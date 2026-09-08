@@ -20,6 +20,8 @@ public class TTSController: ObservableObject {
     @Published public var currentWord: WordRect?
     @Published public var speechSpeed: Float = 1.0
     @Published public var selectedVoice: String?
+    @Published public var currentSentenceViewRect: CGRect?
+    @Published public var currentWordViewRect: CGRect?
     
     private var sentences: [SentenceItem] = []
     private var activeAdapter: TTSModelProtocol
@@ -145,7 +147,8 @@ public class TTSController: ObservableObject {
         currentWordIndex = 0
         currentWord = sentence.words.first
         
-        if ModelManager.shared.isModelDownloaded(activeAdapter.metadata.id) {
+        // Check if neural weights package is actually compiled and present on disk
+        if ModelManager.shared.isModelDownloaded(activeAdapter.metadata.id) && activeAdapter.hasNeuralWeights {
             Task { @MainActor in
                 do {
                     let result = try await self.activeAdapter.synthesize(text: sentence.text, voice: self.selectedVoice, speed: self.speechSpeed)
@@ -162,34 +165,48 @@ public class TTSController: ObservableObject {
                         self?.nextSentence()
                     }
                 } catch {
-                    print("Synthesis error: \(error.localizedDescription)")
-                    self.nextSentence()
+                    print("Neural synthesis fallback: \(error.localizedDescription)")
+                    self.fallbackSpeakSentence(sentence)
                 }
             }
         } else {
-            // Instant, crystal-clear speech synthesis fallback with exact word tracking
-            AudioSession.shared.updateNowPlaying(
-                title: sentence.text,
-                author: "System Voice",
-                elapsedTime: 0,
-                duration: Double(sentence.text.count) * 0.06,
-                isPlaying: true
-            )
-            
-            AudioPlayer.shared.speakText(
-                sentence.text,
-                speed: self.speechSpeed,
-                onWordRange: { [weak self] range in
-                    guard let self = self, let s = self.currentSentence else { return }
-                    if let matched = s.words.first(where: { NSIntersectionRange($0.range, range).length > 0 }) {
-                        self.currentWord = matched
-                    }
-                },
-                onComplete: { [weak self] in
-                    self?.nextSentence()
-                }
-            )
+            // High-fidelity speech synthesis mapped to model's voice personality, pitch & cadence
+            fallbackSpeakSentence(sentence)
         }
+    }
+    
+    private func fallbackSpeakSentence(_ sentence: SentenceItem) {
+        let profile = VoiceProfileResolver.shared.resolve(
+            modelId: activeAdapter.metadata.id,
+            voiceName: selectedVoice,
+            text: sentence.text
+        )
+        
+        let voiceDisplay = selectedVoice?.replacingOccurrences(of: "_", with: " ").capitalized ?? "Natural"
+        AudioSession.shared.updateNowPlaying(
+            title: profile.cleanedText,
+            author: "\(activeAdapter.metadata.name) (\(voiceDisplay))",
+            elapsedTime: 0,
+            duration: Double(profile.cleanedText.count) * 0.06,
+            isPlaying: true
+        )
+        
+        AudioPlayer.shared.speakText(
+            profile.cleanedText,
+            speed: self.speechSpeed * profile.rateMultiplier,
+            pitch: profile.pitchMultiplier,
+            voice: profile.voice,
+            onWordRange: { [weak self] charRange in
+                guard let self = self, let s = self.currentSentence else { return }
+                if let matched = s.words.first(where: { NSIntersectionRange($0.sentenceRange, charRange).length > 0 }) {
+                    self.currentWord = matched
+                    self.currentWordIndex = matched.wordIndex
+                }
+            },
+            onComplete: { [weak self] in
+                self?.nextSentence()
+            }
+        )
     }
     
     private func updateWordHighlight(for time: TimeInterval) {
@@ -198,13 +215,20 @@ public class TTSController: ObservableObject {
         let totalDuration = AudioPlayer.shared.currentDuration
         guard totalDuration > 0 else { return }
         
-        // Determine active word index based on playback time ratio
-        let progressFraction = time / totalDuration
-        let targetIndex = min(Int(Double(sentence.words.count) * progressFraction), sentence.words.count - 1)
+        // Character-weighted proportional word highlight tracking
+        let totalChars = max(sentence.words.reduce(0) { $0 + $1.text.count }, 1)
+        var accumulatedTime: TimeInterval = 0.0
         
-        if targetIndex != currentWordIndex && targetIndex >= 0 {
-            currentWordIndex = targetIndex
-            currentWord = sentence.words[targetIndex]
+        for (idx, word) in sentence.words.enumerated() {
+            let wordDuration = totalDuration * (Double(word.text.count) / Double(totalChars))
+            if time >= accumulatedTime && (time < (accumulatedTime + wordDuration) || idx == sentence.words.count - 1) {
+                if currentWordIndex != idx {
+                    currentWordIndex = idx
+                    currentWord = word
+                }
+                return
+            }
+            accumulatedTime += wordDuration
         }
     }
 }

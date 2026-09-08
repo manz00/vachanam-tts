@@ -83,11 +83,16 @@ private struct SentenceFlowView: View {
         
         if isCurrentSentence && (highlightMode == .both || highlightMode == .wordOnly),
            let activeWord = currentWord {
-            // Find and highlight active word within the sentence
-            if let range = attributed.range(of: activeWord.text) {
-                attributed[range].backgroundColor = highlightChoice.wordColor
-                attributed[range].foregroundColor = Color.black
-                attributed[range].font = font.bold()
+            // Highlight exact instance of active word using 0-based sentenceRange
+            if let swiftRange = Range(activeWord.sentenceRange, in: sentence.text),
+               let attrRange = Range(swiftRange, in: attributed) {
+                attributed[attrRange].backgroundColor = highlightChoice.wordColor
+                attributed[attrRange].foregroundColor = Color.black
+                attributed[attrRange].font = font.bold()
+            } else if let fallbackRange = attributed.range(of: activeWord.text) {
+                attributed[fallbackRange].backgroundColor = highlightChoice.wordColor
+                attributed[fallbackRange].foregroundColor = Color.black
+                attributed[fallbackRange].font = font.bold()
             }
         }
         

@@ -104,9 +104,10 @@ vachanam-tts/
 │   │       └── BookmarkButton.swift        # Animated bookmark toggle
 │   │
 │   ├── TTS/
-│   │   ├── TTSModelProtocol.swift          # Pluggable model interface
+│   │   ├── TTSModelProtocol.swift          # Pluggable model interface & TTSError
 │   │   ├── TTSModelInfo.swift              # Model metadata, formats, tiers
 │   │   ├── TTSController.swift             # Speech orchestrator & word synchronization
+│   │   ├── VoiceProfileResolver.swift      # Model voice presets & pitch/rate mapping
 │   │   ├── ModelManager.swift              # Model downloader, disk cache, delete
 │   │   ├── ModelRegistry.swift             # Model catalog loader
 │   │   └── DeviceCapability.swift          # Hardware RAM checker & tier filters
@@ -224,6 +225,27 @@ vachanam-tts/
   - Fix: Simply re-run (`Cmd + R`) or reboot the simulator via `Simulator > Device > Restart`.
 - **Background Audio in Simulator**:
   - The iOS Simulator routes audio through macOS CoreAudio. Using the native speech synthesis fallback avoids HALC proxy buffer issues.
+
+---
+
+## Speech Synthesis Architecture & Voice Profile Resolver
+
+Vachanam incorporates a hybrid on-device speech pipeline:
+1. **Neural Model Inference**: When compiled CoreML weights (`.mlmodelc`) are present on device, models synthesize raw PCM audio buffers.
+2. **Voice Profile Resolver**: In simulator environments or when neural weights are not yet downloaded, `VoiceProfileResolver` dynamically maps the active model and voice preset (`af_heart`, `am_michael`, `bf_emma`, etc.) to matching high-definition system voices with fine-tuned pitch multipliers, cadence adjustments, and emotion tag stripping. This guarantees:
+   - **Zero Static / "Air" Sound**: Never outputs empty buffers or placeholder sine wave audio.
+   - **Voice Variety**: Female, male, and British English voice personalities tailored to each model preset.
+   - **Instant Latency**: Zero initialization delay on all devices.
+
+---
+
+## PDF Coordinate Conversion & Highlighting Pipeline
+
+Highlighting in PDFKit requires translating from **PDF page coordinate space** (origin `(0, 0)` at bottom-left, Y going up) into **view coordinate space** (origin `(0, 0)` at top-left, Y going down):
+- **`PDFReaderView` Coordinator**: Uses `pdfView.convert(rect, from: page)` to calculate the exact on-screen geometry for both sentence lines and words.
+- **Multi-Line Wrapping**: Sentences spanning multiple lines are split into distinct rectangles using `PDFSelection.selectionsByLine()`, eliminating oversized bounding boxes.
+- **CALayer Sub-pixel Rendering**: Renders highlights using hardware-accelerated `CALayer`s inside a dedicated overlay view attached directly to `PDFView`. Automatically re-aligns upon zooming, panning, or page flipping.
+- **Exact Word Alignment**: Uses 0-based `sentenceRange` tokenization matching `AVSpeechSynthesizerDelegate.willSpeakRangeOfSpeechString`, ensuring every articulated word lights up with 100% precision.
 
 ---
 

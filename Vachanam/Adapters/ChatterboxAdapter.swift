@@ -12,6 +12,12 @@ public class ChatterboxAdapter: TTSModelProtocol {
     public let metadata: TTSModelMetadata
     public private(set) var isLoaded: Bool = false
     
+    public var hasNeuralWeights: Bool {
+        let dir = ModelManager.shared.modelDirectory(for: metadata.id)
+        return FileManager.default.fileExists(atPath: dir.appendingPathComponent("Chatterbox.mlmodelc").path)
+            || FileManager.default.fileExists(atPath: dir.appendingPathComponent("model.mlmodelc").path)
+    }
+    
     public init(metadata: TTSModelMetadata? = nil) {
         self.metadata = metadata ?? ModelRegistry.shared.model(withId: "chatterbox-turbo-en")!
     }
@@ -25,7 +31,6 @@ public class ChatterboxAdapter: TTSModelProtocol {
     }
     
     public func synthesize(text: String, voice: String?, speed: Float) async throws -> TTSAudioResult {
-        // Parse out emotion tags like [laugh], [sigh] while preserving prosodic timing
         let cleanedText = text.replacingOccurrences(of: "\\[(laugh|sigh|whisper|gasp)\\]", with: "", options: .regularExpression)
         let words = cleanedText.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
         let baseWPS = (155.0 / 60.0) * Double(speed)
@@ -48,15 +53,7 @@ public class ChatterboxAdapter: TTSModelProtocol {
         let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
         
-        if let channelData = buffer.floatChannelData?[0] {
-            for i in 0..<Int(frameCount) {
-                let t = Double(i) / sampleRate
-                let sample = (sin(2.0 * .pi * 200.0 * t) + 0.3 * sin(2.0 * .pi * 400.0 * t)) * 0.04 * sin(.pi * (Double(i) / Double(frameCount)))
-                channelData[i] = Float(sample)
-            }
-        }
-        
-        let audioData = Data(bytes: buffer.floatChannelData![0], count: Int(frameCount) * MemoryLayout<Float>.size)
+        let audioData = Data(count: Int(frameCount) * MemoryLayout<Float>.size)
         return TTSAudioResult(audioData: audioData, pcmBuffer: buffer, sampleRate: sampleRate, duration: duration, wordTimestamps: timestamps)
     }
 }

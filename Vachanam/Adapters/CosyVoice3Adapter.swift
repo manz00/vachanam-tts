@@ -12,6 +12,12 @@ public class CosyVoice3Adapter: TTSModelProtocol {
     public let metadata: TTSModelMetadata
     public private(set) var isLoaded: Bool = false
     
+    public var hasNeuralWeights: Bool {
+        let dir = ModelManager.shared.modelDirectory(for: metadata.id)
+        return FileManager.default.fileExists(atPath: dir.appendingPathComponent("CosyVoice.mlmodelc").path)
+            || FileManager.default.fileExists(atPath: dir.appendingPathComponent("model.mlmodelc").path)
+    }
+    
     public init(metadata: TTSModelMetadata? = nil) {
         self.metadata = metadata ?? ModelRegistry.shared.model(withId: "cosyvoice3-0.5b")!
     }
@@ -46,15 +52,7 @@ public class CosyVoice3Adapter: TTSModelProtocol {
         let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
         buffer.frameLength = frameCount
         
-        if let channelData = buffer.floatChannelData?[0] {
-            for i in 0..<Int(frameCount) {
-                let t = Double(i) / sampleRate
-                let sample = (sin(2.0 * .pi * 240.0 * t) + 0.4 * sin(2.0 * .pi * 480.0 * t)) * 0.04 * sin(.pi * (Double(i) / Double(frameCount)))
-                channelData[i] = Float(sample)
-            }
-        }
-        
-        let audioData = Data(bytes: buffer.floatChannelData![0], count: Int(frameCount) * MemoryLayout<Float>.size)
+        let audioData = Data(count: Int(frameCount) * MemoryLayout<Float>.size)
         return TTSAudioResult(audioData: audioData, pcmBuffer: buffer, sampleRate: sampleRate, duration: duration, wordTimestamps: timestamps)
     }
 }

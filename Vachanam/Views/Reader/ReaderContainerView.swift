@@ -28,8 +28,6 @@ public struct ReaderContainerView: View {
     @State private var isExportPresented: Bool = false
     @State private var extractedSentences: [SentenceItem] = []
     
-    @Environment(\.dismiss) var dismiss
-    
     public init(document: ReaderDocument) {
         self.document = document
     }
@@ -50,22 +48,7 @@ public struct ReaderContainerView: View {
                         ZStack {
                             PDFReaderView(document: document, currentPageIndex: $currentPageIndex)
                             
-                            // Highlighting Overlays (in PDF mode)
-                            if ttsController.isPlaying {
-                                if accessibilityManager.highlightMode == .both || accessibilityManager.highlightMode == .sentenceOnly {
-                                    SentenceHighlightOverlay(
-                                        sentenceRect: ttsController.currentSentence?.bounds,
-                                        highlightColor: accessibilityManager.colorChoice.sentenceColor
-                                    )
-                                }
-                                
-                                if accessibilityManager.highlightMode == .both || accessibilityManager.highlightMode == .wordOnly {
-                                    WordHighlightOverlay(
-                                        wordRect: ttsController.currentWord?.bounds,
-                                        highlightColor: accessibilityManager.colorChoice.wordColor
-                                    )
-                                }
-                            }
+
                             
                             // Annotations (Shapes & Drawings)
                             ShapeToolView(
@@ -104,7 +87,7 @@ public struct ReaderContainerView: View {
                     }
                     
                     // Dyslexia Reading Ruler Guide
-                    ReadingRuler(currentY: ttsController.currentSentence?.bounds.origin.y ?? 200)
+                    ReadingRuler(currentY: ttsController.currentSentenceViewRect?.origin.y ?? 200)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -169,7 +152,9 @@ public struct ReaderContainerView: View {
         HStack(spacing: 14) {
             Button {
                 ttsController.stop()
-                dismiss()
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    AppState.shared.closeCurrentDocument()
+                }
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "chevron.left")

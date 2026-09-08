@@ -18,7 +18,7 @@ public class AudioSession {
         #if os(iOS) || targetEnvironment(macCatalyst)
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers, .allowBluetooth, .allowBluetoothA2DP])
+            try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers, .allowBluetoothHFP, .allowBluetoothA2DP])
             try session.setActive(true)
         } catch {
             print("Failed to configure AVAudioSession: \(error.localizedDescription)")
@@ -55,7 +55,7 @@ public class AudioSession {
     }
     
     public func updateNowPlaying(title: String, author: String = "Vachanam", elapsedTime: TimeInterval, duration: TimeInterval, isPlaying: Bool) {
-        var nowPlayingInfo: [String: Any] = [
+        let nowPlayingInfo: [String: Any] = [
             MPMediaItemPropertyTitle: title,
             MPMediaItemPropertyArtist: author,
             MPNowPlayingInfoPropertyElapsedPlaybackTime: elapsedTime,

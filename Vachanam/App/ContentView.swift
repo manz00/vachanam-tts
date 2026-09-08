@@ -17,12 +17,17 @@ public struct ContentView: View {
         ZStack {
             if let document = appState.currentDocument {
                 ReaderContainerView(document: document)
+                    .transition(.opacity)
             } else {
                 DocumentLibraryView { doc in
-                    appState.openDocument(doc)
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        appState.openDocument(doc)
+                    }
                 }
+                .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: appState.currentDocument == nil)
         .preferredColorScheme(.dark)
         // Mac & iPad Keyboard Shortcuts
         .onKeyPress(.space) {

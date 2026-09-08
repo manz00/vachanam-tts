@@ -37,9 +37,27 @@ public struct TTSAudioResult {
     }
 }
 
+public enum TTSError: LocalizedError {
+    case modelNotLoaded
+    case weightsNotFound
+    case synthesisFailed(String)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .modelNotLoaded:
+            return "TTS model is not loaded"
+        case .weightsNotFound:
+            return "Neural weights package (.mlmodelc) not found on device"
+        case .synthesisFailed(let msg):
+            return "Synthesis failed: \(msg)"
+        }
+    }
+}
+
 public protocol TTSModelProtocol: AnyObject {
     var metadata: TTSModelMetadata { get }
     var isLoaded: Bool { get }
+    var hasNeuralWeights: Bool { get }
     
     func loadModel(weightsDirectory: URL) async throws
     func unloadModel()
@@ -48,6 +66,8 @@ public protocol TTSModelProtocol: AnyObject {
 }
 
 public extension TTSModelProtocol {
+    var hasNeuralWeights: Bool { false }
+    
     func streamSynthesize(text: String, voice: String?, speed: Float) -> AsyncThrowingStream<TTSAudioResult, Error> {
         AsyncThrowingStream { continuation in
             Task {

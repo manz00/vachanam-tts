@@ -30,7 +30,14 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
     
     // MARK: - Speech Synthesis Mode (Instant, high-quality, natural speech)
     
-    public func speakText(_ text: String, speed: Float = 1.0, onWordRange: ((NSRange) -> Void)? = nil, onComplete: (() -> Void)? = nil) {
+    public func speakText(
+        _ text: String,
+        speed: Float = 1.0,
+        pitch: Float = 1.0,
+        voice: AVSpeechSynthesisVoice? = nil,
+        onWordRange: ((NSRange) -> Void)? = nil,
+        onComplete: (() -> Void)? = nil
+    ) {
         stop()
         
         AudioSession.shared.configureSession()
@@ -44,12 +51,12 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
         self.onWordRangeHandler = onWordRange
         
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        utterance.voice = voice ?? AVSpeechSynthesisVoice(language: "en-US")
         
         // Base rate mapping (0.5x to 2.0x -> AVSpeechUtterance rate)
         let baseRate = AVSpeechUtteranceDefaultSpeechRate
         utterance.rate = min(max(baseRate * (speed / 1.0), AVSpeechUtteranceMinimumSpeechRate), AVSpeechUtteranceMaximumSpeechRate)
-        utterance.pitchMultiplier = 1.0
+        utterance.pitchMultiplier = min(max(pitch, 0.5), 2.0)
         
         isPlaying = true
         speechSynthesizer?.speak(utterance)
