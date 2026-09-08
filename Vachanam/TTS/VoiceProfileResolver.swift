@@ -47,15 +47,6 @@ public class VoiceProfileResolver {
         case "kokoro-v1.0-en":
             return resolveKokoroVoice(voiceName: selectedVoice, text: clean, allVoices: allVoices)
             
-        case "qwen3-tts-0.6b-en":
-            return resolveQwen3Voice(voiceName: selectedVoice, text: clean, allVoices: allVoices)
-            
-        case "chatterbox-turbo-en":
-            return resolveChatterboxVoice(voiceName: selectedVoice, text: clean, allVoices: allVoices)
-            
-        case "cosyvoice3-0.5b":
-            return resolveCosyVoice(voiceName: selectedVoice, text: clean, allVoices: allVoices)
-            
         default:
             let defaultVoice = AVSpeechSynthesisVoice(language: "en-US")
             return ResolvedVoiceProfile(voice: defaultVoice, pitchMultiplier: 1.0, rateMultiplier: 1.0, cleanedText: clean)
@@ -89,48 +80,6 @@ public class VoiceProfileResolver {
             // af_heart or default: American Female - Warm & expressive
             let voice = findVoice(in: allVoices, language: "en-US", gender: .female, preferredNames: ["Samantha", "Allison", "Ava", "Susan"])
             return ResolvedVoiceProfile(voice: voice, pitchMultiplier: 1.04, rateMultiplier: 1.0, cleanedText: text)
-        }
-    }
-    
-    private func resolveQwen3Voice(voiceName: String, text: String, allVoices: [AVSpeechSynthesisVoice]) -> ResolvedVoiceProfile {
-        if voiceName.contains("warm_narrator") {
-            let voice = findVoice(in: allVoices, language: "en-US", gender: .male, preferredNames: ["Alex", "Tom"])
-            return ResolvedVoiceProfile(voice: voice, pitchMultiplier: 0.92, rateMultiplier: 0.95, cleanedText: text)
-        } else if voiceName.contains("expressive_female") {
-            let voice = findVoice(in: allVoices, language: "en-US", gender: .female, preferredNames: ["Samantha", "Victoria"])
-            return ResolvedVoiceProfile(voice: voice, pitchMultiplier: 1.08, rateMultiplier: 1.02, cleanedText: text)
-        } else {
-            // Natural neutral
-            let voice = AVSpeechSynthesisVoice(language: "en-US")
-            return ResolvedVoiceProfile(voice: voice, pitchMultiplier: 1.0, rateMultiplier: 1.0, cleanedText: text)
-        }
-    }
-    
-    private func resolveChatterboxVoice(voiceName: String, text: String, allVoices: [AVSpeechSynthesisVoice]) -> ResolvedVoiceProfile {
-        if voiceName.contains("storyteller") {
-            let voice = findVoice(in: allVoices, language: "en-GB", gender: .male, preferredNames: ["Daniel", "Oliver"])
-            return ResolvedVoiceProfile(voice: voice, pitchMultiplier: 0.88, rateMultiplier: 0.90, cleanedText: text)
-        } else if voiceName.contains("female") {
-            let voice = findVoice(in: allVoices, language: "en-US", gender: .female, preferredNames: ["Samantha", "Ava"])
-            return ResolvedVoiceProfile(voice: voice, pitchMultiplier: 1.10, rateMultiplier: 1.05, cleanedText: text)
-        } else {
-            // Expressive male
-            let voice = findVoice(in: allVoices, language: "en-US", gender: .male, preferredNames: ["Alex", "Tom"])
-            return ResolvedVoiceProfile(voice: voice, pitchMultiplier: 0.96, rateMultiplier: 1.04, cleanedText: text)
-        }
-    }
-    
-    private func resolveCosyVoice(voiceName: String, text: String, allVoices: [AVSpeechSynthesisVoice]) -> ResolvedVoiceProfile {
-        if voiceName.contains("academic") {
-            let voice = findVoice(in: allVoices, language: "en-US", gender: .male, preferredNames: ["Alex", "Fred"])
-            return ResolvedVoiceProfile(voice: voice, pitchMultiplier: 1.02, rateMultiplier: 1.02, cleanedText: text)
-        } else if voiceName.contains("soft_story") {
-            let voice = findVoice(in: allVoices, language: "en-US", gender: .female, preferredNames: ["Samantha", "Susan"])
-            return ResolvedVoiceProfile(voice: voice, pitchMultiplier: 1.06, rateMultiplier: 0.92, cleanedText: text)
-        } else {
-            // Balanced warm
-            let voice = findVoice(in: allVoices, language: "en-US", gender: .female, preferredNames: ["Samantha", "Ava"])
-            return ResolvedVoiceProfile(voice: voice, pitchMultiplier: 0.98, rateMultiplier: 0.98, cleanedText: text)
         }
     }
     

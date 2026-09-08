@@ -12,6 +12,7 @@ public struct VachanamApp: App {
     @StateObject private var appState = AppState.shared
     
     public init() {
+        setenv("MLX_METAL_GPU_ARCH", "appleg14g", 0)
         AudioSession.shared.configureSession()
         AudioSession.shared.setupRemoteCommands(
             onPlay: {

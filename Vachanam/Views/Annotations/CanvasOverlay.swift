@@ -27,7 +27,6 @@ public struct CanvasOverlay: UIViewRepresentable {
         let canvas = PKCanvasView()
         canvas.backgroundColor = .clear
         canvas.isOpaque = false
-        canvas.delegate = context.coordinator
         
         #if targetEnvironment(macCatalyst)
         canvas.drawingPolicy = .anyInput
@@ -35,20 +34,42 @@ public struct CanvasOverlay: UIViewRepresentable {
         canvas.drawingPolicy = .anyInput
         #endif
         
+        context.coordinator.isProgrammaticUpdate = true
         // Load existing drawing if available
         if let data = AnnotationManager.shared.drawings[pageIndex],
            let drawing = try? PKDrawing(data: data) {
             canvas.drawing = drawing
+            context.coordinator.lastSavedData = data
+        } else {
+            context.coordinator.lastSavedData = canvas.drawing.dataRepresentation()
         }
+        context.coordinator.isProgrammaticUpdate = false
         
+        canvas.delegate = context.coordinator
         context.coordinator.canvasView = canvas
+        context.coordinator.currentPageIndex = pageIndex
         updateTool(for: canvas)
         return canvas
     }
     
     public func updateUIView(_ uiView: PKCanvasView, context: Context) {
+        context.coordinator.parent = self
         uiView.isUserInteractionEnabled = isDrawingActive
         updateTool(for: uiView)
+        
+        if context.coordinator.currentPageIndex != pageIndex {
+            context.coordinator.currentPageIndex = pageIndex
+            context.coordinator.isProgrammaticUpdate = true
+            if let data = AnnotationManager.shared.drawings[pageIndex],
+               let drawing = try? PKDrawing(data: data) {
+                uiView.drawing = drawing
+                context.coordinator.lastSavedData = data
+            } else {
+                uiView.drawing = PKDrawing()
+                context.coordinator.lastSavedData = uiView.drawing.dataRepresentation()
+            }
+            context.coordinator.isProgrammaticUpdate = false
+        }
     }
     
     private func updateTool(for canvas: PKCanvasView) {
@@ -72,14 +93,25 @@ public struct CanvasOverlay: UIViewRepresentable {
     public class Coordinator: NSObject, PKCanvasViewDelegate {
         var parent: CanvasOverlay
         weak var canvasView: PKCanvasView?
+        var currentPageIndex: Int
+        var isProgrammaticUpdate: Bool = false
+        var lastSavedData: Data?
         
         init(_ parent: CanvasOverlay) {
             self.parent = parent
+            self.currentPageIndex = parent.pageIndex
         }
         
         public func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
+            guard !isProgrammaticUpdate else { return }
             let data = canvasView.drawing.dataRepresentation()
-            AnnotationManager.shared.saveDrawingData(data, forPage: parent.pageIndex)
+            guard data != lastSavedData else { return }
+            lastSavedData = data
+            let targetPage = parent.pageIndex
+            
+            DispatchQueue.main.async {
+                AnnotationManager.shared.saveDrawingData(data, forPage: targetPage)
+            }
         }
     }
 }

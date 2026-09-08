@@ -14,11 +14,12 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
 
 ## Key Highlights
 
-- **4 On-Device TTS Models**:
-  1. **Kokoro 82M** (Default, lightweight, ultra-fast English narration, runs on 4GB+ RAM devices)
-  2. **Qwen3-TTS 0.6B** (High fidelity, expressive prosody, native word timestamps, requires 8GB+ RAM)
-  3. **Chatterbox Turbo** (Emotion markup like `[laugh]`, `[sigh]`, requires 8GB+ RAM)
-  4. **CosyVoice 3 0.5B** (4-bit quantized MLX streaming synthesis, requires 8GB+ RAM)
+- **5 On-Device TTS Models**:
+  1. **Apple Natural** (Built-in offline iOS speech synthesis, zero download)
+  2. **Kokoro 82M** (Default, lightweight, ultra-fast English narration, runs on 4GB+ RAM devices)
+  3. **Qwen3-TTS 0.6B** (High fidelity, expressive prosody, native word timestamps, requires 8GB+ RAM)
+  4. **Chatterbox Turbo** (Emotion markup like `[laugh]`, `[sigh]`, requires 8GB+ RAM)
+  5. **CosyVoice 3 0.5B** (4-bit quantized MLX streaming synthesis, requires 8GB+ RAM)
 - **Pluggable Architecture**: Model downloading, caching, storage cleanup, and RAM capability checks.
 - **Dual Reading Modes**:
   - **Original PDF Layout**: Native PDFKit rendering with interactive overlays.
@@ -175,12 +176,39 @@ vachanam-tts/
 
 | Model | Size | Min RAM | Architecture | Best For |
 |---|---|---|---|---|
-| **Kokoro** | ~88 MB | 4 GB | CoreML (Misaki G2P) | All iPads (Air M-series & older) & Mac, long-form reading |
+| **Apple Natural** | 0 MB | 0 GB | Built-in AVSpeech | Zero-download, fast, default system fallback |
+| **Kokoro** | ~164 MB (Bundled) | 4 GB | CoreML (KokoroTTS + Misaki) | All iPads (Air M-series & older) & Mac, long-form reading |
 | **Qwen3-TTS** | ~2.5 GB | 8 GB | CoreML | High quality narration, native word alignment |
 | **Chatterbox** | ~1.5 GB | 8 GB | CoreML | Emotion markup (`[laugh]`, `[sigh]`), character voices |
 | **CosyVoice 3**| ~1.2 GB | 8 GB | MLX (4-bit quantized) | Streaming narration, voice cloning |
 
 *Note: Devices with less than 8GB RAM will automatically indicate that heavier models require 8GB+ unified memory.*
+
+---
+
+## Kokoro CoreML Integration & Model Bundle
+
+### Model Repository & Provenance (`kokoro-coreml/`)
+- **Full Model Repository**: The complete 1.01 GB repository (`mattmireles/kokoro-coreml`) is fully downloaded via Git LFS into `kokoro-coreml/`.
+- **Integrity Verified**: All Git LFS objects have been verified with `git lfs fsck OK` and complete SHA-256 checksum matching against `KokoroRuntimeManifest.json`.
+- **Included Packages**:
+  - **CoreML Pipelines (23 packages)**: Decoder Pre/Post for 3s, 7s, 10s, 15s, and 30s buckets; Duration models for t32 through t512 tokens; F0 pitch predictors for t120 through t1200 frames.
+  - **Voices (50+ voices)**: Full spectrum of American and British English voices (`af_heart`, `af_bella`, `af_nicole`, `am_michael`, `am_fenrir`, `am_puck`, `bf_emma`, etc.) located in `voices/` and `kokoro.js/voices/`.
+  - **Runtime Manifests**: `KokoroRuntimeManifest.json`, `HostedManifest.json`, `hnsf_weights.json`, and `kokoro-vocab.json`.
+
+### Bundled Starter Runtime (`Vachanam/Resources/KokoroModels/`)
+To provide immediate offline neural speech without requiring initial network downloads, Vachanam bundles a complete starter Kokoro CoreML runtime (~164 MB):
+- `coreml/kokoro_duration_t128.mlpackage`
+- `coreml/kokoro_f0ntrain_t600.mlpackage`
+- `coreml/kokoro_decoder_pre_15s.mlpackage`
+- `coreml/kokoro_decoder_har_post_15s.mlpackage`
+- `voices/` (7 core voices: `af_heart`, `af_bella`, `af_nicole`, `am_michael`, `am_fenrir`, `am_puck`, `bf_emma`)
+- `runtime/` (`kokoro-vocab.json` & `hnsf_weights.json`)
+- Pronunciation dictionaries: `us_gold.json`, `us_silver.json`, `gb_gold.json`, `gb_silver.json`
+
+### Simulator & Device Compatibility
+- **CoreML Model Execution**: CoreML models run natively on Apple Silicon GPU/ANE on physical devices and on the host Mac CPU/GPU under the iOS Simulator.
+- **Simulator-Safe Phonemizer**: When executing inside Apple's iOS Simulator (`#if targetEnvironment(simulator)`), `KokoroMisakiPhonemizer` utilizes an in-memory dictionary-backed phonemizer to bypass MLX shared Metal heap assertions (`MTLStorageModePrivate is required for heaps`), ensuring tests and synthesis execute without simulator crashes. On physical iOS devices, full neural G2P is enabled.
 
 ---
 
@@ -223,6 +251,8 @@ vachanam-tts/
 - **Simulator Error: "Busy (Application failed preflight checks)"**:
   - Occurs when Xcode attempts to launch while the iOS Simulator's SpringBoard daemon is transitioning states.
   - Fix: Simply re-run (`Cmd + R`) or reboot the simulator via `Simulator > Device > Restart`.
+- **Build Notice: "warning: not stripping binary because it is signed: .../MisakiSwift.framework"**:
+  - Emitted by Xcode's `strip-tool` during copy phase when building signed Swift packages or dynamic frameworks in Debug. Stripping would alter binary bytes and break the cryptographic code signature, so Xcode safely preserves the symbols. `COPY_PHASE_STRIP = NO` is enforced across all debug configurations in `generate_project.py`.
 - **Console Log: "AddInstanceForFactory: No factory registered for id <CFUUID ...> F8BB1C28-BAE8-11D6-9C31-00039315CD46"**:
   - This is an internal CoreAudio Hardware Abstraction Layer (HAL) diagnostic emitted by macOS when initializing virtual audio devices in the iOS Simulator.
   - It is completely harmless, expected in simulator environments, and has no effect on audio playback, synthesis, or stability. On physical iPad hardware, this log does not appear.
@@ -248,6 +278,7 @@ vachanam-tts/
 - **Console Log: "CoreGraphics PDF has logged an error..."**:
   - Emitted by Apple's CoreGraphics PDFKit rendering subsystem when parsing non-standard font dictionaries or PDF operator streams. Highlighting and page display remain unaffected.
 - **SwiftUI View Update Cycle Prevention**:
+  - **`CanvasOverlay`**: Guarded `PKCanvasViewDelegate.canvasViewDrawingDidChange` with `isProgrammaticUpdate` and deduplication against `lastSavedData`. Dispatches drawing data persistence to `AnnotationManager` asynchronously via `DispatchQueue.main.async`, preventing UIKit delegate drawing events from publishing `@Published` changes synchronously during SwiftUI's `makeUIView` or `updateUIView` layout passes.
   - **`DocumentLibraryView`**: `resolveDocumentURL(for:)` is implemented as a pure, side-effect-free query function without mutating `ReadingProgressTracker.history` during `ForEach` body evaluations. Persistent document path reconciliation runs asynchronously on `.onAppear` and on card tap selection, eliminating `AttributeInvalidatingSubscriber` warnings in `ForEachState`.
   - **`PDFReaderView`**: Removed redundant highlight calls from `updateUIView`, relying solely on the coordinator's reactive observers (`$isPlaying`, `$currentSentence`, page change notifications) so the SwiftUI layout pass never mutates observable state.
   - **`ReaderContainerView` & `ReadingRuler`**: Decoupled `TTSController` observation from `ReaderContainerView` directly into `ReadingRuler`, preventing whole-container re-renders on word-level speech ticks. Unused `currentWordViewRect` tracking has also been purged.

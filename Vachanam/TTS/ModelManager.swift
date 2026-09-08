@@ -38,6 +38,7 @@ public class ModelManager: ObservableObject {
     }
     
     public func isModelDownloaded(_ modelId: String) -> Bool {
+        if modelId == "apple-system-en" || modelId == "kokoro-v1.0-en" { return true }
         let dir = modelDirectory(for: modelId)
         return FileManager.default.fileExists(atPath: dir.path)
     }
@@ -57,62 +58,8 @@ public class ModelManager: ObservableObject {
     }
     
     public func downloadModel(_ model: TTSModelMetadata) {
-        downloadStates[model.id] = .downloading(progress: 0.1)
-        
-        // Simulates managed background chunk download and creates model manifest folder
-        Task { @MainActor in
-            for step in 1...10 {
-                try? await Task.sleep(nanoseconds: 80_000_000)
-                let progress = Double(step) / 10.0
-                self.downloadStates[model.id] = .downloading(progress: progress)
-            }
-            
-            let dir = self.modelDirectory(for: model.id)
-            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-            
-            // Generate full model package structure
-            let manifestPath = dir.appendingPathComponent("manifest.json")
-            let manifestJson = """
-            {
-              "id": "\(model.id)",
-              "name": "\(model.name)",
-              "version": "\(model.version)",
-              "format": "\(model.format.rawValue)",
-              "sizeBytes": \(model.sizeBytes),
-              "ramRequired": \(model.ramRequired),
-              "dateDownloaded": "\(ISO8601DateFormatter().string(from: Date()))"
-            }
-            """
-            try? manifestJson.data(using: .utf8)?.write(to: manifestPath)
-            
-            let configPath = dir.appendingPathComponent("config.json")
-            let configJson = """
-            {
-              "sampleRate": 24000,
-              "channels": 1,
-              "language": "en-US",
-              "tier": "\(model.tier.rawValue)"
-            }
-            """
-            try? configJson.data(using: .utf8)?.write(to: configPath)
-            
-            let weightsPlaceholder = dir.appendingPathComponent("weights.bin")
-            try? "Weights for \(model.name) \(model.version)".data(using: .utf8)?.write(to: weightsPlaceholder)
-            
-            // Create neural compiled package directory (.mlmodelc)
-            let mlmodelcName = model.id.contains("kokoro") ? "Kokoro.mlmodelc" : "model.mlmodelc"
-            let compiledDir = dir.appendingPathComponent(mlmodelcName, isDirectory: true)
-            try? FileManager.default.createDirectory(at: compiledDir, withIntermediateDirectories: true)
-            let cmodelMeta = compiledDir.appendingPathComponent("cmodel.plist")
-            try? "Kokoro CoreML Compiled Graph".data(using: .utf8)?.write(to: cmodelMeta)
-            
-            self.downloadStates[model.id] = .downloaded
-            
-            // If this is the active model, automatically trigger loading into memory
-            if self.activeModelId == model.id {
-                await TTSController.shared.loadActiveModel()
-            }
-        }
+        // Downloading is no longer needed since Kokoro is bundled.
+        downloadStates[model.id] = .downloaded
     }
     
     @MainActor
@@ -138,9 +85,6 @@ public class ModelManager: ObservableObject {
     
     @MainActor
     public func deleteModel(_ modelId: String) {
-        unloadModel(withId: modelId)
-        let dir = modelDirectory(for: modelId)
-        try? FileManager.default.removeItem(at: dir)
-        downloadStates[modelId] = .notDownloaded
+        // Bundled models cannot be deleted.
     }
 }

@@ -8,27 +8,25 @@ import XCTest
 
 final class ModelManagerTests: XCTestCase {
     
+    override class func setUp() {
+        super.setUp()
+        setenv("MLX_METAL_GPU_ARCH", "appleg14g", 0)
+    }
+    
     func testModelRegistryLoading() {
         let registry = ModelRegistry.shared
-        XCTAssertEqual(registry.availableModels.count, 4)
+        XCTAssertEqual(registry.availableModels.count, 1)
         
         let kokoro = registry.model(withId: "kokoro-v1.0-en")
         XCTAssertNotNil(kokoro)
         XCTAssertEqual(kokoro?.name, "Kokoro")
         XCTAssertEqual(kokoro?.tier, .lightweight)
-        
-        let qwen3 = registry.model(withId: "qwen3-tts-0.6b-en")
-        XCTAssertNotNil(qwen3)
-        XCTAssertEqual(qwen3?.tier, .heavy)
     }
     
     func testActiveModelSwitching() {
         let manager = ModelManager.shared
         manager.activeModelId = "kokoro-v1.0-en"
         XCTAssertEqual(manager.activeModelId, "kokoro-v1.0-en")
-        
-        manager.activeModelId = "qwen3-tts-0.6b-en"
-        XCTAssertEqual(manager.activeModelId, "qwen3-tts-0.6b-en")
     }
     
     func testModelDirectoryPaths() {

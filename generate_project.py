@@ -10,7 +10,9 @@ def create_project():
     
     # Collect all source files
     vachanam_files = []
-    for root, _, files in os.walk("Vachanam"):
+    for root, dirs, files in os.walk("Vachanam"):
+        if "Packages" in dirs:
+            dirs.remove("Packages")
         for f in files:
             if f.endswith(".swift"):
                 full_path = os.path.join(root, f)
@@ -51,6 +53,14 @@ def create_project():
     
     font_bold_uuid = generate_uuid()
     font_bold_b_uuid = generate_uuid()
+    
+    kokoro_models_uuid = generate_uuid()
+    kokoro_models_b_uuid = generate_uuid()
+    
+    spm_pkg_ref_uuid = generate_uuid()
+    spm_kokorotts_dep_uuid = generate_uuid()
+    spm_kokorotts_build_file_uuid = generate_uuid()
+    spm_kokorotts_test_build_file_uuid = generate_uuid()
     
     proj_uuid = generate_uuid()
     main_group_uuid = generate_uuid()
@@ -128,6 +138,7 @@ def create_project():
     pbx.append(f"\t\t{font_reg_b_uuid} /* OpenDyslexic-Regular.otf in Resources */ = {{isa = PBXBuildFile; fileRef = {font_reg_uuid} /* OpenDyslexic-Regular.otf */; }};")
     pbx.append(f"\t\t{font_bold_b_uuid} /* OpenDyslexic-Bold.otf in Resources */ = {{isa = PBXBuildFile; fileRef = {font_bold_uuid} /* OpenDyslexic-Bold.otf */; }};")
     pbx.append(f"\t\t{assets_b_uuid} /* Assets.xcassets in Resources */ = {{isa = PBXBuildFile; fileRef = {assets_uuid} /* Assets.xcassets */; }};")
+    pbx.append(f"\t\t{kokoro_models_b_uuid} /* KokoroModels in Resources */ = {{isa = PBXBuildFile; fileRef = {kokoro_models_uuid} /* KokoroModels */; }};")
     pbx.append("/* End PBXBuildFile section */")
     pbx.append("")
     
@@ -150,6 +161,25 @@ def create_project():
     pbx.append("/* End PBXContainerItemProxy section */")
     pbx.append("")
     
+    # XCLocalSwiftPackageReference section
+    pbx.append("/* Begin XCLocalSwiftPackageReference section */")
+    pbx.append(f"\t\t{spm_pkg_ref_uuid} /* XCLocalSwiftPackageReference \"swift-tts\" */ = {{")
+    pbx.append("\t\t\tisa = XCLocalSwiftPackageReference;")
+    pbx.append('\t\t\trelativePath = "Vachanam/Packages/kokoro-coreml/swift-tts";')
+    pbx.append("\t\t};")
+    pbx.append("/* End XCLocalSwiftPackageReference section */")
+    pbx.append("")
+    
+    # XCSwiftPackageProductDependency section
+    pbx.append("/* Begin XCSwiftPackageProductDependency section */")
+    pbx.append(f"\t\t{spm_kokorotts_dep_uuid} /* KokoroTTS */ = {{")
+    pbx.append("\t\t\tisa = XCSwiftPackageProductDependency;")
+    pbx.append(f"\t\t\tpackage = {spm_pkg_ref_uuid} /* XCLocalSwiftPackageReference \"swift-tts\" */;")
+    pbx.append("\t\t\tproductName = KokoroTTS;")
+    pbx.append("\t\t};")
+    pbx.append("/* End XCSwiftPackageProductDependency section */")
+    pbx.append("")
+    
     pbx.append("/* Begin PBXFileReference section */")
     pbx.append(f"\t\t{app_product_uuid} /* Vachanam.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vachanam.app; sourceTree = BUILT_PRODUCTS_DIR; }};")
     pbx.append(f"\t\t{tests_product_uuid} /* VachanamTests.xctest */ = {{isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VachanamTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; }};")
@@ -163,6 +193,7 @@ def create_project():
     pbx.append(f"\t\t{font_reg_uuid} /* OpenDyslexic-Regular.otf */ = {{isa = PBXFileReference; lastKnownFileType = file; path = \"Vachanam/Resources/OpenDyslexic-Regular.otf\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{font_bold_uuid} /* OpenDyslexic-Bold.otf */ = {{isa = PBXFileReference; lastKnownFileType = file; path = \"Vachanam/Resources/OpenDyslexic-Bold.otf\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{assets_uuid} /* Assets.xcassets */ = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = \"Vachanam/Resources/Assets.xcassets\"; sourceTree = \"<group>\"; }};")
+    pbx.append(f"\t\t{kokoro_models_uuid} /* KokoroModels */ = {{isa = PBXFileReference; lastKnownFileType = folder; path = \"Vachanam/Resources/KokoroModels\"; sourceTree = \"<group>\"; }};")
     pbx.append("/* End PBXFileReference section */")
     pbx.append("")
     
@@ -171,6 +202,7 @@ def create_project():
     pbx.append("\t\t\tisa = PBXFrameworksBuildPhase;")
     pbx.append("\t\t\tbuildActionMask = 2147483647;")
     pbx.append("\t\t\tfiles = (")
+    pbx.append(f"\t\t\t\t{spm_kokorotts_build_file_uuid} /* KokoroTTS in Frameworks */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
     pbx.append("\t\t};")
@@ -179,6 +211,7 @@ def create_project():
     pbx.append("\t\t\tisa = PBXFrameworksBuildPhase;")
     pbx.append("\t\t\tbuildActionMask = 2147483647;")
     pbx.append("\t\t\tfiles = (")
+    pbx.append(f"\t\t\t\t{spm_kokorotts_test_build_file_uuid} /* KokoroTTS in Frameworks */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
     pbx.append("\t\t};")
@@ -217,6 +250,7 @@ def create_project():
     pbx.append(f"\t\t\t\t{font_reg_uuid} /* OpenDyslexic-Regular.otf */,")
     pbx.append(f"\t\t\t\t{font_bold_uuid} /* OpenDyslexic-Bold.otf */,")
     pbx.append(f"\t\t\t\t{assets_uuid} /* Assets.xcassets */,")
+    pbx.append(f"\t\t\t\t{kokoro_models_uuid} /* KokoroModels */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\tpath = \".\";")
     pbx.append("\t\t\tsourceTree = \"<group>\";")
@@ -291,6 +325,9 @@ def create_project():
     pbx.append("\t\t\tdependencies = (")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\tname = Vachanam;")
+    pbx.append(f"\t\t\tpackageProductDependencies = (")
+    pbx.append(f"\t\t\t\t{spm_kokorotts_dep_uuid} /* KokoroTTS */,")
+    pbx.append("\t\t\t);")
     pbx.append(f"\t\t\tproductName = Vachanam;")
     pbx.append(f"\t\t\tproductReference = {app_product_uuid} /* Vachanam.app */;")
     pbx.append("\t\t\tproductType = \"com.apple.product-type.application\";")
@@ -309,6 +346,9 @@ def create_project():
     pbx.append(f"\t\t\t\t{app_dep_uuid} /* PBXTargetDependency */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\tname = VachanamTests;")
+    pbx.append(f"\t\t\tpackageProductDependencies = (")
+    pbx.append(f"\t\t\t\t{spm_kokorotts_dep_uuid} /* KokoroTTS */,")
+    pbx.append("\t\t\t);")
     pbx.append(f"\t\t\tproductName = VachanamTests;")
     pbx.append(f"\t\t\tproductReference = {tests_product_uuid} /* VachanamTests.xctest */;")
     pbx.append("\t\t\tproductType = \"com.apple.product-type.bundle.unit-test\";")
@@ -363,6 +403,9 @@ def create_project():
     pbx.append("\t\t\t\tBase,")
     pbx.append("\t\t\t);")
     pbx.append(f"\t\t\tmainGroup = {main_group_uuid};")
+    pbx.append(f"\t\t\tpackageReferences = (")
+    pbx.append(f"\t\t\t\t{spm_pkg_ref_uuid} /* XCLocalSwiftPackageReference \"swift-tts\" */,")
+    pbx.append(f"\t\t\t);")
     pbx.append(f"\t\t\tproductRefGroup = {products_group_uuid} /* Products */;")
     pbx.append("\t\t\tprojectDirPath = \"\";")
     pbx.append("\t\t\tprojectRoot = \"\";")
@@ -385,6 +428,7 @@ def create_project():
     pbx.append(f"\t\t\t\t{font_reg_b_uuid} /* OpenDyslexic-Regular.otf in Resources */,")
     pbx.append(f"\t\t\t\t{font_bold_b_uuid} /* OpenDyslexic-Bold.otf in Resources */,")
     pbx.append(f"\t\t\t\t{assets_b_uuid} /* Assets.xcassets in Resources */,")
+    pbx.append(f"\t\t\t\t{kokoro_models_b_uuid} /* KokoroModels in Resources */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
     pbx.append("\t\t};")
@@ -468,6 +512,7 @@ def create_project():
     pbx.append("\t\t\t\tCLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;")
     pbx.append("\t\t\t\tCLANG_WARN_UNREACHABLE_CODE = YES;")
     pbx.append("\t\t\t\tCLANG_WARN__DUPLICATE_METHOD_MATCH = YES;")
+    pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")
     pbx.append("\t\t\t\tDEBUG_INFORMATION_FORMAT = \"dwarf\";")
     pbx.append("\t\t\t\tDERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;")
     pbx.append("\t\t\t\tENABLE_STRICT_OBJC_MSGSEND = YES;")
@@ -483,9 +528,9 @@ def create_project():
     pbx.append("\t\t\t\tGCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;")
     pbx.append("\t\t\t\tGCC_WARN_UNUSED_FUNCTION = YES;")
     pbx.append("\t\t\t\tGCC_WARN_UNUSED_VARIABLE = YES;")
-    pbx.append("\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 17.0;")
+    pbx.append("\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 18.0;")
     pbx.append("\t\t\t\tLOCALIZATION_PREFERS_STRING_CATALOGS = YES;")
-    pbx.append("\t\t\t\tMACOSX_DEPLOYMENT_TARGET = 14.0;")
+    pbx.append("\t\t\t\tMACOSX_DEPLOYMENT_TARGET = 15.0;")
     pbx.append("\t\t\t\tMTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;")
     pbx.append("\t\t\t\tMTL_FAST_MATH = YES;")
     pbx.append("\t\t\t\tONLY_ACTIVE_ARCH = YES;")
@@ -534,6 +579,7 @@ def create_project():
     pbx.append("\t\t\t\tCLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;")
     pbx.append("\t\t\t\tCLANG_WARN_UNREACHABLE_CODE = YES;")
     pbx.append("\t\t\t\tCLANG_WARN__DUPLICATE_METHOD_MATCH = YES;")
+    pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")
     pbx.append("\t\t\t\tDEBUG_INFORMATION_FORMAT = \"dwarf-with-dsym\";")
     pbx.append("\t\t\t\tDERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;")
     pbx.append("\t\t\t\tENABLE_NS_ASSERTIONS = NO;")
@@ -547,9 +593,9 @@ def create_project():
     pbx.append("\t\t\t\tGCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;")
     pbx.append("\t\t\t\tGCC_WARN_UNUSED_FUNCTION = YES;")
     pbx.append("\t\t\t\tGCC_WARN_UNUSED_VARIABLE = YES;")
-    pbx.append("\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 17.0;")
+    pbx.append("\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 18.0;")
     pbx.append("\t\t\t\tLOCALIZATION_PREFERS_STRING_CATALOGS = YES;")
-    pbx.append("\t\t\t\tMACOSX_DEPLOYMENT_TARGET = 14.0;")
+    pbx.append("\t\t\t\tMACOSX_DEPLOYMENT_TARGET = 15.0;")
     pbx.append("\t\t\t\tMTL_ENABLE_DEBUG_INFO = NO;")
     pbx.append("\t\t\t\tMTL_FAST_MATH = YES;")
     pbx.append("\t\t\t\tONLY_ACTIVE_ARCH = NO;")
@@ -573,6 +619,7 @@ def create_project():
     pbx.append("\t\t\t\tASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = YES;")
     pbx.append("\t\t\t\tASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;")
     pbx.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
+    pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")
     pbx.append("\t\t\t\tCURRENT_PROJECT_VERSION = 1;")
     pbx.append("\t\t\t\tENABLE_TESTABILITY = YES;")
     pbx.append("\t\t\t\tENABLE_USER_SCRIPT_SANDBOXING = YES;")
@@ -592,6 +639,7 @@ def create_project():
     pbx.append("\t\t\tname = Debug;")
     pbx.append("\t\t};")
     
+    # App release
     pbx.append(f"\t\t{conf_release_app} /* Release */ = {{")
     pbx.append("\t\t\tisa = XCBuildConfiguration;")
     pbx.append("\t\t\tbuildSettings = {")
@@ -600,6 +648,7 @@ def create_project():
     pbx.append("\t\t\t\tASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = YES;")
     pbx.append("\t\t\t\tASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;")
     pbx.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
+    pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")
     pbx.append("\t\t\t\tCURRENT_PROJECT_VERSION = 1;")
     pbx.append("\t\t\t\tENABLE_TESTABILITY = YES;")
     pbx.append("\t\t\t\tENABLE_USER_SCRIPT_SANDBOXING = YES;")
@@ -625,6 +674,7 @@ def create_project():
     pbx.append("\t\t\tbuildSettings = {")
     pbx.append("\t\t\t\tBUNDLE_LOADER = \"$(TEST_HOST)\";")
     pbx.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
+    pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")
     pbx.append("\t\t\t\tENABLE_USER_SCRIPT_SANDBOXING = YES;")
     pbx.append("\t\t\t\tGENERATE_INFOPLIST_FILE = YES;")
     pbx.append("\t\t\t\tLOCALIZATION_PREFERS_STRING_CATALOGS = YES;")
@@ -645,6 +695,7 @@ def create_project():
     pbx.append("\t\t\tbuildSettings = {")
     pbx.append("\t\t\t\tBUNDLE_LOADER = \"$(TEST_HOST)\";")
     pbx.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
+    pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")
     pbx.append("\t\t\t\tENABLE_USER_SCRIPT_SANDBOXING = YES;")
     pbx.append("\t\t\t\tGENERATE_INFOPLIST_FILE = YES;")
     pbx.append("\t\t\t\tLOCALIZATION_PREFERS_STRING_CATALOGS = YES;")
@@ -665,6 +716,7 @@ def create_project():
     pbx.append("\t\t\tisa = XCBuildConfiguration;")
     pbx.append("\t\t\tbuildSettings = {")
     pbx.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
+    pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")
     pbx.append("\t\t\t\tENABLE_USER_SCRIPT_SANDBOXING = YES;")
     pbx.append("\t\t\t\tGENERATE_INFOPLIST_FILE = YES;")
     pbx.append("\t\t\t\tLOCALIZATION_PREFERS_STRING_CATALOGS = YES;")
@@ -684,6 +736,7 @@ def create_project():
     pbx.append("\t\t\tisa = XCBuildConfiguration;")
     pbx.append("\t\t\tbuildSettings = {")
     pbx.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
+    pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")
     pbx.append("\t\t\t\tENABLE_USER_SCRIPT_SANDBOXING = YES;")
     pbx.append("\t\t\t\tGENERATE_INFOPLIST_FILE = YES;")
     pbx.append("\t\t\t\tLOCALIZATION_PREFERS_STRING_CATALOGS = YES;")
@@ -825,6 +878,13 @@ def create_project():
             </BuildableReference>
          </TestableReference>
       </Testables>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "MLX_METAL_GPU_ARCH"
+            value = "appleg14g"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -846,6 +906,13 @@ def create_project():
             ReferencedContainer = "container:Vachanam.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "MLX_METAL_GPU_ARCH"
+            value = "appleg14g"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
    </LaunchAction>
 </Scheme>
 """
@@ -856,3 +923,4 @@ def create_project():
 
 if __name__ == "__main__":
     create_project()
+    print("Xcode project generated successfully.")

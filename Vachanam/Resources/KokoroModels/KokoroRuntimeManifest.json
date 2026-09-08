@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-25T21:26:05.046Z",
+  "sdk_commit": "0e08daa5a763f67e4a770df09145ff2ddfe60954",
+  "hf_repo_id": "mattmireles/kokoro-coreml",
+  "hf_revision": "32399b333e809044c404c518cb3807a488e8f47d",
+  "hf_provenance_verified": true,
+  "hf_download_manifest_sha256": "4a969a54a561657b5ec2ebc4ef49d37a493d0bc7c71c32b867aec3b3b4bdde31",
+  "bundle_profile": "starter",
+  "minimum_platforms": {
+    "iOS": "18.0",
+    "macOS": "15.0"
+  },
+  "supported_languages": [
+    "en-US"
+  ],
+  "buckets": [
+    15
+  ],
+  "duration_token_sizes": [
+    128
+  ],
+  "model_packages": [
+    {
+      "path": "coreml/kokoro_duration_t128.mlpackage",
+      "tree_sha256": "9b53f5b289ff633567f70270c57ed68cbd63fc3b320f32caf7b60e4edc2d91e9",
+      "file_count": 3,
+      "bytes": 44459888,
+      "files": [
+        {
+          "path": "Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 5540359,
+          "sha256": "ca9a8bca2ba4e3af108351792b9240d590c26b8871afd50578983975885d8c26"
+        },
+        {
+          "path": "Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 38918912,
+          "sha256": "25db30a2ec864db6b048ce149e980a42dbc9ee2b29fdb8ca956b5a0e8289f1ee"
+        },
+        {
+          "path": "Manifest.json",
+          "bytes": 617,
+          "sha256": "51be9ffd007a5c27210ff8e5a6158d44ed66f66ea9647684d9661781f737970f"
+        }
+      ]
+    },
+    {
+      "path": "coreml/kokoro_f0ntrain_t600.mlpackage",
+      "tree_sha256": "c01fc9efa172c6360e7eb791677da37528a28425862ea6728123a65f7df8b38b",
+      "file_count": 3,
+      "bytes": 20582780,
+      "files": [
+        {
+          "path": "Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 84755,
+          "sha256": "79050ea4aa8de4252e254e1f90db4b53ea3d233cf27058309dfe0bf4a7b05ff5"
+        },
+        {
+          "path": "Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 20497408,
+          "sha256": "5dd6617aba20d23aff99e40667ab008389668defe3813496b8bf45b434bf512f"
+        },
+        {
+          "path": "Manifest.json",
+          "bytes": 617,
+          "sha256": "a2cdbcc7b3a77e0cf90c3b6c166d654bbb0c6925eef5076bef6b4fe8a12238e3"
+        }
+      ]
+    },
+    {
+      "path": "coreml/kokoro_decoder_pre_15s.mlpackage",
+      "tree_sha256": "0c2a481aad2af83a9396cb49ca0b2446d073e650f6b37856ba553a64b87ece32",
+      "file_count": 3,
+      "bytes": 67266115,
+      "files": [
+        {
+          "path": "Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 74522,
+          "sha256": "7fd7fd79ddba7b371cc012c0fe99511a67938d4dbf9364b32b021613ca5e873b"
+        },
+        {
+          "path": "Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 67190976,
+          "sha256": "9932a592f367dc61f3912430dbb79a7149c88c09b46e1ee2b57122aac1e05271"
+        },
+        {
+          "path": "Manifest.json",
+          "bytes": 617,
+          "sha256": "9c6a88ad42d0d3a4743a38e4896acd1707d32555e731a850ab1ba5cd4e5d5095"
+        }
+      ]
+    },
+    {
+      "path": "coreml/kokoro_decoder_har_post_15s.mlpackage",
+      "tree_sha256": "156fbd526c9eac2fc86c46a2fda4485087afaa925548268b560988d71239bae1",
+      "file_count": 3,
+      "bytes": 39697754,
+      "files": [
+        {
+          "path": "Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 343289,
+          "sha256": "47a73915a21b2275eb5bc144a6a63c1524d333bbccbaf2bd8b5d45ed747dfcc3"
+        },
+        {
+          "path": "Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 39353848,
+          "sha256": "e4ada8b28c56a4acda6a88e7c6d076aa65a39051841597bc0c4c07a60afe5ac2"
+        },
+        {
+          "path": "Manifest.json",
+          "bytes": 617,
+          "sha256": "2357ffbaed935725d7defa5a689906d559f6b5cf05c124116a5e79df246df1dd"
+        }
+      ]
+    }
+  ],
+  "voices": [
+    {
+      "path": "voices/af_heart.bin",
+      "bytes": 522240,
+      "sha256": "d583ccff3cdca2f7fae535cb998ac07e9fcb90f09737b9a41fa2734ec44a8f0b"
+    }
+  ],
+  "runtime_assets": {
+    "vocab": {
+      "path": "runtime/kokoro-vocab.json",
+      "bytes": 1159,
+      "sha256": "353ca94410fde4575cb091a0ba32b8e99077fde4f38fded506f4f041d22571a3"
+    },
+    "hnsf_weights": {
+      "path": "runtime/hnsf_weights.json",
+      "bytes": 336,
+      "sha256": "de73b717732da77b31736f67a108d35c478ab116b0a188e9787019b0408c0226"
+    }
+  }
+}

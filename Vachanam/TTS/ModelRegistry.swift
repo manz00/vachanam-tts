@@ -36,6 +36,26 @@ public class ModelRegistry {
         // Fallback default definitions
         self.availableModels = [
             TTSModelMetadata(
+                id: "apple-system-en",
+                name: "Apple Natural",
+                version: "Built-in",
+                description: "Built-in iOS speech synthesis. Fast, zero download, works offline.",
+                sizeBytes: 0,
+                ramRequired: 0,
+                languages: ["en-US", "en-GB", "en-AU", "en-IE", "en-ZA"],
+                format: .coreML,
+                requiresG2P: false,
+                g2pEngine: nil,
+                quality: .standard,
+                supportsVoiceCloning: false,
+                supportsEmotionControl: false,
+                supportsStreaming: true,
+                supportsWordTimestamps: true,
+                minDeviceRAM: 0,
+                tier: .lightweight,
+                voices: ["samantha", "alex", "victoria", "daniel", "karen"]
+            ),
+            TTSModelMetadata(
                 id: "kokoro-v1.0-en",
                 name: "Kokoro",
                 version: "1.0",

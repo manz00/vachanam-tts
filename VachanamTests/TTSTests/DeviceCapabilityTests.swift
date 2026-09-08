@@ -13,19 +13,14 @@ final class DeviceCapabilityTests: XCTestCase {
         XCTAssertEqual(lowRamCap.physicalRAMGigabytes, 4)
         
         let kokoro = ModelRegistry.shared.model(withId: "kokoro-v1.0-en")!
-        let qwen3 = ModelRegistry.shared.model(withId: "qwen3-tts-0.6b-en")!
         
         XCTAssertTrue(lowRamCap.canRun(model: kokoro))
-        XCTAssertFalse(lowRamCap.canRun(model: qwen3))
-        XCTAssertNotNil(lowRamCap.compatibilityReason(for: qwen3))
     }
     
     func testStandardRAMDevice() {
         let standardCap = DeviceCapability(simulatedRAMGB: 8)
-        let qwen3 = ModelRegistry.shared.model(withId: "qwen3-tts-0.6b-en")!
-        let cosyVoice = ModelRegistry.shared.model(withId: "cosyvoice3-0.5b")!
+        let kokoro = ModelRegistry.shared.model(withId: "kokoro-v1.0-en")!
         
-        XCTAssertTrue(standardCap.canRun(model: qwen3))
-        XCTAssertTrue(standardCap.canRun(model: cosyVoice))
+        XCTAssertTrue(standardCap.canRun(model: kokoro))
     }
 }

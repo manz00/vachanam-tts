@@ -73,12 +73,8 @@ public class TTSController: ObservableObject {
         switch modelId {
         case "kokoro-v1.0-en":
             activeAdapter = KokoroAdapter()
-        case "qwen3-tts-0.6b-en":
-            activeAdapter = Qwen3TTSAdapter()
-        case "chatterbox-turbo-en":
-            activeAdapter = ChatterboxAdapter()
-        case "cosyvoice3-0.5b":
-            activeAdapter = CosyVoice3Adapter()
+        case "apple-system-en":
+            activeAdapter = AppleSystemAdapter()
         default:
             activeAdapter = KokoroAdapter()
         }
@@ -231,6 +227,32 @@ public class TTSController: ObservableObject {
             isPlaying: true
         )
         
+        // If Apple System is selected or neural weights missing, fallback to AVSpeechSynthesizer
+        if activeAdapter.metadata.id == "apple-system-en" || !activeAdapter.isLoaded || !activeAdapter.hasNeuralWeights {
+            speakWithAppleTTS(profile: profile)
+            return
+        }
+        
+        // Use neural adapter
+        Task { @MainActor in
+            do {
+                let result = try await activeAdapter.synthesize(
+                    text: profile.cleanedText,
+                    voice: selectedVoice,
+                    speed: self.speechSpeed * profile.rateMultiplier
+                )
+                
+                AudioPlayer.shared.play(result: result, speed: 1.0) { [weak self] in
+                    self?.nextSentence()
+                }
+            } catch {
+                print("Neural synthesis failed: \(error.localizedDescription)")
+                self.speakWithAppleTTS(profile: profile)
+            }
+        }
+    }
+    
+    private func speakWithAppleTTS(profile: ResolvedVoiceProfile) {
         AudioPlayer.shared.speakText(
             profile.cleanedText,
             speed: self.speechSpeed * profile.rateMultiplier,

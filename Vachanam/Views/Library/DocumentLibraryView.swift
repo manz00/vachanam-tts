@@ -282,7 +282,7 @@ public struct DocumentLibraryView: View {
             • Dyslexia reading ruler guide with adjustable height and opacity
             • Distraction-free Reader View with customizable OpenDyslexic fonts
             • Full Apple Pencil drawing, shapes, sticky notes, and text boxes
-            • Privacy-first on-device speech with Kokoro, Qwen3, and system voice profiles
+            • Privacy-first on-device speech with Kokoro and system voice profiles
             """
             page1Body.draw(in: CGRect(x: 54, y: 130, width: 504, height: 580), withAttributes: bodyAttributes)
             
@@ -303,7 +303,7 @@ public struct DocumentLibraryView: View {
 
             Voice Profiles and Neural Models:
             • Tap the brain icon in the library to browse available on-device TTS models.
-            • Switch between Kokoro, Qwen3-TTS, Chatterbox, and CosyVoice 3.
+            • Use the Audio settings to manage the bundled Kokoro voice model.
             • Select distinct voice personalities such as Heart, Bella, Michael, or Emma.
 
             Enjoy reading with Vachanam!

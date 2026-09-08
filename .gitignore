@@ -5,3 +5,8 @@ project.xcworkspace/xcuserdata/
 *.xcuserdatad/
 .DS_Store
 *.swp
+.build/
+.swiftpm/
+
+# Root Hugging Face downloaded model cache
+/kokoro-coreml/

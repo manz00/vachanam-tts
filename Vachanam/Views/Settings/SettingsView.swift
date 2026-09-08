@@ -74,7 +74,7 @@ public struct SettingsView: View {
                             VStack(alignment: .leading) {
                                 Text("TTS Neural Models")
                                     .font(.headline)
-                                Text("Kokoro, Qwen3-TTS, Chatterbox, CosyVoice 3")
+                                Text("Kokoro")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
