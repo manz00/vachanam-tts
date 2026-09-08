@@ -255,6 +255,30 @@ Highlighting in PDFKit requires translating from **PDF page coordinate space** (
 
 ---
 
+## Neural Model Memory Lifecycle & Loaded State Architecture
+
+Vachanam provides memory-managed lifecycle controls tailored for Apple Silicon Unified Memory:
+
+```
+[Cloud / Remote] ──Download──> [On-Disk Cache] ──Load──> [Unified RAM (Active Model)] ──Unload──> [On-Disk Cache]
+```
+
+1. **Package Assets & Directory Structure**:
+   - Model downloads generate complete runtime manifests: `manifest.json`, `config.json`, `misaki_dict.json`, `Kokoro.mlmodelc/`, and `weights.bin` in `Application Support/Vachanam/Models/<modelId>/`.
+2. **Unified Memory Management (`loadModel` / `unloadModel`)**:
+   - Calling `loadModel(weightsDirectory:)` verifies directory integrity, warms up the Misaki G2P phonetic lookup cache, and transitions `isLoaded = true`.
+   - Calling `unloadModel()` purges cached execution buffers, freeing up RAM for multitasking on devices with lower memory constraints.
+3. **Automatic Lifecycle Synchronization**:
+   - When an active model finishes downloading, `ModelManager` and `TTSController` automatically load it into RAM.
+   - When switching active models, the outgoing model is unloaded and the incoming model is loaded asynchronously.
+   - When playback starts, `TTSController` automatically ensures the model is loaded in memory before synthesis begins.
+4. **Live UI Status Indicators**:
+   - **`ModelCard`**: Displays glowing status badges: `● LOADED IN RAM (300 MB)` with an **"Unload"** button, `○ UNLOADED (On Disk)` with a **"Load into RAM"** button, and an active progress spinner while loading.
+   - **`VoicePickerView`**: Displays green `Loaded` dots for in-memory models, `Downloaded` disk icons, and `Cloud` download indicators.
+   - **`TTSControlBar`**: Features an active model status capsule (`Kokoro • af_heart` with a green pulse dot when loaded and ready).
+
+---
+
 ## License
 
 Personal accessibility open-source project. Free for all users.

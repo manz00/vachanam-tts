@@ -73,13 +73,33 @@ public struct TTSControlBar: View {
                     .cornerRadius(6)
             }
             
-            // Voice Picker
+            // Voice & Model Status Pill
             Button {
                 isVoicePickerPresented = true
             } label: {
-                Image(systemName: "waveform")
-                    .font(.system(size: 16))
-                    .foregroundColor(Color.tealAccent)
+                HStack(spacing: 6) {
+                    Image(systemName: "waveform")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.tealAccent)
+                    
+                    Text(ttsController.activeAdapterMetadata.name)
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    
+                    if ttsController.isModelLoading {
+                        ProgressView()
+                            .scaleEffect(0.5)
+                            .tint(Color.amberAccent)
+                    } else {
+                        Circle()
+                            .fill(ttsController.isModelLoaded ? Color.green : Color.white.opacity(0.4))
+                            .frame(width: 6, height: 6)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color.white.opacity(0.10))
+                .cornerRadius(14)
             }
             
             // Sleep Timer

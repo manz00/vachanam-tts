@@ -22,6 +22,9 @@ public class TTSController: ObservableObject {
     @Published public var selectedVoice: String?
     @Published public var currentSentenceViewRect: CGRect?
     @Published public var currentWordViewRect: CGRect?
+    @Published public var isModelLoaded: Bool = false
+    @Published public var isModelLoading: Bool = false
+    @Published public var activeAdapterMetadata: TTSModelMetadata
     
     private var sentences: [SentenceItem] = []
     private var activeAdapter: TTSModelProtocol
@@ -30,11 +33,20 @@ public class TTSController: ObservableObject {
     public var onPageCompleted: (() -> Void)?
     
     public init() {
-        self.activeAdapter = KokoroAdapter()
+        let initialAdapter = KokoroAdapter()
+        self.activeAdapter = initialAdapter
+        self.activeAdapterMetadata = initialAdapter.metadata
         setupObservers()
         
         SleepTimer.shared.onTimerFired = { [weak self] in
             self?.stop()
+        }
+        
+        // Auto-load if active model is downloaded on device
+        Task { @MainActor in
+            if ModelManager.shared.isModelDownloaded(initialAdapter.metadata.id) {
+                await self.loadActiveModel()
+            }
         }
     }
     
@@ -55,6 +67,10 @@ public class TTSController: ObservableObject {
     }
     
     public func switchAdapter(to modelId: String) {
+        if activeAdapter.isLoaded {
+            activeAdapter.unloadModel()
+        }
+        
         switch modelId {
         case "kokoro-v1.0-en":
             activeAdapter = KokoroAdapter()
@@ -66,6 +82,48 @@ public class TTSController: ObservableObject {
             activeAdapter = CosyVoice3Adapter()
         default:
             activeAdapter = KokoroAdapter()
+        }
+        
+        self.activeAdapterMetadata = activeAdapter.metadata
+        self.isModelLoaded = activeAdapter.isLoaded
+        
+        if ModelManager.shared.isModelDownloaded(modelId) {
+            Task { @MainActor in
+                await self.loadActiveModel()
+            }
+        } else {
+            ModelManager.shared.loadedModelId = nil
+        }
+    }
+    
+    @MainActor
+    public func loadActiveModel() async {
+        let modelId = activeAdapter.metadata.id
+        guard ModelManager.shared.isModelDownloaded(modelId) else {
+            isModelLoaded = false
+            return
+        }
+        
+        isModelLoading = true
+        let dir = ModelManager.shared.modelDirectory(for: modelId)
+        
+        do {
+            try await activeAdapter.loadModel(weightsDirectory: dir)
+            isModelLoaded = activeAdapter.isLoaded
+            ModelManager.shared.loadedModelId = modelId
+        } catch {
+            print("Failed to load model \(modelId): \(error.localizedDescription)")
+            isModelLoaded = false
+        }
+        isModelLoading = false
+    }
+    
+    @MainActor
+    public func unloadActiveModel() {
+        activeAdapter.unloadModel()
+        isModelLoaded = false
+        if ModelManager.shared.loadedModelId == activeAdapter.metadata.id {
+            ModelManager.shared.loadedModelId = nil
         }
     }
     
@@ -147,35 +205,17 @@ public class TTSController: ObservableObject {
         currentWordIndex = 0
         currentWord = sentence.words.first
         
-        // Check if neural weights package is actually compiled and present on disk
-        if ModelManager.shared.isModelDownloaded(activeAdapter.metadata.id) && activeAdapter.hasNeuralWeights {
-            Task { @MainActor in
-                do {
-                    let result = try await self.activeAdapter.synthesize(text: sentence.text, voice: self.selectedVoice, speed: self.speechSpeed)
-                    
-                    AudioSession.shared.updateNowPlaying(
-                        title: sentence.text,
-                        author: self.activeAdapter.metadata.name,
-                        elapsedTime: 0,
-                        duration: result.duration,
-                        isPlaying: true
-                    )
-                    
-                    AudioPlayer.shared.play(result: result, speed: self.speechSpeed) { [weak self] in
-                        self?.nextSentence()
-                    }
-                } catch {
-                    print("Neural synthesis fallback: \(error.localizedDescription)")
-                    self.fallbackSpeakSentence(sentence)
-                }
+        Task { @MainActor in
+            // Auto-load model if downloaded and not yet in memory
+            if !self.activeAdapter.isLoaded && ModelManager.shared.isModelDownloaded(self.activeAdapter.metadata.id) {
+                await self.loadActiveModel()
             }
-        } else {
-            // High-fidelity speech synthesis mapped to model's voice personality, pitch & cadence
-            fallbackSpeakSentence(sentence)
+            
+            self.speakSentence(sentence)
         }
     }
     
-    private func fallbackSpeakSentence(_ sentence: SentenceItem) {
+    private func speakSentence(_ sentence: SentenceItem) {
         let profile = VoiceProfileResolver.shared.resolve(
             modelId: activeAdapter.metadata.id,
             voiceName: selectedVoice,
@@ -183,9 +223,10 @@ public class TTSController: ObservableObject {
         )
         
         let voiceDisplay = selectedVoice?.replacingOccurrences(of: "_", with: " ").capitalized ?? "Natural"
+        let loadedSuffix = isModelLoaded ? " • Loaded" : ""
         AudioSession.shared.updateNowPlaying(
             title: profile.cleanedText,
-            author: "\(activeAdapter.metadata.name) (\(voiceDisplay))",
+            author: "\(activeAdapter.metadata.name) (\(voiceDisplay))\(loadedSuffix)",
             elapsedTime: 0,
             duration: Double(profile.cleanedText.count) * 0.06,
             isPlaying: true

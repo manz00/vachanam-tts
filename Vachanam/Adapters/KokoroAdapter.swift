@@ -17,6 +17,7 @@ public class KokoroAdapter: TTSModelProtocol {
         let dir = ModelManager.shared.modelDirectory(for: metadata.id)
         return FileManager.default.fileExists(atPath: dir.appendingPathComponent("Kokoro.mlmodelc").path)
             || FileManager.default.fileExists(atPath: dir.appendingPathComponent("model.mlmodelc").path)
+            || FileManager.default.fileExists(atPath: dir.appendingPathComponent("weights.bin").path)
     }
     
     public init(metadata: TTSModelMetadata? = nil, g2p: G2PProtocol = MisakiG2P.shared) {
@@ -25,6 +26,13 @@ public class KokoroAdapter: TTSModelProtocol {
     }
     
     public func loadModel(weightsDirectory: URL) async throws {
+        guard FileManager.default.fileExists(atPath: weightsDirectory.path) else {
+            throw TTSError.weightsNotFound
+        }
+        
+        // Warm up Misaki phonemizer and dictionary cache
+        _ = g2p.phonemize(text: "Kokoro neural reader ready", language: "en-US")
+        
         isLoaded = true
     }
     
@@ -33,6 +41,10 @@ public class KokoroAdapter: TTSModelProtocol {
     }
     
     public func synthesize(text: String, voice: String?, speed: Float) async throws -> TTSAudioResult {
+        guard isLoaded else {
+            throw TTSError.modelNotLoaded
+        }
+        
         let phonemes = g2p.phonemize(text: text, language: "en-US")
         _ = phonemes
         

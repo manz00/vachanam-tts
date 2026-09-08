@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2660"
-   version = "1.8">
+   LastUpgradeVersion = "1530"
+   version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "85A988840F2F4180ABFE78D1"
+               BlueprintIdentifier = "7E3092D086344802BF325FA9"
                BuildableName = "Vachanam.app"
                BlueprintName = "Vachanam"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -28,7 +28,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D5AF91D1A3834A11B80A8B12"
+               BlueprintIdentifier = "7A3EDC999DAA4CDB95B8C180"
                BuildableName = "VachanamTests.xctest"
                BlueprintName = "VachanamTests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -42,7 +42,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "254A5A9E69A646519DB86355"
+               BlueprintIdentifier = "09DE0E683A3444929A7ED058"
                BuildableName = "VachanamUITests.xctest"
                BlueprintName = "VachanamUITests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -60,7 +60,7 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D5AF91D1A3834A11B80A8B12"
+               BlueprintIdentifier = "7A3EDC999DAA4CDB95B8C180"
                BuildableName = "VachanamTests.xctest"
                BlueprintName = "VachanamTests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -74,7 +74,6 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useLaunchSchemeArgsEnv = "YES"
-      useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
@@ -83,25 +82,11 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "85A988840F2F4180ABFE78D1"
+            BlueprintIdentifier = "7E3092D086344802BF325FA9"
             BuildableName = "Vachanam.app"
             BlueprintName = "Vachanam"
             ReferencedContainer = "container:Vachanam.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
-   <ProfileAction
-      buildConfiguration = "Release"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      savedToolIdentifier = ""
-      useCustomWorkingDirectory = "NO"
-      debugDocumentVersioning = "YES">
-   </ProfileAction>
-   <AnalyzeAction
-      buildConfiguration = "Debug">
-   </AnalyzeAction>
-   <ArchiveAction
-      buildConfiguration = "Release"
-      revealArchiveInOrganizer = "YES">
-   </ArchiveAction>
 </Scheme>

@@ -16,6 +16,7 @@ public class CosyVoice3Adapter: TTSModelProtocol {
         let dir = ModelManager.shared.modelDirectory(for: metadata.id)
         return FileManager.default.fileExists(atPath: dir.appendingPathComponent("CosyVoice.mlmodelc").path)
             || FileManager.default.fileExists(atPath: dir.appendingPathComponent("model.mlmodelc").path)
+            || FileManager.default.fileExists(atPath: dir.appendingPathComponent("weights.bin").path)
     }
     
     public init(metadata: TTSModelMetadata? = nil) {
@@ -23,6 +24,9 @@ public class CosyVoice3Adapter: TTSModelProtocol {
     }
     
     public func loadModel(weightsDirectory: URL) async throws {
+        guard FileManager.default.fileExists(atPath: weightsDirectory.path) else {
+            throw TTSError.weightsNotFound
+        }
         isLoaded = true
     }
     
@@ -31,6 +35,9 @@ public class CosyVoice3Adapter: TTSModelProtocol {
     }
     
     public func synthesize(text: String, voice: String?, speed: Float) async throws -> TTSAudioResult {
+        guard isLoaded else {
+            throw TTSError.modelNotLoaded
+        }
         let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
         let baseWPS = (165.0 / 60.0) * Double(speed)
         let duration = max(Double(words.count) / baseWPS, 0.4)

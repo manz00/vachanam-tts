@@ -20,12 +20,17 @@ public struct VoicePickerView: View {
                 Section(header: Text("Active TTS Model")) {
                     ForEach(ModelRegistry.shared.availableModels) { model in
                         let isSelected = modelManager.activeModelId == model.id
+                        let isDownloaded = modelManager.isModelDownloaded(model.id)
+                        let isLoaded = modelManager.isModelLoaded(model.id) || (isSelected && ttsController.isModelLoaded)
+                        
                         Button {
-                            modelManager.activeModelId = model.id
+                            Task {
+                                try? await modelManager.loadModel(withId: model.id)
+                            }
                         } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
+                                    HStack(spacing: 6) {
                                         Text(model.name)
                                             .font(.headline)
                                             .foregroundColor(.white)
@@ -35,6 +40,37 @@ public struct VoicePickerView: View {
                                             .padding(.vertical, 2)
                                             .background(Color.white.opacity(0.15))
                                             .cornerRadius(4)
+                                        
+                                        if isLoaded {
+                                            HStack(spacing: 3) {
+                                                Circle()
+                                                    .fill(Color.green)
+                                                    .frame(width: 6, height: 6)
+                                                Text("Loaded")
+                                                    .font(.caption2.bold())
+                                                    .foregroundColor(.green)
+                                            }
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.green.opacity(0.15))
+                                            .cornerRadius(4)
+                                        } else if isDownloaded {
+                                            HStack(spacing: 3) {
+                                                Image(systemName: "internaldrive")
+                                                    .font(.system(size: 8))
+                                                Text("Downloaded")
+                                                    .font(.caption2)
+                                            }
+                                            .foregroundColor(.secondary)
+                                        } else {
+                                            HStack(spacing: 3) {
+                                                Image(systemName: "cloud")
+                                                    .font(.system(size: 8))
+                                                Text("Cloud")
+                                                    .font(.caption2)
+                                            }
+                                            .foregroundColor(.secondary.opacity(0.7))
+                                        }
                                     }
                                     Text(model.description)
                                         .font(.caption)

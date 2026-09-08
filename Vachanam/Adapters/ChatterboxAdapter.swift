@@ -16,6 +16,7 @@ public class ChatterboxAdapter: TTSModelProtocol {
         let dir = ModelManager.shared.modelDirectory(for: metadata.id)
         return FileManager.default.fileExists(atPath: dir.appendingPathComponent("Chatterbox.mlmodelc").path)
             || FileManager.default.fileExists(atPath: dir.appendingPathComponent("model.mlmodelc").path)
+            || FileManager.default.fileExists(atPath: dir.appendingPathComponent("weights.bin").path)
     }
     
     public init(metadata: TTSModelMetadata? = nil) {
@@ -23,6 +24,9 @@ public class ChatterboxAdapter: TTSModelProtocol {
     }
     
     public func loadModel(weightsDirectory: URL) async throws {
+        guard FileManager.default.fileExists(atPath: weightsDirectory.path) else {
+            throw TTSError.weightsNotFound
+        }
         isLoaded = true
     }
     
@@ -31,6 +35,9 @@ public class ChatterboxAdapter: TTSModelProtocol {
     }
     
     public func synthesize(text: String, voice: String?, speed: Float) async throws -> TTSAudioResult {
+        guard isLoaded else {
+            throw TTSError.modelNotLoaded
+        }
         let cleanedText = text.replacingOccurrences(of: "\\[(laugh|sigh|whisper|gasp)\\]", with: "", options: .regularExpression)
         let words = cleanedText.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
         let baseWPS = (155.0 / 60.0) * Double(speed)
