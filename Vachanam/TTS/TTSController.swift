@@ -2,22 +2,38 @@
 //  TTSController.swift
 //  Vachanam
 //
-//  Central TTS orchestrator: sentences queue, synthesis, audio dispatch, and live word/sentence tracking.
+//  Central TTS Playback Coordinator & Model Manager:
+//  - 3-Layer architecture (PDF Layout, Semantic Text, Audio Timeline)
+//  - Stable globalWordID and sentenceID indexing across pages
+//  - Two-tier content-hashed audio caching
+//  - Rolling background pre-generation of upcoming chunks
+//  - Full task cancellation (latest user action wins, no stuck playback)
 //
 
 import Foundation
 import Combine
 import AVFoundation
+import CoreGraphics
 
 public class TTSController: ObservableObject {
     public static let shared = TTSController()
     
+    // Playback State (Synchronized with PlaybackCoordinator)
     @Published public var isPlaying: Bool = false
     @Published public var isPaused: Bool = false
+    @Published public var isGenerating: Bool = false
+    
+    // Stable Global Indexing
+    @Published public var currentWordID: Int?
+    @Published public var currentSentenceID: Int?
+    @Published public var currentChunkID: Int?
+    
+    // Backward-compatible properties for existing views
     @Published public var currentSentenceIndex: Int = 0
     @Published public var currentSentence: SentenceItem?
     @Published public var currentWordIndex: Int = 0
     @Published public var currentWord: WordRect?
+    
     @Published public var speechSpeed: Float = 1.0
     @Published public var selectedVoice: String?
     @Published public var currentSentenceViewRect: CGRect?
@@ -25,11 +41,20 @@ public class TTSController: ObservableObject {
     @Published public var isModelLoading: Bool = false
     @Published public var activeAdapterMetadata: TTSModelMetadata
     
-    private var sentences: [SentenceItem] = []
+    // Access to PlaybackCoordinator
+    public var coordinator: PlaybackCoordinator { PlaybackCoordinator.shared }
+    
+    public var activeSemanticDocument: SemanticDocument? {
+        PlaybackCoordinator.shared.activeSemanticDocument
+    }
+    
     private var activeAdapter: TTSModelProtocol
+    public var currentAdapter: TTSModelProtocol { activeAdapter }
     private var cancellables = Set<AnyCancellable>()
     
+    // Callbacks
     public var onPageCompleted: (() -> Void)?
+    public var onPageChanged: ((Int) -> Void)?
     
     public init() {
         let initialAdapter = KokoroAdapter()
@@ -57,13 +82,59 @@ public class TTSController: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Observe AudioPlayer playback time to synchronize words
-        AudioPlayer.shared.$currentTime
-            .sink { [weak self] time in
-                self?.updateWordHighlight(for: time)
-            }
-            .store(in: &cancellables)
+        // Observe PlaybackCoordinator properties
+        let coord = PlaybackCoordinator.shared
+        
+        coord.$isPlaying
+            .receive(on: RunLoop.main)
+            .assign(to: &$isPlaying)
+        
+        coord.$isPaused
+            .receive(on: RunLoop.main)
+            .assign(to: &$isPaused)
+        
+        coord.$isGenerating
+            .receive(on: RunLoop.main)
+            .assign(to: &$isGenerating)
+        
+        coord.$currentWordID
+            .receive(on: RunLoop.main)
+            .assign(to: &$currentWordID)
+        
+        coord.$currentSentenceID
+            .receive(on: RunLoop.main)
+            .assign(to: &$currentSentenceID)
+        
+        coord.$currentChunkID
+            .receive(on: RunLoop.main)
+            .assign(to: &$currentChunkID)
+        
+        coord.$currentSentence
+            .receive(on: RunLoop.main)
+            .assign(to: &$currentSentence)
+        
+        coord.$currentSentenceIndex
+            .receive(on: RunLoop.main)
+            .assign(to: &$currentSentenceIndex)
+        
+        coord.$currentWord
+            .receive(on: RunLoop.main)
+            .assign(to: &$currentWord)
+        
+        coord.$currentWordIndex
+            .receive(on: RunLoop.main)
+            .assign(to: &$currentWordIndex)
+        
+        coord.onPageChanged = { [weak self] page in
+            self?.onPageChanged?(page)
+        }
+        
+        coord.onPageCompleted = { [weak self] in
+            self?.onPageCompleted?()
+        }
     }
+    
+    // MARK: - Model Management
     
     public func switchAdapter(to modelId: String) {
         if activeAdapter.isLoaded {
@@ -122,175 +193,67 @@ public class TTSController: ObservableObject {
         }
     }
     
+    // MARK: - Document Loading & Playback Forwarding
+    
+    /// Loads a full SemanticDocument into the PlaybackCoordinator.
+    public func loadDocument(_ document: SemanticDocument, initialSentenceID: Int = 0) {
+        PlaybackCoordinator.shared.loadDocument(document, initialSentenceID: initialSentenceID)
+    }
+    
+    /// Legacy array-based sentence loader for backward compatibility.
     public func loadSentences(_ items: [SentenceItem], startIndex: Int = 0) {
-        self.sentences = items
         self.currentSentenceIndex = min(startIndex, max(items.count - 1, 0))
         if !items.isEmpty && currentSentenceIndex < items.count {
             self.currentSentence = items[currentSentenceIndex]
             self.currentWord = items[currentSentenceIndex].words.first
+            self.currentSentenceID = items[currentSentenceIndex].sentenceIndex
+            self.currentWordID = items[currentSentenceIndex].words.first?.globalWordID
         } else {
             self.currentSentence = nil
             self.currentWord = nil
+            self.currentSentenceID = nil
+            self.currentWordID = nil
         }
     }
     
     public func play() {
-        guard !sentences.isEmpty else { return }
-        if isPaused {
-            AudioPlayer.shared.resume()
-            isPaused = false
-            isPlaying = true
-            return
-        }
-        
-        isPlaying = true
-        isPaused = false
-        synthesizeAndPlayCurrentSentence()
+        PlaybackCoordinator.shared.play()
+    }
+    
+    public func play(scope: PlaybackScope) {
+        PlaybackCoordinator.shared.play(scope: scope)
+    }
+    
+    public func play(page: Int) {
+        PlaybackCoordinator.shared.play(page: page)
     }
     
     public func pause() {
-        AudioPlayer.shared.pause()
-        isPaused = true
-        isPlaying = false
+        PlaybackCoordinator.shared.pause()
     }
     
     public func stop() {
-        AudioPlayer.shared.stop()
-        isPlaying = false
-        isPaused = false
-        currentWord = nil
+        PlaybackCoordinator.shared.stop()
+    }
+    
+    public func jumpTo(globalWordID: Int) {
+        PlaybackCoordinator.shared.play(fromWordID: globalWordID)
+    }
+    
+    public func jumpTo(sentenceID: Int) {
+        guard let doc = activeSemanticDocument,
+              let sentence = doc.sentence(id: sentenceID),
+              let firstWord = sentence.words.first else {
+            return
+        }
+        PlaybackCoordinator.shared.play(fromWordID: firstWord.globalWordID)
     }
     
     public func nextSentence() {
-        guard currentSentenceIndex < sentences.count - 1 else {
-            onPageCompleted?()
-            return
-        }
-        currentSentenceIndex += 1
-        currentSentence = sentences[currentSentenceIndex]
-        currentWordIndex = 0
-        currentWord = currentSentence?.words.first
-        
-        if isPlaying {
-            synthesizeAndPlayCurrentSentence()
-        }
+        PlaybackCoordinator.shared.nextSentence()
     }
     
     public func previousSentence() {
-        guard currentSentenceIndex > 0 else { return }
-        currentSentenceIndex -= 1
-        currentSentence = sentences[currentSentenceIndex]
-        currentWordIndex = 0
-        currentWord = currentSentence?.words.first
-        
-        if isPlaying {
-            synthesizeAndPlayCurrentSentence()
-        }
-    }
-    
-    private func synthesizeAndPlayCurrentSentence() {
-        guard currentSentenceIndex < sentences.count else {
-            isPlaying = false
-            onPageCompleted?()
-            return
-        }
-        
-        let sentence = sentences[currentSentenceIndex]
-        currentSentence = sentence
-        currentWordIndex = 0
-        currentWord = sentence.words.first
-        
-        Task { @MainActor in
-            // Auto-load model if downloaded and not yet in memory
-            if !self.activeAdapter.isLoaded && ModelManager.shared.isModelDownloaded(self.activeAdapter.metadata.id) {
-                await self.loadActiveModel()
-            }
-            
-            self.speakSentence(sentence)
-        }
-    }
-    
-    private func speakSentence(_ sentence: SentenceItem) {
-        let profile = VoiceProfileResolver.shared.resolve(
-            modelId: activeAdapter.metadata.id,
-            voiceName: selectedVoice,
-            text: sentence.text
-        )
-        
-        let voiceDisplay = selectedVoice?.replacingOccurrences(of: "_", with: " ").capitalized ?? "Natural"
-        let loadedSuffix = isModelLoaded ? " • Loaded" : ""
-        AudioSession.shared.updateNowPlaying(
-            title: profile.cleanedText,
-            author: "\(activeAdapter.metadata.name) (\(voiceDisplay))\(loadedSuffix)",
-            elapsedTime: 0,
-            duration: Double(profile.cleanedText.count) * 0.06,
-            isPlaying: true
-        )
-        
-        // If Apple System is selected or neural weights missing, fallback to AVSpeechSynthesizer
-        if activeAdapter.metadata.id == "apple-system-en" || !activeAdapter.isLoaded || !activeAdapter.hasNeuralWeights {
-            speakWithAppleTTS(profile: profile)
-            return
-        }
-        
-        // Use neural adapter
-        Task { @MainActor in
-            do {
-                let result = try await activeAdapter.synthesize(
-                    text: profile.cleanedText,
-                    voice: selectedVoice,
-                    speed: self.speechSpeed * profile.rateMultiplier
-                )
-                
-                AudioPlayer.shared.play(result: result, speed: 1.0) { [weak self] in
-                    self?.nextSentence()
-                }
-            } catch {
-                print("Neural synthesis failed: \(error.localizedDescription)")
-                self.speakWithAppleTTS(profile: profile)
-            }
-        }
-    }
-    
-    private func speakWithAppleTTS(profile: ResolvedVoiceProfile) {
-        AudioPlayer.shared.speakText(
-            profile.cleanedText,
-            speed: self.speechSpeed * profile.rateMultiplier,
-            pitch: profile.pitchMultiplier,
-            voice: profile.voice,
-            onWordRange: { [weak self] charRange in
-                guard let self = self, let s = self.currentSentence else { return }
-                if let matched = s.words.first(where: { NSIntersectionRange($0.sentenceRange, charRange).length > 0 }) {
-                    self.currentWord = matched
-                    self.currentWordIndex = matched.wordIndex
-                }
-            },
-            onComplete: { [weak self] in
-                self?.nextSentence()
-            }
-        )
-    }
-    
-    private func updateWordHighlight(for time: TimeInterval) {
-        guard let sentence = currentSentence, !sentence.words.isEmpty else { return }
-        
-        let totalDuration = AudioPlayer.shared.currentDuration
-        guard totalDuration > 0 else { return }
-        
-        // Character-weighted proportional word highlight tracking
-        let totalChars = max(sentence.words.reduce(0) { $0 + $1.text.count }, 1)
-        var accumulatedTime: TimeInterval = 0.0
-        
-        for (idx, word) in sentence.words.enumerated() {
-            let wordDuration = totalDuration * (Double(word.text.count) / Double(totalChars))
-            if time >= accumulatedTime && (time < (accumulatedTime + wordDuration) || idx == sentence.words.count - 1) {
-                if currentWordIndex != idx {
-                    currentWordIndex = idx
-                    currentWord = word
-                }
-                return
-            }
-            accumulatedTime += wordDuration
-        }
+        PlaybackCoordinator.shared.previousSentence()
     }
 }

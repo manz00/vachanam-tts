@@ -44,6 +44,13 @@ public struct ReaderTextView: View {
                                 : Color.clear
                         )
                         .cornerRadius(6)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            ttsController.jumpTo(sentenceID: sentence.sentenceIndex)
+                            if !ttsController.isPlaying {
+                                ttsController.play()
+                            }
+                        }
                     }
                 }
                 .padding(28)

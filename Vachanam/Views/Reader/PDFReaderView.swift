@@ -102,6 +102,11 @@ public struct PDFReaderView: UIViewRepresentable {
         overlayView.frame = pdfView.bounds
         pdfView.addSubview(overlayView)
         
+        // Tap-to-speak gesture recognizer
+        let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
+        tapGesture.cancelsTouchesInView = false
+        pdfView.addGestureRecognizer(tapGesture)
+        
         context.coordinator.pdfView = pdfView
         context.coordinator.overlayView = overlayView
         context.coordinator.setupObservers()
@@ -161,20 +166,24 @@ public struct PDFReaderView: UIViewRepresentable {
         func setupObservers() {
             cancellables.removeAll()
             
-            TTSController.shared.$isPlaying
+            PlaybackCoordinator.shared.$isPlaying
                 .receive(on: RunLoop.main)
                 .sink { [weak self] _ in self?.updateHighlights() }
                 .store(in: &cancellables)
             
-            TTSController.shared.$currentSentence
+            PlaybackCoordinator.shared.$currentSentence
                 .receive(on: RunLoop.main)
                 .sink { [weak self] sentence in
                     guard let self = self else { return }
                     if let s = sentence, let pdfView = self.pdfView {
-                        if s.pageIndex != self.parent.currentPageIndex, let targetPage = self.parent.document.page(at: s.pageIndex) {
+                        // Only auto-navigate PDF page if playback is actively playing
+                        if PlaybackCoordinator.shared.isPlaying,
+                           s.pageIndex != self.parent.currentPageIndex,
+                           let targetPage = self.parent.document.page(at: s.pageIndex) {
                             pdfView.go(to: targetPage)
                             DispatchQueue.main.async {
                                 self.parent.currentPageIndex = s.pageIndex
+                                PlaybackCoordinator.shared.setVisiblePageIndex(s.pageIndex)
                             }
                         }
                     }
@@ -182,7 +191,7 @@ public struct PDFReaderView: UIViewRepresentable {
                 }
                 .store(in: &cancellables)
             
-            TTSController.shared.$currentWord
+            PlaybackCoordinator.shared.$currentWord
                 .receive(on: RunLoop.main)
                 .sink { [weak self] _ in self?.updateHighlights() }
                 .store(in: &cancellables)
@@ -198,12 +207,33 @@ public struct PDFReaderView: UIViewRepresentable {
                 .store(in: &cancellables)
         }
         
+        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
+            guard let pdfView = pdfView, let page = pdfView.currentPage else { return }
+            let pointInView = gesture.location(in: pdfView)
+            let pointInPage = pdfView.convert(pointInView, to: page)
+            let pageIndex = parent.document.pdfDocument.index(for: page)
+            guard pageIndex >= 0 else { return }
+            
+            if let doc = PlaybackCoordinator.shared.activeSemanticDocument,
+               let word = doc.findWord(at: pointInPage, onPageIndex: pageIndex) {
+                PlaybackCoordinator.shared.play(fromWordID: word.globalWordID)
+            } else if let selection = page.selectionForWord(at: pointInPage),
+                      let wordBounds = Optional(selection.bounds(for: page)),
+                      !wordBounds.isEmpty {
+                if let doc = PlaybackCoordinator.shared.activeSemanticDocument,
+                   let word = doc.words(forPageIndex: pageIndex).first(where: { $0.bounds.intersects(wordBounds) }) {
+                    PlaybackCoordinator.shared.play(fromWordID: word.globalWordID)
+                }
+            }
+        }
+        
         @objc func pageChanged(_ notification: Notification) {
             guard let pdfView = pdfView, let page = pdfView.currentPage else { return }
             let index = parent.document.pdfDocument.index(for: page)
             if index != parent.currentPageIndex && index >= 0 {
                 DispatchQueue.main.async {
                     self.parent.currentPageIndex = index
+                    PlaybackCoordinator.shared.setVisiblePageIndex(index)
                     self.updateHighlights()
                 }
             }
@@ -219,13 +249,14 @@ public struct PDFReaderView: UIViewRepresentable {
             guard let pdfView = pdfView, let page = pdfView.currentPage, let overlay = overlayView else { return }
             let currentPageIdx = parent.document.pdfDocument.index(for: page)
             
-            let isPlaying = TTSController.shared.isPlaying
-            let sentence = TTSController.shared.currentSentence
-            let word = TTSController.shared.currentWord
+            let coord = PlaybackCoordinator.shared
+            let isHighlightActive = coord.isPlaying || coord.isGenerating
+            let sentence = coord.currentSentence
+            let word = coord.currentWord
             let mode = AccessibilityManager.shared.highlightMode
             let colors = AccessibilityManager.shared.colorChoice
             
-            guard isPlaying, let currentSentence = sentence, currentSentence.pageIndex == currentPageIdx else {
+            guard isHighlightActive, let currentSentence = sentence else {
                 overlay.clear()
                 if TTSController.shared.currentSentenceViewRect != nil {
                     DispatchQueue.main.async {
@@ -237,11 +268,26 @@ public struct PDFReaderView: UIViewRepresentable {
                 return
             }
             
+            let isSentenceOnPage = (currentSentence.pageIndex == currentPageIdx) ||
+                (coord.activeSemanticDocument?.sentence(id: currentSentence.sentenceIndex)?.pageSpans.contains(currentPageIdx) == true)
+            
+            guard isSentenceOnPage else {
+                overlay.clear()
+                return
+            }
+            
             // Convert sentence line bounds from PDF page space to View space
             var sentenceViewRects: [CGRect] = []
             if mode == .both || mode == .sentenceOnly {
-                sentenceViewRects = currentSentence.lineBounds.map { lineBound in
-                    pdfView.convert(lineBound, from: page)
+                if let doc = coord.activeSemanticDocument,
+                   let semanticSentence = doc.sentence(id: currentSentence.sentenceIndex) {
+                    sentenceViewRects = semanticSentence.lineBounds(for: currentPageIdx).map { lineBound in
+                        pdfView.convert(lineBound, from: page)
+                    }
+                } else {
+                    sentenceViewRects = currentSentence.lineBounds.map { lineBound in
+                        pdfView.convert(lineBound, from: page)
+                    }
                 }
             }
             

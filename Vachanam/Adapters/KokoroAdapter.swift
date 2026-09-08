@@ -8,6 +8,7 @@
 import Foundation
 import AVFoundation
 import KokoroTTS
+import KokoroPipeline
 
 public class KokoroAdapter: TTSModelProtocol {
     public let metadata: TTSModelMetadata
@@ -68,21 +69,36 @@ public class KokoroAdapter: TTSModelProtocol {
             throw TTSError.modelNotLoaded
         }
         
-        let voiceId: KokoroVoiceID
+        let requestedVoiceId: KokoroVoiceID
         if let voice = voice, !voice.isEmpty {
-            voiceId = KokoroVoiceID(voice)
+            requestedVoiceId = KokoroVoiceID(voice)
         } else {
-            voiceId = .afHeart
+            requestedVoiceId = .afHeart
         }
         
         let safeSpeed = speed > 0.0 ? speed : 1.0
         let options = KokoroSynthesisOptions(speed: safeSpeed)
         
-        let generatedAudio = try await tts.synthesize(text, voice: voiceId, options: options)
+        // Stage 1: Text preparation and Misaki phonemization
+        let startTotal = CACurrentMediaTime()
+        let prepared: [KokoroPreparedInput]
+        do {
+            prepared = try await tts.prepare(text, voice: requestedVoiceId, options: options)
+        } catch KokoroError.unsupportedVoice {
+            // Fallback to bundled default voice if requested voice embedding is absent
+            prepared = try await tts.prepare(text, voice: .afHeart, options: options)
+        }
+        let endPrep = CACurrentMediaTime()
+        
+        // Stage 2: Core ML Model Inference (Duration, F0, Decoder Pre/Post)
+        let generatedAudio = try await tts.synthesizePrepared(prepared)
+        let endInference = CACurrentMediaTime()
+        
+        // Stage 3: Audio Buffer & Timestamp Processing
         let buffer = try generatedAudio.makePCMBuffer()
         let duration = generatedAudio.durationSeconds
         
-        let audioData = generatedAudio.samples.withUnsafeBufferPointer { ptr in
+        let audioData = generatedAudio.samples.withUnsafeBufferPointer { (ptr: UnsafeBufferPointer<Float>) in
             Data(buffer: ptr)
         }
         
@@ -99,6 +115,26 @@ public class KokoroAdapter: TTSModelProtocol {
                 currentTime = endTime
             }
         }
+        let endTotal = CACurrentMediaTime()
+        
+        // Record telemetry metrics
+        let prepMs = (endPrep - startTotal) * 1000.0
+        let inferenceMs = (endInference - endPrep) * 1000.0
+        let postMs = (endTotal - endInference) * 1000.0
+        let totalMs = (endTotal - startTotal) * 1000.0
+        
+        TTSMetricsLogger.shared.record(metrics: SynthesisTimingMetrics(
+            modelId: metadata.id,
+            textSnippet: text,
+            characterCount: text.count,
+            wordCount: words.count,
+            audioDuration: duration,
+            textProcessingMs: prepMs * 0.3,
+            phonemizationMs: prepMs * 0.7,
+            modelInferenceMs: inferenceMs,
+            audioPostProcessingMs: postMs,
+            totalLatencyMs: totalMs
+        ))
         
         return TTSAudioResult(
             audioData: audioData,

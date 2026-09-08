@@ -64,13 +64,14 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
     
     // MARK: - Neural Audio / WAV Buffer Playback
     
-    public func play(result: TTSAudioResult, speed: Float = 1.0, onComplete: (() -> Void)? = nil) {
+    public func play(result: TTSAudioResult, speed: Float = 1.0, startTime: TimeInterval = 0.0, onComplete: (() -> Void)? = nil) {
         stop()
         
         AudioSession.shared.configureSession()
         
         self.currentDuration = result.duration
-        self.currentTime = 0.0
+        let clampedStart = max(0.0, min(startTime, max(0.0, result.duration - 0.05)))
+        self.currentTime = clampedStart
         self.onCompleteHandler = onComplete
         
         // Prepare WAV formatted data from raw audio
@@ -81,6 +82,9 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
             avPlayer?.delegate = self
             avPlayer?.enableRate = true
             avPlayer?.rate = speed
+            if clampedStart > 0 {
+                avPlayer?.currentTime = clampedStart
+            }
             avPlayer?.prepareToPlay()
             
             if avPlayer?.play() == true {
@@ -93,6 +97,13 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
             print("AVAudioPlayer error: \(error.localizedDescription)")
             onComplete?()
         }
+    }
+    
+    public func seek(to time: TimeInterval) {
+        guard let player = avPlayer else { return }
+        let clampedTime = max(0.0, min(time, currentDuration))
+        player.currentTime = clampedTime
+        self.currentTime = clampedTime
     }
     
     public func pause() {
@@ -119,6 +130,8 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
     }
     
     public func stop() {
+        onCompleteHandler = nil
+        onWordRangeHandler = nil
         if let synth = speechSynthesizer, synth.isSpeaking {
             synth.stopSpeaking(at: .immediate)
         }

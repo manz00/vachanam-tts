@@ -17,6 +17,7 @@ public struct WordRect: Identifiable, Hashable {
     public let bounds: CGRect           // Bounds in PDF page coordinates
     public let pageIndex: Int
     public let wordIndex: Int           // Index within sentence (0, 1, 2...)
+    public let globalWordID: Int
     
     public init(
         text: String,
@@ -24,7 +25,8 @@ public struct WordRect: Identifiable, Hashable {
         sentenceRange: NSRange = NSRange(location: 0, length: 0),
         bounds: CGRect,
         pageIndex: Int,
-        wordIndex: Int = 0
+        wordIndex: Int = 0,
+        globalWordID: Int = 0
     ) {
         self.text = text
         self.range = range
@@ -32,6 +34,17 @@ public struct WordRect: Identifiable, Hashable {
         self.bounds = bounds
         self.pageIndex = pageIndex
         self.wordIndex = wordIndex
+        self.globalWordID = globalWordID
+    }
+    
+    public init(from semanticWord: SemanticWord) {
+        self.text = semanticWord.text
+        self.range = semanticWord.sentenceRange
+        self.sentenceRange = semanticWord.sentenceRange
+        self.bounds = semanticWord.bounds
+        self.pageIndex = semanticWord.pageIndex
+        self.wordIndex = semanticWord.wordIndexInSentence
+        self.globalWordID = semanticWord.globalWordID
     }
 }
 
@@ -61,6 +74,16 @@ public struct SentenceItem: Identifiable, Hashable {
         self.words = words
         self.pageIndex = pageIndex
         self.sentenceIndex = sentenceIndex
+    }
+    
+    public init(from semanticSentence: SemanticSentence) {
+        self.text = semanticSentence.text
+        self.range = NSRange(location: 0, length: semanticSentence.text.utf16.count)
+        self.pageIndex = semanticSentence.primaryPageIndex
+        self.sentenceIndex = semanticSentence.sentenceID
+        self.lineBounds = semanticSentence.lineBounds(for: semanticSentence.primaryPageIndex)
+        self.bounds = semanticSentence.bounds(for: semanticSentence.primaryPageIndex)
+        self.words = semanticSentence.words.map { WordRect(from: $0) }
     }
 }
 

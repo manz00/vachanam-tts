@@ -73,7 +73,7 @@ public class ModelRegistry {
                 supportsWordTimestamps: false,
                 minDeviceRAM: 4,
                 tier: .lightweight,
-                voices: ["af_heart", "af_bella", "am_michael", "am_adam", "bf_emma", "bm_george"]
+                voices: ["af_heart", "af_bella", "af_nicole", "am_fenrir", "am_michael", "am_puck", "bf_emma"]
             ),
             TTSModelMetadata(
                 id: "qwen3-tts-0.6b-en",

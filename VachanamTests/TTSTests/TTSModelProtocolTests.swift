@@ -31,6 +31,18 @@ final class TTSModelProtocolTests: XCTestCase {
             XCTAssertEqual(result.sampleRate, 24000.0)
             XCTAssertFalse(result.wordTimestamps.isEmpty)
             
+            // Test af_bella voice
+            let resultBella = try await adapter.synthesize(text: "Hello from Bella.", voice: "af_bella", speed: 1.0)
+            XCTAssertGreaterThan(resultBella.duration, 0.0)
+            
+            // Test bf_emma voice
+            let resultEmma = try await adapter.synthesize(text: "Good day from Emma.", voice: "bf_emma", speed: 1.0)
+            XCTAssertGreaterThan(resultEmma.duration, 0.0)
+            
+            // Test unbundled voice gracefully falls back without throwing unsupportedVoice
+            let resultFallback = try await adapter.synthesize(text: "Fallback test.", voice: "unknown_voice_xyz", speed: 1.0)
+            XCTAssertGreaterThan(resultFallback.duration, 0.0)
+            
             adapter.unloadModel()
             XCTAssertFalse(adapter.isLoaded)
         } catch TTSError.weightsNotFound {

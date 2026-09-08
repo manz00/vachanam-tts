@@ -14,6 +14,7 @@ public struct TTSControlBar: View {
     
     @State private var isVoicePickerPresented: Bool = false
     @State private var isSleepTimerPresented: Bool = false
+    @State private var isFixPronunciationPresented: Bool = false
     
     public init(documentTitle: String) {
         self.documentTitle = documentTitle
@@ -50,6 +51,33 @@ public struct TTSControlBar: View {
                 Image(systemName: "forward.end.fill")
                     .font(.system(size: 16))
                     .foregroundColor(.white.opacity(0.85))
+            }
+            
+            // Playback Scope Menu (Document vs Current Page)
+            Menu {
+                Button {
+                    PlaybackCoordinator.shared.scope = .document
+                } label: {
+                    Label("Read Full Document", systemImage: "doc.text")
+                }
+                
+                Button {
+                    PlaybackCoordinator.shared.scope = .page(PlaybackCoordinator.shared.visiblePageIndex)
+                } label: {
+                    Label("Read Page \(PlaybackCoordinator.shared.visiblePageIndex + 1) Only", systemImage: "doc.plaintext")
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: PlaybackCoordinator.shared.scope.isPageOnly ? "doc.plaintext" : "doc.text")
+                        .font(.system(size: 12))
+                    Text(PlaybackCoordinator.shared.scope.isPageOnly ? "Page" : "Doc")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                }
+                .foregroundColor(.white.opacity(0.9))
+                .padding(.horizontal, 7)
+                .padding(.vertical, 4)
+                .background(Color.white.opacity(0.12))
+                .cornerRadius(6)
             }
             
             Divider()
@@ -102,6 +130,16 @@ public struct TTSControlBar: View {
                 .cornerRadius(14)
             }
             
+            // Fix Pronunciation
+            Button {
+                isFixPronunciationPresented = true
+            } label: {
+                Image(systemName: "character.bubble")
+                    .font(.system(size: 15))
+                    .foregroundColor(.white.opacity(0.80))
+            }
+            .accessibilityLabel("Fix Pronunciation")
+            
             // Sleep Timer
             Button {
                 isSleepTimerPresented = true
@@ -129,6 +167,19 @@ public struct TTSControlBar: View {
         }
         .sheet(isPresented: $isSleepTimerPresented) {
             SleepTimerView()
+        }
+        .sheet(isPresented: $isFixPronunciationPresented) {
+            let activeWordText: String = {
+                if let wID = PlaybackCoordinator.shared.currentWordID,
+                   let word = PlaybackCoordinator.shared.activeSemanticDocument?.word(id: wID) {
+                    return word.text
+                }
+                return ""
+            }()
+            FixPronunciationSheet(
+                initialWord: activeWordText,
+                documentID: PlaybackCoordinator.shared.activeSemanticDocument?.documentID
+            )
         }
     }
 }

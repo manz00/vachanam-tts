@@ -111,7 +111,7 @@ public struct ReaderContainerView: View {
         .background(Color(red: 0.05, green: 0.08, blue: 0.13))
         .navigationBarHidden(true)
         .onAppear {
-            loadCurrentPageContent()
+            initializeDocument()
             annotationManager.loadAnnotations(for: document.fileURL)
             let savedPage = progressTracker.lastPage(for: document.fileURL)
             if savedPage > 0 && savedPage < document.pageCount {
@@ -119,7 +119,6 @@ public struct ReaderContainerView: View {
             }
         }
         .onChange(of: currentPageIndex) { _, newPage in
-            loadCurrentPageContent()
             progressTracker.recordProgress(
                 documentURL: document.fileURL,
                 title: document.title,
@@ -222,18 +221,41 @@ public struct ReaderContainerView: View {
         }
     }
     
-    private func loadCurrentPageContent() {
-        guard let page = document.page(at: currentPageIndex) else { return }
-        extractedSentences = TextExtractor.shared.extractSentences(from: page, pageIndex: currentPageIndex)
-        ttsController.loadSentences(extractedSentences)
+    private func initializeDocument() {
+        let pdf = document.pdfDocument
+        let docTitle = document.title
+        let docID = document.id
         
-        ttsController.onPageCompleted = {
-            if self.currentPageIndex < self.document.pageCount - 1 {
-                self.currentPageIndex += 1
-                self.ttsController.play()
-            } else {
-                self.ttsController.stop()
+        PlaybackCoordinator.shared.setVisiblePageIndex(currentPageIndex)
+        
+        Task.detached(priority: .userInitiated) {
+            let semDoc = SentenceSegmenter.shared.parseDocument(
+                pdfDocument: pdf,
+                title: docTitle,
+                documentID: docID
+            )
+            await MainActor.run {
+                ttsController.loadDocument(semDoc)
+                extractedSentences = semDoc.sentences.map { SentenceItem(from: $0) }
             }
+        }
+        
+        ttsController.onPageChanged = { [self] newPage in
+            if self.currentPageIndex != newPage && newPage >= 0 && newPage < self.document.pageCount {
+                self.currentPageIndex = newPage
+                PlaybackCoordinator.shared.setVisiblePageIndex(newPage)
+            }
+        }
+        
+        ttsController.onPageCompleted = { [self] in
+            // PlaybackCoordinator strictly enforces scope boundaries and stops automatically.
+            // Record progress without forcing unwanted page looping.
+            self.progressTracker.recordProgress(
+                documentURL: self.document.fileURL,
+                title: self.document.title,
+                currentPage: self.currentPageIndex,
+                totalPages: self.document.pageCount
+            )
         }
     }
 }
