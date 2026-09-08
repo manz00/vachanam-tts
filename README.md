@@ -238,7 +238,7 @@ vachanam-tts/
 - **SwiftUI View Update Cycle Prevention**:
   - Highlighting rect updates and sentence geometry in `PDFReaderView` are dispatched asynchronously to the main run loop and guarded against duplicate assignments, preventing "Publishing changes from within view updates" warnings during SwiftUI render passes.
 - **Xcode "Validate Project Settings" / Recommended Settings**:
-  - `generate_project.py` embeds Xcode's complete suite of modern recommended build settings (`LastUpgradeCheck = 1600;`, `ENABLE_USER_SCRIPT_SANDBOXING = YES`, `SWIFT_COMPILATION_MODE = wholemodule` for Release, `ONLY_ACTIVE_ARCH = YES` for Debug, full recommended Clang/GCC compiler warnings, and automatic asset/string catalog symbol generation). This completely prevents Xcode from displaying the "Validate Project Settings" / "Update to recommended settings" prompt upon opening the project.
+  - `generate_project.py` embeds Xcode's complete suite of modern recommended build settings across both Project and Target levels (`LastUpgradeCheck = 1600;`, `ENABLE_USER_SCRIPT_SANDBOXING = YES`, `STRING_CATALOG_GENERATE_SYMBOLS = YES`, `LOCALIZATION_PREFERS_STRING_CATALOGS = YES`, `SWIFT_COMPILATION_MODE = wholemodule` for Release, `ONLY_ACTIVE_ARCH = YES` for Debug, full recommended Clang/GCC compiler warnings, and automatic asset/string catalog symbol generation). This completely prevents Xcode from displaying the "Validate Project Settings" / "Update to recommended settings" prompt upon opening the project.
 
 ---
 
