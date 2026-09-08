@@ -143,7 +143,9 @@ public struct PDFReaderView: UIViewRepresentable {
             }
         }
         
-        context.coordinator.updateHighlights()
+        DispatchQueue.main.async {
+            context.coordinator.updateHighlights()
+        }
     }
     
     public func makeCoordinator() -> Coordinator {
@@ -171,13 +173,16 @@ public struct PDFReaderView: UIViewRepresentable {
             TTSController.shared.$currentSentence
                 .receive(on: RunLoop.main)
                 .sink { [weak self] sentence in
-                    if let s = sentence, let pdfView = self?.pdfView {
-                        if s.pageIndex != self?.parent.currentPageIndex, let targetPage = self?.parent.document.page(at: s.pageIndex) {
+                    guard let self = self else { return }
+                    if let s = sentence, let pdfView = self.pdfView {
+                        if s.pageIndex != self.parent.currentPageIndex, let targetPage = self.parent.document.page(at: s.pageIndex) {
                             pdfView.go(to: targetPage)
-                            self?.parent.currentPageIndex = s.pageIndex
+                            DispatchQueue.main.async {
+                                self.parent.currentPageIndex = s.pageIndex
+                            }
                         }
                     }
-                    self?.updateHighlights()
+                    self.updateHighlights()
                 }
                 .store(in: &cancellables)
             
@@ -226,8 +231,14 @@ public struct PDFReaderView: UIViewRepresentable {
             
             guard isPlaying, let currentSentence = sentence, currentSentence.pageIndex == currentPageIdx else {
                 overlay.clear()
-                TTSController.shared.currentSentenceViewRect = nil
-                TTSController.shared.currentWordViewRect = nil
+                DispatchQueue.main.async {
+                    if TTSController.shared.currentSentenceViewRect != nil {
+                        TTSController.shared.currentSentenceViewRect = nil
+                    }
+                    if TTSController.shared.currentWordViewRect != nil {
+                        TTSController.shared.currentWordViewRect = nil
+                    }
+                }
                 return
             }
             
@@ -245,11 +256,15 @@ public struct PDFReaderView: UIViewRepresentable {
                 wordViewRect = pdfView.convert(currentWord.bounds, from: page)
             }
             
-            // Update tracking rects for ruler and external observers
-            if let firstLine = sentenceViewRects.first {
-                TTSController.shared.currentSentenceViewRect = firstLine
+            // Update tracking rects for ruler asynchronously without triggering view cycle
+            DispatchQueue.main.async {
+                if let firstLine = sentenceViewRects.first, TTSController.shared.currentSentenceViewRect != firstLine {
+                    TTSController.shared.currentSentenceViewRect = firstLine
+                }
+                if TTSController.shared.currentWordViewRect != wordViewRect {
+                    TTSController.shared.currentWordViewRect = wordViewRect
+                }
             }
-            TTSController.shared.currentWordViewRect = wordViewRect
             
             // Render on overlay
             overlay.render(

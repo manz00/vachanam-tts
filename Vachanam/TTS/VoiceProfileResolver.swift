@@ -27,7 +27,11 @@ public struct ResolvedVoiceProfile {
 public class VoiceProfileResolver {
     public static let shared = VoiceProfileResolver()
     
-    private init() {}
+    private var cachedVoices: [AVSpeechSynthesisVoice] = []
+    
+    private init() {
+        self.cachedVoices = AVSpeechSynthesisVoice.speechVoices()
+    }
     
     /// Resolves the optimal voice, pitch, and speech rate for a given model ID and voice preset.
     public func resolve(modelId: String, voiceName: String?, text: String) -> ResolvedVoiceProfile {
@@ -36,7 +40,7 @@ public class VoiceProfileResolver {
             .replacingOccurrences(of: "\\[(laugh|sigh|whisper|gasp|pause|chuckle)\\]", with: "", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         
-        let allVoices = AVSpeechSynthesisVoice.speechVoices()
+        let allVoices = cachedVoices.isEmpty ? AVSpeechSynthesisVoice.speechVoices() : cachedVoices
         let selectedVoice = voiceName?.lowercased() ?? ""
         
         switch modelId {

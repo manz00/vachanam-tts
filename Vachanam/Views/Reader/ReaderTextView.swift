@@ -50,7 +50,7 @@ public struct ReaderTextView: View {
                 .frame(maxWidth: 820)
             }
             .background(themeManager.currentReaderTheme.backgroundColor)
-            .onChange(of: ttsController.currentSentenceIndex) { newIndex in
+            .onChange(of: ttsController.currentSentenceIndex) { _, newIndex in
                 if accessibilityManager.isAutoScrollEnabled {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         proxy.scrollTo(newIndex, anchor: .center)

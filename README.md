@@ -231,6 +231,12 @@ vachanam-tts/
   - This is a known macOS/Xcode cosmetic log. It has zero impact on app execution, UI rendering, or functionality, and does not occur on physical devices.
 - **Simulator Container UUID Changes & Sample Guide**:
   - iOS Simulator reinstallation generates new sandbox container UUIDs. Vachanam dynamically resolves document filenames in the persistent `Documents` directory and auto-regenerates the multi-page `Vachanam_Getting_Started.pdf` guide if a previous container's temporary path was stored.
+- **Console Log: "LoudnessManager.mm: ... cannot get acoustic ID" & "AVAudioBuffer.mm: mBuffers[0].mDataByteSize (0)"**:
+  - Emitted internally by Apple's CoreAudio / AVSpeechSynthesis subsystem in simulator environments because the virtual simulator device does not possess physical hardware speaker acoustic calibration profiles (`LoudnessManager plist`). It is completely benign and does not occur on physical iPad/Mac hardware.
+- **Console Log: "Error fetching voices: DecodingError.dataCorrupted" & "Error fetching locales"**:
+  - Emitted by Apple's internal system voice catalog parser on macOS Sequoia / iOS 18 Simulator when querying `AVSpeechSynthesisVoice.speechVoices()`. `VoiceProfileResolver` caches voices at startup to prevent redundant disk queries on every spoken sentence.
+- **SwiftUI View Update Cycle Prevention**:
+  - Highlighting rect updates and sentence geometry in `PDFReaderView` are dispatched asynchronously to the main run loop and guarded against duplicate assignments, preventing "Publishing changes from within view updates" warnings during SwiftUI render passes.
 
 ---
 

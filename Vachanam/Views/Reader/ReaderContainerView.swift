@@ -118,7 +118,7 @@ public struct ReaderContainerView: View {
                 currentPageIndex = savedPage
             }
         }
-        .onChange(of: currentPageIndex) { newPage in
+        .onChange(of: currentPageIndex) { _, newPage in
             loadCurrentPageContent()
             progressTracker.recordProgress(
                 documentURL: document.fileURL,
