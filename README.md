@@ -226,6 +226,8 @@ vachanam-tts/
 - **Console Log: "AddInstanceForFactory: No factory registered for id <CFUUID ...> F8BB1C28-BAE8-11D6-9C31-00039315CD46"**:
   - This is an internal CoreAudio Hardware Abstraction Layer (HAL) diagnostic emitted by macOS when initializing virtual audio devices in the iOS Simulator.
   - It is completely harmless, expected in simulator environments, and has no effect on audio playback, synthesis, or stability. On physical iPad hardware, this log does not appear.
+- **Console Log: "Failed to send CA Event for app launch measurements for ca_event_type: ..."**:
+  - Emitted by Apple's internal `CoreAnalytics` daemon (`com.apple.app_launch_measurement`) because virtual iOS Simulators do not run the hardware telemetry subsystem used to send performance analytics to Apple servers. It is purely cosmetic and expected on all simulator targets.
 - **Console Log: "Unable to get ISSymbol for UTI: com.apple.ios-simulator Error..."**:
   - Emitted by macOS's `IconServices` daemon when Xcode launches a process in the simulator and attempts to resolve a macOS system icon for the virtual simulator UTI.
   - This is a known macOS/Xcode cosmetic log. It has zero impact on app execution, UI rendering, or functionality, and does not occur on physical devices.
