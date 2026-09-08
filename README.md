@@ -35,7 +35,9 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
   - **Text Boxes**: Typed comments with customizable font size.
   - **Undo / Redo**: Multi-step transactional stack.
   - **Markdown Export**: One-tap export of all bookmarks, sticky notes, and text annotations.
-- **Audio Controls**:
+- **Audio Controls & Dual Engine**:
+  - Native instant speech synthesis fallback (`AVSpeechSynthesizer`) for natural out-of-the-box narration with exact word tracking.
+  - Neural audio playback (`AVAudioPlayer`) for CoreML/MLX models without simulator HALC proxy issues.
   - Background audio playback (`UIBackgroundModes = ["audio"]`).
   - Lock screen and Control Center media integration via `MPRemoteCommandCenter`.
   - Sleep timer (15m, 30m, 45m, 60m, end of page).

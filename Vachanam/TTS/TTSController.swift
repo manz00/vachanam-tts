@@ -145,25 +145,50 @@ public class TTSController: ObservableObject {
         currentWordIndex = 0
         currentWord = sentence.words.first
         
-        Task { @MainActor in
-            do {
-                let result = try await self.activeAdapter.synthesize(text: sentence.text, voice: self.selectedVoice, speed: self.speechSpeed)
-                
-                AudioSession.shared.updateNowPlaying(
-                    title: sentence.text,
-                    author: self.activeAdapter.metadata.name,
-                    elapsedTime: 0,
-                    duration: result.duration,
-                    isPlaying: true
-                )
-                
-                AudioPlayer.shared.play(result: result, speed: self.speechSpeed) { [weak self] in
+        if ModelManager.shared.isModelDownloaded(activeAdapter.metadata.id) {
+            Task { @MainActor in
+                do {
+                    let result = try await self.activeAdapter.synthesize(text: sentence.text, voice: self.selectedVoice, speed: self.speechSpeed)
+                    
+                    AudioSession.shared.updateNowPlaying(
+                        title: sentence.text,
+                        author: self.activeAdapter.metadata.name,
+                        elapsedTime: 0,
+                        duration: result.duration,
+                        isPlaying: true
+                    )
+                    
+                    AudioPlayer.shared.play(result: result, speed: self.speechSpeed) { [weak self] in
+                        self?.nextSentence()
+                    }
+                } catch {
+                    print("Synthesis error: \(error.localizedDescription)")
+                    self.nextSentence()
+                }
+            }
+        } else {
+            // Instant, crystal-clear speech synthesis fallback with exact word tracking
+            AudioSession.shared.updateNowPlaying(
+                title: sentence.text,
+                author: "System Voice",
+                elapsedTime: 0,
+                duration: Double(sentence.text.count) * 0.06,
+                isPlaying: true
+            )
+            
+            AudioPlayer.shared.speakText(
+                sentence.text,
+                speed: self.speechSpeed,
+                onWordRange: { [weak self] range in
+                    guard let self = self, let s = self.currentSentence else { return }
+                    if let matched = s.words.first(where: { NSIntersectionRange($0.range, range).length > 0 }) {
+                        self.currentWord = matched
+                    }
+                },
+                onComplete: { [weak self] in
                     self?.nextSentence()
                 }
-            } catch {
-                print("Synthesis error: \(error.localizedDescription)")
-                self.nextSentence()
-            }
+            )
         }
     }
     
