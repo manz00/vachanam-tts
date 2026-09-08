@@ -7,6 +7,7 @@
 
 import Foundation
 import AVFoundation
+import NaturalLanguage
 import KokoroTTS
 import KokoroPipeline
 
@@ -65,6 +66,31 @@ public class KokoroAdapter: TTSModelProtocol {
     }
     
     public func synthesize(text: String, voice: String?, speed: Float) async throws -> TTSAudioResult {
+        return try await synthesize(text: text, voice: voice, speed: speed, targetWords: nil)
+    }
+    
+    public func synthesize(text: String, voice: String?, speed: Float, pauseDuration: TimeInterval) async throws -> TTSAudioResult {
+        return try await synthesize(text: text, voice: voice, speed: speed, pauseDuration: pauseDuration, targetWords: nil)
+    }
+    
+    public func synthesize(
+        text: String,
+        voice: String?,
+        speed: Float,
+        pauseDuration: TimeInterval,
+        targetWords: [String]?
+    ) async throws -> TTSAudioResult {
+        let base = try await synthesize(text: text, voice: voice, speed: speed, targetWords: targetWords)
+        guard pauseDuration > 0 else { return base }
+        return base.withAppendedSilence(duration: pauseDuration)
+    }
+    
+    public func synthesize(
+        text: String,
+        voice: String?,
+        speed: Float,
+        targetWords: [String]? = nil
+    ) async throws -> TTSAudioResult {
         guard isLoaded, let tts = self.tts else {
             throw TTSError.modelNotLoaded
         }
@@ -103,13 +129,31 @@ public class KokoroAdapter: TTSModelProtocol {
         }
         
         // Calculate estimated word timestamps for read-along highlighting
-        let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        let wordsToTimestamp: [String]
+        if let targetWords = targetWords, !targetWords.isEmpty {
+            wordsToTimestamp = targetWords
+        } else {
+            // Extract individual spoken words via NLTokenizer, eliminating bullet symbols and splitting compound words
+            let tokenizer = NLTokenizer(unit: .word)
+            tokenizer.string = text
+            var extracted: [String] = []
+            let fullRange = text.startIndex..<text.endIndex
+            tokenizer.enumerateTokens(in: fullRange) { range, _ in
+                let token = String(text[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !token.isEmpty {
+                    extracted.append(token)
+                }
+                return true
+            }
+            wordsToTimestamp = extracted.isEmpty ? text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty } : extracted
+        }
+        
         var timestamps: [WordTimestamp] = []
-        if !words.isEmpty && duration > 0 {
-            let totalChars = max(words.reduce(0) { $0 + $1.count }, 1)
+        if !wordsToTimestamp.isEmpty && duration > 0 {
+            let totalChars = max(wordsToTimestamp.reduce(0) { $0 + max(1, $1.count) }, 1)
             var currentTime: TimeInterval = 0.0
-            for word in words {
-                let wordDuration = duration * (Double(word.count) / Double(totalChars))
+            for word in wordsToTimestamp {
+                let wordDuration = duration * (Double(max(1, word.count)) / Double(totalChars))
                 let endTime = currentTime + wordDuration
                 timestamps.append(WordTimestamp(word: word, startTime: currentTime, endTime: endTime))
                 currentTime = endTime
@@ -127,7 +171,7 @@ public class KokoroAdapter: TTSModelProtocol {
             modelId: metadata.id,
             textSnippet: text,
             characterCount: text.count,
-            wordCount: words.count,
+            wordCount: wordsToTimestamp.count,
             audioDuration: duration,
             textProcessingMs: prepMs * 0.3,
             phonemizationMs: prepMs * 0.7,

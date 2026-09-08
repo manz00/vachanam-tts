@@ -50,4 +50,43 @@ final class TTSModelProtocolTests: XCTestCase {
             XCTAssertFalse(adapter.isLoaded)
         }
     }
+    
+    func testKokoroTargetWordsAndCompoundWordAlignment() async throws {
+        let adapter = KokoroAdapter()
+        let bundleURL = Bundle.main.url(forResource: "KokoroModels", withExtension: nil)
+        let modelsDir = bundleURL ?? URL(fileURLWithPath: "/tmp")
+        
+        do {
+            try await adapter.loadModel(weightsDirectory: modelsDir)
+            XCTAssertTrue(adapter.isLoaded)
+            
+            // 1. TargetWords explicit matching: "Word-by-word reading" split into ["Word", "by", "word", "reading"]
+            let targetWords = ["Word", "by", "word", "reading"]
+            let resultTarget = try await adapter.synthesize(
+                text: "Word-by-word reading.",
+                voice: "af_heart",
+                speed: 1.0,
+                pauseDuration: 0.0,
+                targetWords: targetWords
+            )
+            XCTAssertEqual(resultTarget.wordTimestamps.count, targetWords.count)
+            for (idx, stamp) in resultTarget.wordTimestamps.enumerated() {
+                XCTAssertEqual(stamp.word, targetWords[idx])
+            }
+            
+            // 2. Standalone fallback with bullet symbol: "• Word-by-word" should not have "•" as a timestamp
+            let resultBullet = try await adapter.synthesize(
+                text: "• Word-by-word reading.",
+                voice: "af_heart",
+                speed: 1.0
+            )
+            XCTAssertFalse(resultBullet.wordTimestamps.contains { $0.word == "•" })
+            XCTAssertTrue(resultBullet.wordTimestamps.contains { $0.word.lowercased() == "word" })
+            
+            adapter.unloadModel()
+        } catch TTSError.weightsNotFound {
+            // Handled when running in environments without bundled models
+            XCTAssertFalse(adapter.isLoaded)
+        }
+    }
 }

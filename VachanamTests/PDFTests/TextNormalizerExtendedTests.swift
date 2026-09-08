@@ -44,4 +44,32 @@ final class TextNormalizerExtendedTests: XCTestCase {
         XCTAssertEqual(normalizer.normalizeForSpeech("Use ¾ cup."), "Use three quarters cup.")
         XCTAssertEqual(normalizer.normalizeForSpeech("Black & White"), "Black and White")
     }
+    
+    func testBulletAndListMarkerStripping() {
+        let normalizer = TextNormalizer.shared
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("• Word-by-word synchronized reading."),
+            "Word-by-word synchronized reading."
+        )
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("◦ Dyslexia reading ruler."),
+            "Dyslexia reading ruler."
+        )
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("▪ Distraction-free reader mode."),
+            "Distraction-free reader mode."
+        )
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("● Full Apple Pencil drawing support."),
+            "Full Apple Pencil drawing support."
+        )
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("- First list item\n- Second list item"),
+            "First list item Second list item"
+        )
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("* Asterisk bullet item"),
+            "Asterisk bullet item"
+        )
+    }
 }

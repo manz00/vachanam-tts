@@ -66,6 +66,18 @@ public struct TextNormalizer {
         
         var result = normalize(text)
         
+        // Strip bullet points and visual list ornaments that should not be spoken
+        // (Unicode bullets, circles, squares, diamonds, triangles, checkmarks)
+        let bulletChars = CharacterSet(charactersIn: "•◦▪▫●■◆❖★☆►▻➢✓✔\u{2022}\u{25E6}\u{25AA}\u{25AB}\u{25CF}\u{25A0}\u{25C6}\u{2756}\u{2605}\u{2606}\u{25BA}\u{25BB}\u{27A2}\u{2713}\u{2714}")
+        result = result.components(separatedBy: bulletChars).joined(separator: " ")
+        
+        // Strip leading list hyphens, en-dashes, em-dashes, asterisks on newlines or start of text
+        result = result.replacingOccurrences(
+            of: #"(?:^|[\r\n]+)\s*[*–—\-]\s+"#,
+            with: " ",
+            options: .regularExpression
+        )
+        
         // Currencies: $100 -> 100 dollars, €50 -> 50 euros, etc.
         result = result.replacingOccurrences(
             of: #"\$(\d+(?:\.\d{1,2})?)\b"#,

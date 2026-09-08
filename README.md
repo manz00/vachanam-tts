@@ -32,15 +32,17 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
   - Gives the narrator natural acoustic breathing room and keeps visual focus on the final spoken word during pauses without UI jitter.
 - **Advanced Symbol-to-Speech & Math Normalization**:
   - `TextNormalizer.normalizeForSpeech` converts mathematical operators (`×` $\to$ `times`, `÷` $\to$ `divided by`, `≠` $\to$ `is not equal to`, `≤`, `≥`, `≈`, `∞`), vulgar fractions (`½` $\to$ `one half`, `¼` $\to$ `one quarter`), currencies (`$100` $\to$ `100 dollars`, `€`, `£`, `¥`), percentages (`25%` $\to$ `25 percent`), plus-minus (`±5` $\to$ `plus or minus 5`), temperatures and angles (`100°C` $\to$ `100 degrees Celsius`, `72°F` $\to$ `72 degrees Fahrenheit`, `90°` $\to$ `90 degrees`), and ampersands (`&` $\to$ `and`) into fluent speech while preserving sentence punctuation.
+  - Automatically strips visual bullet ornaments (`•`, `◦`, `▪`, `▫`, `●`, `■`, `◆`, `❖`, `★`, `☆`, `►`, `▻`, `➢`, `✓`, `✔`) and leading list hyphens/asterisks (`- `, `* `) so that visual layout glyphs are never spoken awkwardly or indexed as phantom audio words.
 - **Layered Pronunciation Dictionary System (`PronunciationManager`)**:
   - Three-tier hierarchy: **Global** (common acronyms & phonetics), **Book-specific** (character names, domain terminology), and **User overrides** (custom fixes).
   - Employs case-insensitive word-boundary regex substitution (`\b(word)\b`) and revision hashing for automatic audio cache invalidation.
 - **Interactive Pronunciation Correction (`FixPronunciationSheet`)**:
   - Accessible directly from the TTS Control Bar (`Fix Pronunciation` button) or context menu.
   - Allows users to enter phonetic respellings with instant speech preview and automatic cache purging.
-- **Monotonic Highlighting Clock & Drift Telemetry**:
-  - Fast binary-search lookup across Kokoro word timestamps keeps karaoke word highlighting precisely locked to `AVAudioPlayer.currentTime`.
-  - Telemetry logs warnings if highlighting drift exceeds 150ms.
+- **Monotonic Highlighting Clock & Compound Word Alignment**:
+  - **Strict 1:1 `targetWords` Contract**: Passes segmented document `SemanticWord` tokens (split via `NLTokenizer`) directly to the TTS adapter (`KokoroAdapter.synthesize(..., targetWords:)`). Compound words like `Word-by-word`, `on-device`, and `distraction-free` receive distinct, individual word timestamps that match their precise PDF bounding boxes, completely eliminating index shifts.
+  - **Inter-Word Gap Holding**: In-flight binary search smoothly holds the preceding word's highlight during acoustic gaps rather than jumping back to the beginning of the chunk.
+  - **Calibrated Drift Telemetry**: Accurately measures audio drift outside actual word time intervals `[startTime, endTime]`, logging warnings only when true timing desynchronization (>150ms) occurs.
 - **Stable Global Word Indexing (`globalWordID`)**: Every word receives a persistent, monotonic global identity across the entire document. Navigating between pages or selecting words on different pages never gets stuck or invalidates position.
 - **Tap-to-Speak**: Tap any word directly on the PDF page or in Reader View to immediately begin narration from that word. Obsolete in-flight synthesis tasks are cancelled instantly with zero delay.
 - **Rolling TTS Pre-Generation & Content-Hashed Cache**: While Chunk $N$ plays, Chunk $N+1$ is pre-generated in the background without CPU/Core ML contention and stored in a non-blocking two-tier in-memory/disk cache (`TTSAudioCache`). Instant, gapless playback on chunk transitions and repeated visits without Swift Concurrency thread blocking.
@@ -318,6 +320,10 @@ vachanam-tts/
   - Emitted internally by Apple's `PencilKit` framework when drawing or erasing on the iOS Simulator using mouse/trackpad pointer events instead of a physical Apple Pencil digitizer. It has zero impact on annotation persistence or drawing fidelity.
 - **Console Log: "CoreGraphics PDF has logged an error..."**:
   - Emitted by Apple's CoreGraphics PDFKit rendering subsystem when parsing non-standard font dictionaries or PDF operator streams. Highlighting and page display remain unaffected.
+- **Console Log: "connection to service named com.apple.linkd.autoShortcut"**:
+  - Emitted by macOS's `AppIntents` system framework on Mac Catalyst when running outside an App Store sandbox or Shortcuts daemon registration. It is purely cosmetic and has zero effect on app execution, playback, or performance.
+- **Console Log: "open(/private/var/db/DetachedSignatures) - No such file or directory"**:
+  - Emitted by macOS `libsqlite3` and security subsystems querying detached code signatures for local debug builds. Harmless diagnostic with zero impact on functionality.
 - **SwiftUI View Update Cycle Prevention**:
   - **`CanvasOverlay`**: Guarded `PKCanvasViewDelegate.canvasViewDrawingDidChange` with `isProgrammaticUpdate` and deduplication against `lastSavedData`. Dispatches drawing data persistence to `AnnotationManager` asynchronously via `DispatchQueue.main.async`, preventing UIKit delegate drawing events from publishing `@Published` changes synchronously during SwiftUI's `makeUIView` or `updateUIView` layout passes.
   - **`DocumentLibraryView`**: `resolveDocumentURL(for:)` is implemented as a pure, side-effect-free query function without mutating `ReadingProgressTracker.history` during `ForEach` body evaluations. Persistent document path reconciliation runs asynchronously on `.onAppear` and on card tap selection, eliminating `AttributeInvalidatingSubscriber` warnings in `ForEachState`.

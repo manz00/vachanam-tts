@@ -342,12 +342,16 @@ public class PlaybackCoordinator: ObservableObject {
                 return
             }
             
+            let chunkWords = chunk.wordIDs.compactMap { doc.word(id: $0) }
+            let targetWordStrings = chunkWords.map { $0.text }
+            
             do {
                 let result = try await adapter.synthesize(
                     text: profile.cleanedText,
                     voice: voice,
                     speed: speed * profile.rateMultiplier,
-                    pauseDuration: chunk.pauseDurationAfter
+                    pauseDuration: chunk.pauseDurationAfter,
+                    targetWords: targetWordStrings
                 )
                 
                 guard self.currentRequestID == requestID else { return }
@@ -372,7 +376,29 @@ public class PlaybackCoordinator: ObservableObject {
     
     private func startAudioPlayback(result: TTSAudioResult, chunk: TTSChunk, startWordID: Int, requestID: UUID) {
         guard currentRequestID == requestID else { return }
-        self.activeAudioResult = result
+        
+        // Ensure word timestamps strictly match chunkWords 1:1, correcting any legacy cache or misaligned counts
+        let chunkWords = chunk.wordIDs.compactMap { activeSemanticDocument?.word(id: $0) }
+        var playbackResult = result
+        if !chunkWords.isEmpty && (result.wordTimestamps.isEmpty || result.wordTimestamps.count != chunkWords.count) && result.duration > 0 {
+            let totalChars = max(chunkWords.reduce(0) { $0 + max(1, $1.text.count) }, 1)
+            var currentTime: TimeInterval = 0.0
+            var correctedTimestamps: [WordTimestamp] = []
+            for cw in chunkWords {
+                let wDuration = result.duration * (Double(max(1, cw.text.count)) / Double(totalChars))
+                let endTime = currentTime + wDuration
+                correctedTimestamps.append(WordTimestamp(word: cw.text, startTime: currentTime, endTime: endTime))
+                currentTime = endTime
+            }
+            playbackResult = TTSAudioResult(
+                audioData: result.audioData,
+                pcmBuffer: result.pcmBuffer,
+                sampleRate: result.sampleRate,
+                duration: result.duration,
+                wordTimestamps: correctedTimestamps
+            )
+        }
+        self.activeAudioResult = playbackResult
         
         // Prefetch next chunk in background
         triggerPreGeneration(forChunkID: chunk.chunkID + 1)
@@ -381,13 +407,14 @@ public class PlaybackCoordinator: ObservableObject {
         var startTimeOffset: TimeInterval = 0.0
         if let doc = activeSemanticDocument,
            let targetWord = doc.word(id: startWordID),
-           targetWord.globalWordID != chunk.wordIDs.first {
+           targetWord.globalWordID != chunk.wordIDs.first,
+           let wordIdxInChunk = chunk.wordIDs.firstIndex(of: startWordID) {
             
-            if let stamp = result.wordTimestamps.first(where: { $0.word == targetWord.text }) {
-                startTimeOffset = stamp.startTime
-            } else if let wordIdxInChunk = chunk.wordIDs.firstIndex(of: startWordID), !chunk.wordIDs.isEmpty {
+            if wordIdxInChunk < playbackResult.wordTimestamps.count {
+                startTimeOffset = playbackResult.wordTimestamps[wordIdxInChunk].startTime
+            } else if !chunk.wordIDs.isEmpty {
                 let fraction = Double(wordIdxInChunk) / Double(chunk.wordIDs.count)
-                startTimeOffset = fraction * result.duration
+                startTimeOffset = fraction * playbackResult.duration
             }
         }
         
@@ -397,11 +424,11 @@ public class PlaybackCoordinator: ObservableObject {
             title: sentenceText,
             author: TTSController.shared.activeAdapterMetadata.name,
             elapsedTime: startTimeOffset,
-            duration: result.duration,
+            duration: playbackResult.duration,
             isPlaying: true
         )
         
-        AudioPlayer.shared.play(result: result, speed: 1.0, startTime: startTimeOffset) { [weak self] in
+        AudioPlayer.shared.play(result: playbackResult, speed: 1.0, startTime: startTimeOffset) { [weak self] in
             guard let self = self, self.currentRequestID == requestID else { return }
             self.handleChunkCompleted(chunkID: chunk.chunkID, requestID: requestID)
         }
@@ -493,20 +520,25 @@ public class PlaybackCoordinator: ObservableObject {
             }
             
             if matchIndex < 0 {
-                // If past the end of the last word (e.g. during trailing silence pause), hold last word
-                matchIndex = (time >= timestamps.last!.startTime) ? (timestamps.count - 1) : 0
+                // If past the end of the last word (e.g. during trailing silence pause), hold last word;
+                // during inter-word gap, hold the preceding word instead of jumping back to 0.
+                matchIndex = (time >= timestamps.last!.startTime) ? (timestamps.count - 1) : max(0, min(high, timestamps.count - 1))
             }
             
             if matchIndex < chunkWords.count {
                 let word = chunkWords[matchIndex]
                 let matchedStamp = timestamps[matchIndex]
                 
-                // Telemetry: measure highlight drift against expected word time
-                let expectedWordCenter = (matchedStamp.startTime + matchedStamp.endTime) / 2.0
-                let driftMs = abs(time - expectedWordCenter) * 1000.0
-                if driftMs > 150.0 && time < matchedStamp.endTime {
+                // Telemetry: measure highlight drift outside expected word bounds
+                var driftMs: Double = 0.0
+                if time < matchedStamp.startTime {
+                    driftMs = (matchedStamp.startTime - time) * 1000.0
+                } else if time > matchedStamp.endTime && matchIndex < timestamps.count - 1 {
+                    driftMs = (time - matchedStamp.endTime) * 1000.0
+                }
+                if driftMs > 150.0 {
                     #if DEBUG
-                    print("⚠️ [Highlight Drift] Audio: \(String(format: "%.3f", time))s vs '\(word.text)' center: \(String(format: "%.3f", expectedWordCenter))s (Drift: \(String(format: "%.1f", driftMs))ms)")
+                    print("⚠️ [Highlight Drift] Audio: \(String(format: "%.3f", time))s vs '\(word.text)' [\(String(format: "%.3f", matchedStamp.startTime))s-\(String(format: "%.3f", matchedStamp.endTime))s] (Drift: \(String(format: "%.1f", driftMs))ms)")
                     #endif
                 }
                 
@@ -577,6 +609,9 @@ public class PlaybackCoordinator: ObservableObject {
             return
         }
         
+        let chunkWords = chunk.wordIDs.compactMap { doc.word(id: $0) }
+        let targetWordStrings = chunkWords.map { $0.text }
+        
         prefetchTask?.cancel()
         prefetchTask = Task.detached(priority: .utility) {
             let profile = VoiceProfileResolver.shared.resolve(
@@ -589,7 +624,8 @@ public class PlaybackCoordinator: ObservableObject {
                 text: profile.cleanedText,
                 voice: voice,
                 speed: speed * profile.rateMultiplier,
-                pauseDuration: chunk.pauseDurationAfter
+                pauseDuration: chunk.pauseDurationAfter,
+                targetWords: targetWordStrings
             ) {
                 TTSAudioCache.shared.store(key: cacheKey, result: result)
             }
@@ -618,14 +654,28 @@ public class PlaybackCoordinator: ObservableObject {
             let adapter = TTSController.shared.currentAdapter
             let voice = TTSController.shared.selectedVoice
             let speed = TTSController.shared.speechSpeed
+            let pronRev = PronunciationManager.shared.revisionHash(for: doc.documentID)
+            let normalizedSpokenText = TextNormalizer.shared.normalizeForSpeech(chunk.text)
+            let processedSpokenText = PronunciationManager.shared.applyPronunciations(to: normalizedSpokenText, documentID: doc.documentID)
             let oldKey = TTSAudioCache.shared.makeKey(
+                documentID: doc.documentID,
+                modelId: adapter.metadata.id,
+                voice: voice,
+                speed: speed,
+                text: processedSpokenText,
+                pronunciationRevision: pronRev
+            )
+            TTSAudioCache.shared.invalidate(key: oldKey)
+            
+            // Also invalidate with legacy chunk.text key
+            let legacyKey = TTSAudioCache.shared.makeKey(
                 documentID: doc.documentID,
                 modelId: adapter.metadata.id,
                 voice: voice,
                 speed: speed,
                 text: chunk.text
             )
-            TTSAudioCache.shared.invalidate(key: oldKey)
+            TTSAudioCache.shared.invalidate(key: legacyKey)
             
             // If currently playing this chunk, immediately replay from this word
             if currentChunkID == chunk.chunkID && isPlaying {
