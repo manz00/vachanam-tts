@@ -96,7 +96,7 @@ public struct DocumentLibraryView: View {
                     } else {
                         LazyVGrid(columns: columns, spacing: 24) {
                             ForEach(filteredHistory) { record in
-                                let url = URL(fileURLWithPath: record.documentPath)
+                                let url = resolveDocumentURL(for: record)
                                 DocumentCard(
                                     title: record.title,
                                     progressFraction: record.progressFraction,
@@ -106,6 +106,13 @@ public struct DocumentLibraryView: View {
                                 ) {
                                     if let doc = ReaderDocument(url: url) {
                                         onSelectDocument(doc)
+                                    } else {
+                                        // Auto-recover missing/stale sample guide
+                                        let guideURL = ensureGettingStartedGuideExists()
+                                        if let doc = ReaderDocument(url: guideURL) {
+                                            progressTracker.recordProgress(documentURL: guideURL, title: doc.title, currentPage: 0, totalPages: doc.pageCount)
+                                            onSelectDocument(doc)
+                                        }
                                     }
                                 }
                             }
@@ -172,6 +179,9 @@ public struct DocumentLibraryView: View {
             .sheet(isPresented: $isModelManagerPresented) {
                 ModelManagerView()
             }
+            .onAppear {
+                ensureGettingStartedGuideExists()
+            }
         }
     }
     
@@ -182,6 +192,32 @@ public struct DocumentLibraryView: View {
         return progressTracker.history.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
     }
     
+    private func resolveDocumentURL(for record: ReadingRecord) -> URL {
+        let directURL = URL(fileURLWithPath: record.documentPath)
+        if FileManager.default.fileExists(atPath: directURL.path) {
+            return directURL
+        }
+        
+        let filename = directURL.lastPathComponent
+        
+        // 1. Check in persistent Documents directory
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let docURL = docs.appendingPathComponent(filename)
+        if FileManager.default.fileExists(atPath: docURL.path) {
+            progressTracker.updatePath(oldPath: record.documentPath, newURL: docURL)
+            return docURL
+        }
+        
+        // 2. If it's the Getting Started guide, regenerate in Documents directory
+        if filename.contains("Getting_Started") || record.title.contains("Getting_Started") || record.title.contains("Getting Started") {
+            let guideURL = ensureGettingStartedGuideExists()
+            progressTracker.updatePath(oldPath: record.documentPath, newURL: guideURL)
+            return guideURL
+        }
+        
+        return directURL
+    }
+    
     private func copyToLocalDocuments(url: URL) -> URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dest = docs.appendingPathComponent(url.lastPathComponent)
@@ -189,41 +225,86 @@ public struct DocumentLibraryView: View {
         return FileManager.default.fileExists(atPath: dest.path) ? dest : url
     }
     
-    private func openBuiltinSample() {
-        // Create an accessibility sample PDF document programmatically
-        let pdfRenderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 612, height: 792))
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("Vachanam_Getting_Started.pdf")
+    @discardableResult
+    private func ensureGettingStartedGuideExists() -> URL {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let guideURL = docs.appendingPathComponent("Vachanam_Getting_Started.pdf")
         
-        try? pdfRenderer.writePDF(to: tempURL) { context in
+        if FileManager.default.fileExists(atPath: guideURL.path) {
+            return guideURL
+        }
+        
+        let pdfRenderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 612, height: 792))
+        try? pdfRenderer.writePDF(to: guideURL) { context in
+            // Page 1: Welcome & Overview
             context.beginPage()
             
             let titleAttributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.boldSystemFont(ofSize: 26),
-                .foregroundColor: UIColor.black
+                .foregroundColor: UIColor(red: 0.1, green: 0.15, blue: 0.25, alpha: 1.0)
+            ]
+            let headingAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.boldSystemFont(ofSize: 17),
+                .foregroundColor: UIColor(red: 0.85, green: 0.55, blue: 0.15, alpha: 1.0)
             ]
             let bodyAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 15),
+                .font: UIFont.systemFont(ofSize: 14),
                 .foregroundColor: UIColor.darkGray
             ]
             
             "Welcome to Vachanam".draw(at: CGPoint(x: 54, y: 60), withAttributes: titleAttributes)
+            "Accessibility-First PDF Reading with On-Device Speech".draw(at: CGPoint(x: 54, y: 95), withAttributes: headingAttributes)
             
-            let sampleBody = """
-            Vachanam is an accessibility-focused PDF reader designed for iPad and Mac.
+            let page1Body = """
+            Vachanam is an accessibility-focused PDF reader designed for iPad and Mac. \
             It features on-device neural text-to-speech, synchronized word and sentence highlighting, \
             an OpenDyslexic typography mode, and complete Apple Pencil annotation tools.
 
             Press the Play button below to hear this text read aloud with live karaoke-style word highlighting. \
             You can adjust reading speed from 0.5x to 2.0x, switch between Original PDF and Reader View, \
             and draw or take notes with the floating toolbar.
+
+            Key features include:
+            • Word-by-word synchronized highlighting with customizable colors
+            • Dyslexia reading ruler guide with adjustable height and opacity
+            • Distraction-free Reader View with customizable OpenDyslexic fonts
+            • Full Apple Pencil drawing, shapes, sticky notes, and text boxes
+            • Privacy-first on-device speech with Kokoro, Qwen3, and system voice profiles
             """
+            page1Body.draw(in: CGRect(x: 54, y: 130, width: 504, height: 580), withAttributes: bodyAttributes)
             
-            let rect = CGRect(x: 54, y: 120, width: 504, height: 600)
-            sampleBody.draw(in: rect, withAttributes: bodyAttributes)
+            // Page 2: Navigation & Annotation Guide
+            context.beginPage()
+            "Annotations & Reading Modes".draw(at: CGPoint(x: 54, y: 60), withAttributes: titleAttributes)
+            "Mastering Your Reading Experience".draw(at: CGPoint(x: 54, y: 95), withAttributes: headingAttributes)
+            
+            let page2Body = """
+            You can customize every aspect of your reading experience in Vachanam.
+
+            Using the Top Bar Controls:
+            • Tap the pencil icon to toggle the Apple Pencil drawing and shapes toolbar.
+            • Tap the bookmark icon to save this page for quick access.
+            • Tap the grid icon to view thumbnail pages and jump anywhere in the document.
+            • Tap the slider icon to customize highlight colors, font size, and themes.
+            • Tap the segmented toggle to switch between PDF Layout and clean Reader View.
+
+            Voice Profiles and Neural Models:
+            • Tap the brain icon in the library to browse available on-device TTS models.
+            • Switch between Kokoro, Qwen3-TTS, Chatterbox, and CosyVoice 3.
+            • Select distinct voice personalities such as Heart, Bella, Michael, or Emma.
+
+            Enjoy reading with Vachanam!
+            """
+            page2Body.draw(in: CGRect(x: 54, y: 130, width: 504, height: 580), withAttributes: bodyAttributes)
         }
         
-        if let doc = ReaderDocument(url: tempURL) {
-            progressTracker.recordProgress(documentURL: tempURL, title: doc.title, currentPage: 0, totalPages: 1)
+        return guideURL
+    }
+    
+    private func openBuiltinSample() {
+        let guideURL = ensureGettingStartedGuideExists()
+        if let doc = ReaderDocument(url: guideURL) {
+            progressTracker.recordProgress(documentURL: guideURL, title: doc.title, currentPage: 0, totalPages: doc.pageCount)
             onSelectDocument(doc)
         }
     }

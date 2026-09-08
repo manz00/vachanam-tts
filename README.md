@@ -229,6 +229,8 @@ vachanam-tts/
 - **Console Log: "Unable to get ISSymbol for UTI: com.apple.ios-simulator Error..."**:
   - Emitted by macOS's `IconServices` daemon when Xcode launches a process in the simulator and attempts to resolve a macOS system icon for the virtual simulator UTI.
   - This is a known macOS/Xcode cosmetic log. It has zero impact on app execution, UI rendering, or functionality, and does not occur on physical devices.
+- **Simulator Container UUID Changes & Sample Guide**:
+  - iOS Simulator reinstallation generates new sandbox container UUIDs. Vachanam dynamically resolves document filenames in the persistent `Documents` directory and auto-regenerates the multi-page `Vachanam_Getting_Started.pdf` guide if a previous container's temporary path was stored.
 
 ---
 

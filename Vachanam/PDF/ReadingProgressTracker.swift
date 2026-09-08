@@ -80,6 +80,27 @@ public class ReadingProgressTracker: ObservableObject {
         record(for: documentURL)?.currentPage ?? 0
     }
     
+    public func updatePath(oldPath: String, newURL: URL) {
+        if let idx = history.firstIndex(where: { $0.documentPath == oldPath }) {
+            let old = history[idx]
+            let updated = ReadingRecord(
+                documentPath: newURL.path,
+                title: old.title,
+                currentPage: old.currentPage,
+                totalPages: old.totalPages,
+                lastOpened: old.lastOpened,
+                estimatedRemainingMinutes: old.estimatedRemainingMinutes
+            )
+            history[idx] = updated
+            saveHistory()
+        }
+    }
+    
+    public func removeRecord(path: String) {
+        history.removeAll { $0.documentPath == path }
+        saveHistory()
+    }
+    
     private func saveHistory() {
         if let encoded = try? JSONEncoder().encode(history) {
             UserDefaults.standard.set(encoded, forKey: storageKey)
