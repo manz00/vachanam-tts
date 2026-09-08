@@ -237,6 +237,14 @@ vachanam-tts/
   - Emitted internally by Apple's CoreAudio / AVSpeechSynthesis subsystem in simulator environments because the virtual simulator device does not possess physical hardware speaker acoustic calibration profiles (`LoudnessManager plist`). It is completely benign and does not occur on physical iPad/Mac hardware.
 - **Console Log: "Error fetching voices: DecodingError.dataCorrupted" & "Error fetching locales"**:
   - Emitted by Apple's internal system voice catalog parser on macOS Sequoia / iOS 18 Simulator when querying `AVSpeechSynthesisVoice.speechVoices()`. `VoiceProfileResolver` caches voices at startup to prevent redundant disk queries on every spoken sentence.
+- **Console Log: "EspressoModelWrapper::initialize Cannot create MPS context, fallback to CPU"**:
+  - Emitted by Apple's `Espresso` CoreML neural inference engine when running inside the iOS Simulator. The simulator does not expose Apple Neural Engine (ANE) or Metal Performance Shaders (MPS) to guest virtual machines, so CoreML automatically falls back to CPU execution. On physical iPad/Mac hardware with Apple Silicon, models run with full GPU and Neural Engine acceleration.
+- **Console Log: "HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload"**:
+  - An internal CoreAudio warning emitted when the macOS host audio daemon detects high virtual CPU contention while synthesizing neural speech buffers. It does not occur on real hardware due to dedicated audio DSP hardware.
+- **Console Log: "retrieving stroke identifier gave nil or invalid result... Unable to find stroke from stroke group"**:
+  - Emitted internally by Apple's `PencilKit` framework when drawing or erasing on the iOS Simulator using mouse/trackpad pointer events instead of a physical Apple Pencil digitizer. It has zero impact on annotation persistence or drawing fidelity.
+- **Console Log: "CoreGraphics PDF has logged an error..."**:
+  - Emitted by Apple's CoreGraphics PDFKit rendering subsystem when parsing non-standard font dictionaries or PDF operator streams. Highlighting and page display remain unaffected.
 - **SwiftUI View Update Cycle Prevention**:
   - **`DocumentLibraryView`**: `resolveDocumentURL(for:)` is implemented as a pure, side-effect-free query function without mutating `ReadingProgressTracker.history` during `ForEach` body evaluations. Persistent document path reconciliation runs asynchronously on `.onAppear` and on card tap selection, eliminating `AttributeInvalidatingSubscriber` warnings in `ForEachState`.
   - **`PDFReaderView`**: Removed redundant highlight calls from `updateUIView`, relying solely on the coordinator's reactive observers (`$isPlaying`, `$currentSentence`, page change notifications) so the SwiftUI layout pass never mutates observable state.
