@@ -237,6 +237,8 @@ vachanam-tts/
   - Emitted by Apple's internal system voice catalog parser on macOS Sequoia / iOS 18 Simulator when querying `AVSpeechSynthesisVoice.speechVoices()`. `VoiceProfileResolver` caches voices at startup to prevent redundant disk queries on every spoken sentence.
 - **SwiftUI View Update Cycle Prevention**:
   - Highlighting rect updates and sentence geometry in `PDFReaderView` are dispatched asynchronously to the main run loop and guarded against duplicate assignments, preventing "Publishing changes from within view updates" warnings during SwiftUI render passes.
+- **Xcode "Validate Project Settings" / Recommended Settings**:
+  - `generate_project.py` embeds Xcode's complete suite of modern recommended build settings (`LastUpgradeCheck = 1600;`, `ENABLE_USER_SCRIPT_SANDBOXING = YES`, `SWIFT_COMPILATION_MODE = wholemodule` for Release, `ONLY_ACTIVE_ARCH = YES` for Debug, full recommended Clang/GCC compiler warnings, and automatic asset/string catalog symbol generation). This completely prevents Xcode from displaying the "Validate Project Settings" / "Update to recommended settings" prompt upon opening the project.
 
 ---
 
