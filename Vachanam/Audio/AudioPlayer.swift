@@ -24,19 +24,32 @@ public class AudioPlayer: ObservableObject {
     private var startTime: TimeInterval = 0.0
     private var onCompleteHandler: (() -> Void)?
     
-    public init() {
-        setupEngine()
-    }
+    private var isEngineConfigured: Bool = false
     
-    private func setupEngine() {
-        audioEngine.attach(playerNode)
-        audioEngine.attach(timePitch)
+    public init() {}
+    
+    private func ensureEngineRunning() -> Bool {
+        if !isEngineConfigured {
+            audioEngine.attach(playerNode)
+            audioEngine.attach(timePitch)
+            
+            let format = AVAudioFormat(standardFormatWithSampleRate: 24000.0, channels: 1)!
+            audioEngine.connect(playerNode, to: timePitch, format: format)
+            // Connecting to mainMixerNode with nil format allows automatic conversion to hardware sample rate
+            audioEngine.connect(timePitch, to: audioEngine.mainMixerNode, format: nil)
+            isEngineConfigured = true
+        }
         
-        let format = AVAudioFormat(standardFormatWithSampleRate: 24000.0, channels: 1)!
-        audioEngine.connect(playerNode, to: timePitch, format: format)
-        audioEngine.connect(timePitch, to: audioEngine.mainMixerNode, format: format)
-        
-        try? audioEngine.start()
+        if !audioEngine.isRunning {
+            AudioSession.shared.configureSession()
+            do {
+                try audioEngine.start()
+            } catch {
+                print("AudioEngine start error: \(error.localizedDescription)")
+                return false
+            }
+        }
+        return true
     }
     
     public func play(result: TTSAudioResult, speed: Float = 1.0, onComplete: (() -> Void)? = nil) {
@@ -47,14 +60,15 @@ public class AudioPlayer: ObservableObject {
             return
         }
         
+        guard ensureEngineRunning() else {
+            onComplete?()
+            return
+        }
+        
         self.currentDuration = result.duration
         self.currentTime = 0.0
         self.onCompleteHandler = onComplete
         self.timePitch.rate = speed
-        
-        if !audioEngine.isRunning {
-            try? audioEngine.start()
-        }
         
         playerNode.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
             DispatchQueue.main.async {
