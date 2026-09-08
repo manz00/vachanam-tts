@@ -324,6 +324,10 @@ vachanam-tts/
   - Emitted by macOS's `AppIntents` system framework on Mac Catalyst when running outside an App Store sandbox or Shortcuts daemon registration. It is purely cosmetic and has zero effect on app execution, playback, or performance.
 - **Console Log: "open(/private/var/db/DetachedSignatures) - No such file or directory"**:
   - Emitted by macOS `libsqlite3` and security subsystems querying detached code signatures for local debug builds. Harmless diagnostic with zero impact on functionality.
+- **Console Log: "cannot add handler to 4 from 1 - dropping"**:
+  - Emitted internally by macOS `QuartzCore` (CoreAnimation) in Mac Catalyst during window display refresh cycle registrations. Benign OS compositor notification.
+- **Linker Warning: "search path '/var/run/.../MetalToolchain.../maccatalyst' not found"**:
+  - Xcode 16 passes its system Metal compiler toolchain directory by default, which contains a `macosx` architecture folder but no separate `maccatalyst` directory on the system volume. The linker safely falls back to standard framework search paths and builds cleanly.
 - **SwiftUI View Update Cycle Prevention**:
   - **`CanvasOverlay`**: Guarded `PKCanvasViewDelegate.canvasViewDrawingDidChange` with `isProgrammaticUpdate` and deduplication against `lastSavedData`. Dispatches drawing data persistence to `AnnotationManager` asynchronously via `DispatchQueue.main.async`, preventing UIKit delegate drawing events from publishing `@Published` changes synchronously during SwiftUI's `makeUIView` or `updateUIView` layout passes.
   - **`DocumentLibraryView`**: `resolveDocumentURL(for:)` is implemented as a pure, side-effect-free query function without mutating `ReadingProgressTracker.history` during `ForEach` body evaluations. Persistent document path reconciliation runs asynchronously on `.onAppear` and on card tap selection, eliminating `AttributeInvalidatingSubscriber` warnings in `ForEachState`.
