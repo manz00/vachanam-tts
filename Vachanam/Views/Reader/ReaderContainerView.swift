@@ -10,7 +10,7 @@ import PDFKit
 
 public struct ReaderContainerView: View {
     public let document: ReaderDocument
-    @ObservedObject var ttsController = TTSController.shared
+    private let ttsController = TTSController.shared
     @ObservedObject var annotationManager = AnnotationManager.shared
     @ObservedObject var bookmarkManager = BookmarkManager.shared
     @ObservedObject var progressTracker = ReadingProgressTracker.shared
@@ -87,7 +87,7 @@ public struct ReaderContainerView: View {
                     }
                     
                     // Dyslexia Reading Ruler Guide
-                    ReadingRuler(currentY: ttsController.currentSentenceViewRect?.origin.y ?? 200)
+                    ReadingRuler()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }

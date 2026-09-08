@@ -21,7 +21,6 @@ public class TTSController: ObservableObject {
     @Published public var speechSpeed: Float = 1.0
     @Published public var selectedVoice: String?
     @Published public var currentSentenceViewRect: CGRect?
-    @Published public var currentWordViewRect: CGRect?
     @Published public var isModelLoaded: Bool = false
     @Published public var isModelLoading: Bool = false
     @Published public var activeAdapterMetadata: TTSModelMetadata

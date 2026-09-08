@@ -142,10 +142,6 @@ public struct PDFReaderView: UIViewRepresentable {
                 uiView.go(to: target)
             }
         }
-        
-        DispatchQueue.main.async {
-            context.coordinator.updateHighlights()
-        }
     }
     
     public func makeCoordinator() -> Coordinator {
@@ -231,12 +227,11 @@ public struct PDFReaderView: UIViewRepresentable {
             
             guard isPlaying, let currentSentence = sentence, currentSentence.pageIndex == currentPageIdx else {
                 overlay.clear()
-                DispatchQueue.main.async {
-                    if TTSController.shared.currentSentenceViewRect != nil {
-                        TTSController.shared.currentSentenceViewRect = nil
-                    }
-                    if TTSController.shared.currentWordViewRect != nil {
-                        TTSController.shared.currentWordViewRect = nil
+                if TTSController.shared.currentSentenceViewRect != nil {
+                    DispatchQueue.main.async {
+                        if TTSController.shared.currentSentenceViewRect != nil {
+                            TTSController.shared.currentSentenceViewRect = nil
+                        }
                     }
                 }
                 return
@@ -256,13 +251,17 @@ public struct PDFReaderView: UIViewRepresentable {
                 wordViewRect = pdfView.convert(currentWord.bounds, from: page)
             }
             
-            // Update tracking rects for ruler asynchronously without triggering view cycle
-            DispatchQueue.main.async {
-                if let firstLine = sentenceViewRects.first, TTSController.shared.currentSentenceViewRect != firstLine {
-                    TTSController.shared.currentSentenceViewRect = firstLine
+            // Update tracking rects for ruler asynchronously if ruler is enabled
+            if AccessibilityManager.shared.isReadingRulerEnabled {
+                let firstLine = sentenceViewRects.first
+                if TTSController.shared.currentSentenceViewRect != firstLine {
+                    DispatchQueue.main.async {
+                        TTSController.shared.currentSentenceViewRect = firstLine
+                    }
                 }
-                if TTSController.shared.currentWordViewRect != wordViewRect {
-                    TTSController.shared.currentWordViewRect = wordViewRect
+            } else if TTSController.shared.currentSentenceViewRect != nil {
+                DispatchQueue.main.async {
+                    TTSController.shared.currentSentenceViewRect = nil
                 }
             }
             

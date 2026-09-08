@@ -96,7 +96,6 @@ public struct DocumentLibraryView: View {
                     } else {
                         LazyVGrid(columns: columns, spacing: 24) {
                             ForEach(filteredHistory) { record in
-                                let url = resolveDocumentURL(for: record)
                                 DocumentCard(
                                     title: record.title,
                                     progressFraction: record.progressFraction,
@@ -104,6 +103,10 @@ public struct DocumentLibraryView: View {
                                     pageCount: record.totalPages,
                                     lastOpenedDate: record.lastOpened
                                 ) {
+                                    let url = resolveDocumentURL(for: record)
+                                    if url.path != record.documentPath {
+                                        progressTracker.updatePath(oldPath: record.documentPath, newURL: url)
+                                    }
                                     if let doc = ReaderDocument(url: url) {
                                         onSelectDocument(doc)
                                     } else {
@@ -181,6 +184,9 @@ public struct DocumentLibraryView: View {
             }
             .onAppear {
                 ensureGettingStartedGuideExists()
+                DispatchQueue.main.async {
+                    reconcileHistoryPaths()
+                }
             }
         }
     }
@@ -204,18 +210,25 @@ public struct DocumentLibraryView: View {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let docURL = docs.appendingPathComponent(filename)
         if FileManager.default.fileExists(atPath: docURL.path) {
-            progressTracker.updatePath(oldPath: record.documentPath, newURL: docURL)
             return docURL
         }
         
         // 2. If it's the Getting Started guide, regenerate in Documents directory
         if filename.contains("Getting_Started") || record.title.contains("Getting_Started") || record.title.contains("Getting Started") {
             let guideURL = ensureGettingStartedGuideExists()
-            progressTracker.updatePath(oldPath: record.documentPath, newURL: guideURL)
             return guideURL
         }
         
         return directURL
+    }
+    
+    private func reconcileHistoryPaths() {
+        for record in progressTracker.history {
+            let resolved = resolveDocumentURL(for: record)
+            if resolved.path != record.documentPath {
+                progressTracker.updatePath(oldPath: record.documentPath, newURL: resolved)
+            }
+        }
     }
     
     private func copyToLocalDocuments(url: URL) -> URL {

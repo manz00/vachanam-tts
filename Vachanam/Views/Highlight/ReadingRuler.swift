@@ -9,15 +9,14 @@ import SwiftUI
 
 public struct ReadingRuler: View {
     @ObservedObject var accessibilityManager = AccessibilityManager.shared
-    public let currentY: CGFloat
+    @ObservedObject var ttsController = TTSController.shared
     @State private var dragOffset: CGFloat = 0.0
     
-    public init(currentY: CGFloat) {
-        self.currentY = currentY
-    }
+    public init() {}
     
     public var body: some View {
         if accessibilityManager.isReadingRulerEnabled {
+            let currentY = ttsController.currentSentenceViewRect?.origin.y ?? 200
             GeometryReader { geometry in
                 let targetY = max(min(currentY + dragOffset, geometry.size.height - accessibilityManager.readingRulerHeight), 0)
                 
