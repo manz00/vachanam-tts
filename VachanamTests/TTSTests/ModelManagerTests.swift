@@ -1,0 +1,39 @@
+//
+//  ModelManagerTests.swift
+//  VachanamTests
+//
+
+import XCTest
+@testable import Vachanam
+
+final class ModelManagerTests: XCTestCase {
+    
+    func testModelRegistryLoading() {
+        let registry = ModelRegistry.shared
+        XCTAssertEqual(registry.availableModels.count, 4)
+        
+        let kokoro = registry.model(withId: "kokoro-v1.0-en")
+        XCTAssertNotNil(kokoro)
+        XCTAssertEqual(kokoro?.name, "Kokoro")
+        XCTAssertEqual(kokoro?.tier, .lightweight)
+        
+        let qwen3 = registry.model(withId: "qwen3-tts-0.6b-en")
+        XCTAssertNotNil(qwen3)
+        XCTAssertEqual(qwen3?.tier, .heavy)
+    }
+    
+    func testActiveModelSwitching() {
+        let manager = ModelManager.shared
+        manager.activeModelId = "kokoro-v1.0-en"
+        XCTAssertEqual(manager.activeModelId, "kokoro-v1.0-en")
+        
+        manager.activeModelId = "qwen3-tts-0.6b-en"
+        XCTAssertEqual(manager.activeModelId, "qwen3-tts-0.6b-en")
+    }
+    
+    func testModelDirectoryPaths() {
+        let manager = ModelManager.shared
+        let dir = manager.modelDirectory(for: "kokoro-v1.0-en")
+        XCTAssertTrue(dir.path.contains("kokoro-v1.0-en"))
+    }
+}
