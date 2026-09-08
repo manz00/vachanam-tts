@@ -188,23 +188,17 @@ vachanam-tts/
 
 ## Kokoro CoreML Integration & Model Bundle
 
-### Model Repository & Provenance (`kokoro-coreml/`)
-- **Full Model Repository**: The complete 1.01 GB repository (`mattmireles/kokoro-coreml`) is fully downloaded via Git LFS into `kokoro-coreml/`.
-- **Integrity Verified**: All Git LFS objects have been verified with `git lfs fsck OK` and complete SHA-256 checksum matching against `KokoroRuntimeManifest.json`.
-- **Included Packages**:
-  - **CoreML Pipelines (23 packages)**: Decoder Pre/Post for 3s, 7s, 10s, 15s, and 30s buckets; Duration models for t32 through t512 tokens; F0 pitch predictors for t120 through t1200 frames.
-  - **Voices (50+ voices)**: Full spectrum of American and British English voices (`af_heart`, `af_bella`, `af_nicole`, `am_michael`, `am_fenrir`, `am_puck`, `bf_emma`, etc.) located in `voices/` and `kokoro.js/voices/`.
-  - **Runtime Manifests**: `KokoroRuntimeManifest.json`, `HostedManifest.json`, `hnsf_weights.json`, and `kokoro-vocab.json`.
-
-### Bundled Starter Runtime (`Vachanam/Resources/KokoroModels/`)
-To provide immediate offline neural speech without requiring initial network downloads, Vachanam bundles a complete starter Kokoro CoreML runtime (~164 MB):
-- `coreml/kokoro_duration_t128.mlpackage`
-- `coreml/kokoro_f0ntrain_t600.mlpackage`
-- `coreml/kokoro_decoder_pre_15s.mlpackage`
-- `coreml/kokoro_decoder_har_post_15s.mlpackage`
-- `voices/` (7 core voices: `af_heart`, `af_bella`, `af_nicole`, `am_michael`, `am_fenrir`, `am_puck`, `bf_emma`)
-- `runtime/` (`kokoro-vocab.json` & `hnsf_weights.json`)
-- Pronunciation dictionaries: `us_gold.json`, `us_silver.json`, `gb_gold.json`, `gb_silver.json`
+### Model Provenance & Upstream
+- **Upstream Repository**: Built from [mattmireles/kokoro-coreml](https://huggingface.co/mattmireles/kokoro-coreml).
+- **Embedded Swift Package**: Located in `Vachanam/Packages/kokoro-coreml` (~7.8 MB), providing the `KokoroTTS` runtime and pipeline.
+- **Bundled Starter Runtime (`Vachanam/Resources/KokoroModels/`)**:
+  To provide immediate offline neural speech without requiring initial network downloads, Vachanam bundles a complete starter Kokoro CoreML runtime (~185 MB):
+  - `coreml/kokoro_duration_pre_15s.mlpackage`
+  - `coreml/kokoro_style_encoder.mlpackage`
+  - `coreml/kokoro_decoder_pre_15s.mlpackage`
+  - `voices/` (`af_bella.bin`, `af_sarah.bin`, `am_adam.bin`, `am_michael.bin`)
+  - `runtime/` (`kokoro-vocab.json` & `hnsf_weights.json`)
+  - Pronunciation dictionaries: `us_gold.json`, `us_silver.json`, `gb_gold.json`, `gb_silver.json`
 
 ### Simulator & Device Compatibility
 - **CoreML Model Execution**: CoreML models run natively on Apple Silicon GPU/ANE on physical devices and on the host Mac CPU/GPU under the iOS Simulator.
