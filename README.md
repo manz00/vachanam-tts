@@ -223,8 +223,9 @@ vachanam-tts/
 - **Simulator Error: "Busy (Application failed preflight checks)"**:
   - Occurs when Xcode attempts to launch while the iOS Simulator's SpringBoard daemon is transitioning states.
   - Fix: Simply re-run (`Cmd + R`) or reboot the simulator via `Simulator > Device > Restart`.
-- **Background Audio in Simulator**:
-  - The iOS Simulator routes audio through macOS CoreAudio. Using the native speech synthesis fallback avoids HALC proxy buffer issues.
+- **Console Log: "AddInstanceForFactory: No factory registered for id <CFUUID ...> F8BB1C28-BAE8-11D6-9C31-00039315CD46"**:
+  - This is an internal CoreAudio Hardware Abstraction Layer (HAL) diagnostic emitted by macOS when initializing virtual audio devices in the iOS Simulator.
+  - It is completely harmless, expected in simulator environments, and has no effect on audio playback, synthesis, or stability. On physical iPad hardware, this log does not appear.
 
 ---
 
