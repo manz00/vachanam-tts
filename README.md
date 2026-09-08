@@ -217,6 +217,16 @@ vachanam-tts/
 
 ---
 
+## Troubleshooting & Simulator Tips
+
+- **Simulator Error: "Busy (Application failed preflight checks)"**:
+  - Occurs when Xcode attempts to launch while the iOS Simulator's SpringBoard daemon is transitioning states.
+  - Fix: Simply re-run (`Cmd + R`) or reboot the simulator via `Simulator > Device > Restart`.
+- **Background Audio in Simulator**:
+  - The iOS Simulator routes audio through macOS CoreAudio. Using the native speech synthesis fallback avoids HALC proxy buffer issues.
+
+---
+
 ## License
 
 Personal accessibility open-source project. Free for all users.
