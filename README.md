@@ -514,6 +514,14 @@ When executing in the iPad simulator or natively on macOS (Mac Catalyst):
    - Simulator CoreAudio proxy messages occur when host audio proxies desynchronize during system speech fallback. Keeping synthesis on the neural CoreML path with bundled voices resolves these proxy drops.
 8. **`MetalToolchain` / `cryptexd` Linker Warning (Mac Catalyst)**:
    - `ld: warning: search path '/var/run/com.apple.security.cryptexd/mnt/.../Metal.xctoolchain/usr/lib/swift/maccatalyst' not found` is a known upstream Apple Clang / Xcode issue on macOS Sequoia when building Mac Catalyst. Xcode automatically injects the mounted Metal toolchain cryptex path into linker arguments. The linker safely bypasses the non-existent subdirectory and links against the macOS SDK libraries without issue.
+9. **`AddInstanceForFactory` / `CoreAudio HAL Factory` (CoreFoundation / CFBundle)**:
+   - `AddInstanceForFactory: No factory registered for id <CFUUID ...> F8BB1C28-BAE8-11D6-9C31-00039315CD46` is emitted by Apple's CoreAudio Hardware Abstraction Layer when discovering system audio hardware and AudioUnit driver plug-ins. It is standard Apple diagnostic logging and has zero impact on audio playback.
+10. **`libsqlite3` / `open(/private/var/db/DetachedSignatures)`**:
+    - Emitted by SQLite when initializing system caches. macOS queries the optional detached code signatures database, which does not exist on consumer macOS installations. SQLite safely continues.
+11. **`AudioAnalytics` / `carc` / `Reporter disconnected`**:
+    - Emitted by Apple's internal `AudioAnalytics` framework when local audio sessions initialize without transmitting usage analytics to Apple.
+12. **`BaseBoard` / `Unable to obtain a task name port right`**:
+    - Emitted by Apple's `BaseBoard` framework when verifying Mach port task rights across windowing processes within the sandboxed Mac Catalyst environment.
 
 ---
 
