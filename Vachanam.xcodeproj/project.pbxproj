@@ -7,81 +7,81 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D69497C4908544A6A5AA1F99 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356910ED7D9748909A50922F /* AppState.swift */; };
-		420F2D219E26435293309CE5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72D4D7B186C42B5A3C8C3C6 /* ContentView.swift */; };
-		55BA1ED38037495DA70AE84F /* VachanamApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2A1510D4C3473EA7EA9F8B /* VachanamApp.swift */; };
-		3B5A5CAB841E4796BF73F9DC /* ReaderDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2454EBFA4E144EDCBB57A270 /* ReaderDocument.swift */; };
-		9529FDF8CBF64554ABD475C6 /* ReadingProgressTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5961A8116474204916F9DC2 /* ReadingProgressTracker.swift */; };
-		302D6E11847148CC831486B7 /* TextExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA1E09F12514B4288619263 /* TextExtractor.swift */; };
-		7CC7DDAFC7DF4E9DAE74F0C8 /* BookmarkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E9F3B46DA647BFA441C89A /* BookmarkManager.swift */; };
-		F275F34677FA4FE1B5FA9D53 /* AnnotationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4BCA9192A2495D8E56984A /* AnnotationManager.swift */; };
-		A40D7425F37B459DB5E6EABE /* UndoRedoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAC43A6E34649958ED0F2F5 /* UndoRedoManager.swift */; };
-		95C2481F45CB41E1AA7FEB91 /* AnnotationExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E740A24CDD3E4932909A3826 /* AnnotationExporter.swift */; };
-		99CFD762DF6F4BDAA3ACDC28 /* KokoroAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5389B9AB314F49B79CC74F35 /* KokoroAdapter.swift */; };
-		F1ABADA204CE4FB8AB66D94C /* Qwen3TTSAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B038C7E57C449B6A9020E34 /* Qwen3TTSAdapter.swift */; };
-		2642392F358E4C04AE2047D1 /* ChatterboxAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DB45A401184B57BA19CBF9 /* ChatterboxAdapter.swift */; };
-		51B71B85059545999445F941 /* CosyVoice3Adapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732B76807D0747969BAAF796 /* CosyVoice3Adapter.swift */; };
-		C6662119922F473D896B603D /* MisakiG2P.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19AC068A5A574154A1E865C0 /* MisakiG2P.swift */; };
-		74A160F09A334C3EA7DF2A40 /* G2PProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD48ECCCCA9D4D169515EA00 /* G2PProtocol.swift */; };
-		974D5EBB137A423B9BDDB105 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8F2C82FA22416E87CDDD1D /* AudioPlayer.swift */; };
-		B6B4EF72034D441C8290AE0A /* SleepTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920FB626EAFD4D4890E6D327 /* SleepTimer.swift */; };
-		05306A1C988E44F9B1B482F8 /* AudioSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A721564CBF94EFEA6B2C61C /* AudioSession.swift */; };
-		A0B5E0C16A00467C897FF4EF /* DeviceCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = F80CE9AEA5A04E5B921CF6B3 /* DeviceCapability.swift */; };
-		9D5C272D77BA453397A838C9 /* ModelRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54E538C0B15542B4A3341F4D /* ModelRegistry.swift */; };
-		398E72198BB74681A0C063C1 /* TTSModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 229E1BCC297A4582AA2F93C1 /* TTSModelProtocol.swift */; };
-		B038433D1F06445FB24E6DFD /* ModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D232AFED05446CB18E241C /* ModelManager.swift */; };
-		E01AAD652C244E928262AFC3 /* TTSController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD7FF546A679443F8F401D72 /* TTSController.swift */; };
-		1487F1C0C82848C8BDF5C315 /* TTSModelInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666F546C17DC467AAD705FB1 /* TTSModelInfo.swift */; };
-		A0BD9B1B041547408EDE1A50 /* FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ECD6E6D0B8E4E1A94CAF325 /* FontManager.swift */; };
-		69113E2E793B4088A8E77F68 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0C486BFB9348F69D00274B /* ThemeManager.swift */; };
-		058442F0EBAE4930997631CE /* AccessibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F26AF9B4394AE082828F78 /* AccessibilityManager.swift */; };
-		C6B84EF01A5B43EC88284091 /* ReaderTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46552E62CED2426C91CF6D15 /* ReaderTextView.swift */; };
-		2230A761940C4CBFBC278BB5 /* ReaderContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F3A3275F354308AFE83A01 /* ReaderContainerView.swift */; };
-		A0BE578373C14FF38DF517A6 /* PageThumbnailGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1AEBA6C7C2F4B1B8837C8BF /* PageThumbnailGrid.swift */; };
-		731614B4AE2F458EBA80A534 /* PDFReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC13F6A14BA4850AB7FBDD2 /* PDFReaderView.swift */; };
-		2A9EFE8614A1404E877AA6E1 /* TOCView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF96EC7E07C425DAEE6D216 /* TOCView.swift */; };
-		789D5938C1C247D291E54DD9 /* ReadingModeToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EBBBB2A56DF46E9836BB67B /* ReadingModeToggle.swift */; };
-		4FC762165F9A499DAE84B6BA /* ReadingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E278A790907F475D9C4951DC /* ReadingSettingsView.swift */; };
-		C6C23533DB954FC6A44D99E7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1876FC9491A94AA0B0078C80 /* SettingsView.swift */; };
-		D82234BF288148A6ABB51189 /* AccessibilitySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39E0ADD8EB5041FE96957704 /* AccessibilitySettingsView.swift */; };
-		2FEE9E479B5643BB9230E96B /* AppearanceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 248866E966C84C3ABC37094C /* AppearanceSettingsView.swift */; };
-		17B2CCC74D22464E99FB3377 /* ReadingRuler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2222CCF1C15A44C69580CC14 /* ReadingRuler.swift */; };
-		A961FC648F4D4226B2A97554 /* SentenceHighlightOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0DE994CE6864D958AF09E34 /* SentenceHighlightOverlay.swift */; };
-		00375242C42C4B63B13BC088 /* HighlightSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1119C75B5202421CB000A3E3 /* HighlightSettingsView.swift */; };
-		547CC78E0ABF487FBE38EAF3 /* WordHighlightOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0F7FCBECF5D4D56A19BF4C6 /* WordHighlightOverlay.swift */; };
-		77AF42C974FC45EA9821ACCD /* DocumentLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2802800ECD43779ED3FCDF /* DocumentLibraryView.swift */; };
-		47A6EC8DD4364DE1B4A5C4C8 /* ReadingHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52535195712E45A1BF47CED5 /* ReadingHistoryView.swift */; };
-		858C66120CED466598EB49D0 /* DocumentCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FE4FCCA766F4131A7AA23D4 /* DocumentCard.swift */; };
-		595249D916BE48289CC43A8E /* ModelDownloadProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D6A6BBCF93D4B4A81ECA989 /* ModelDownloadProgress.swift */; };
-		7A9E50FBCC0948D5B3111303 /* ModelManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BA1CBC9B2F4055BC6F44C6 /* ModelManagerView.swift */; };
-		9EBFD48E2C4D4D018F6B2F60 /* ModelCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F9B2C0025AE45D9872794AB /* ModelCard.swift */; };
-		E9854E16803C44BAB0E8D8B8 /* TextBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E1C7C90177540C8855E6E05 /* TextBoxView.swift */; };
-		2B775FB801334AFC8E94FFB5 /* CanvasOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B02E5DF42F234C8F835F2BB0 /* CanvasOverlay.swift */; };
-		95790151B602428A9F6DB30D /* AnnotationExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1545F4026D7246BE8EFEFD16 /* AnnotationExportView.swift */; };
-		265C2644135D41B18F9D087B /* StickyNoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E22E7386BD49FC94516880 /* StickyNoteView.swift */; };
-		C1DBA48C2E5C4852868B961B /* AnnotationToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B21B56FA0C942138256BF6E /* AnnotationToolbar.swift */; };
-		3E131767CE544FA19F7CC07C /* ShapeToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A48C5C6966D456CAA015982 /* ShapeToolView.swift */; };
-		5E7E88C88F854AC183362705 /* BookmarkButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9604E123F9F94F3B9EC50783 /* BookmarkButton.swift */; };
-		D282D0ED9C254A1096A9CC9F /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C58667F5C57B443FAC6E40AA /* ProgressBar.swift */; };
-		2ABB0709734049FBA42D3EE4 /* TTSControlBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3E1FF3562649249F139BCC /* TTSControlBar.swift */; };
-		A3D06DF6A2D44551B2F7FA1D /* VoicePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00F800CA3804D909833904D /* VoicePickerView.swift */; };
-		FE66CDC6839E4B47B8FFF224 /* SleepTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DF410553DC34146BEEE8341 /* SleepTimerView.swift */; };
-		58A05F8D39D24AC5992F468F /* TextExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7114F905AF52455B9E5F6AE3 /* TextExtractorTests.swift */; };
-		0D3C1E60A308409382C99691 /* BookmarkManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D9E491F16044BC8B818F73 /* BookmarkManagerTests.swift */; };
-		F152B15322A14AAFBA154B74 /* FontManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4689666098E146E58756193E /* FontManagerTests.swift */; };
-		B81291A484F64CF9BA673DD3 /* AnnotationExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4E240FFB8074120BF2CD312 /* AnnotationExporterTests.swift */; };
-		FAFEAA258E99411284ED4AD4 /* AnnotationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B1BD0151B60474483C3B12B /* AnnotationManagerTests.swift */; };
-		3BA5F3DCF9204E879E8AF732 /* UndoRedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BAEDCC8F68467488EA2072 /* UndoRedoTests.swift */; };
-		91ADF252846C47C590794736 /* ModelManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87647D84D5664CF6B0B84C60 /* ModelManagerTests.swift */; };
-		8CF81BDDBC6E450D981B7613 /* TTSModelProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76D356E74B704C689D1F988B /* TTSModelProtocolTests.swift */; };
-		ED29ADC391884116AB0A8CE5 /* DeviceCapabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7F1894A86394D95ADA35DCD /* DeviceCapabilityTests.swift */; };
-		6ACDE1E9FF20499F82C4A86A /* ModelManagementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3C8EEC9F874776B089D92B /* ModelManagementTests.swift */; };
-		BE07F5FBCFB14530AD8C60DA /* AccessibilityUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 957BDC81D19A462B9FAADF3F /* AccessibilityUITests.swift */; };
-		59EFBDE6535F4EEB8C8DE337 /* ReaderFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ADDCBED8F944D49A1B11E13 /* ReaderFlowTests.swift */; };
-		F72E68DC33EB40BA8B30A279 /* model_registry.json in Resources */ = {isa = PBXBuildFile; fileRef = FF013D8755DE4FA1973AB34B /* model_registry.json */; };
-		369BF3C07CFA422BA7C2374A /* OpenDyslexic-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = D038EAF53EAE43889B986F66 /* OpenDyslexic-Regular.otf */; };
-		D778126A99DB44F89D448A7B /* OpenDyslexic-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 2ACE916F951A4CF78A287AC5 /* OpenDyslexic-Bold.otf */; };
-		CBAF28AE4C234003AFA477F1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0552E59E83F5489FA314852A /* Assets.xcassets */; };
+		00375242C42C4B63B13BC088 /* Vachanam/Views/Highlight/HighlightSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1119C75B5202421CB000A3E3 /* Vachanam/Views/Highlight/HighlightSettingsView.swift */; };
+		05306A1C988E44F9B1B482F8 /* Vachanam/Audio/AudioSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A721564CBF94EFEA6B2C61C /* Vachanam/Audio/AudioSession.swift */; };
+		058442F0EBAE4930997631CE /* Vachanam/Accessibility/AccessibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F26AF9B4394AE082828F78 /* Vachanam/Accessibility/AccessibilityManager.swift */; };
+		0D3C1E60A308409382C99691 /* VachanamTests/PDFTests/BookmarkManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D9E491F16044BC8B818F73 /* VachanamTests/PDFTests/BookmarkManagerTests.swift */; };
+		1487F1C0C82848C8BDF5C315 /* Vachanam/TTS/TTSModelInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666F546C17DC467AAD705FB1 /* Vachanam/TTS/TTSModelInfo.swift */; };
+		17B2CCC74D22464E99FB3377 /* Vachanam/Views/Highlight/ReadingRuler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2222CCF1C15A44C69580CC14 /* Vachanam/Views/Highlight/ReadingRuler.swift */; };
+		2230A761940C4CBFBC278BB5 /* Vachanam/Views/Reader/ReaderContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F3A3275F354308AFE83A01 /* Vachanam/Views/Reader/ReaderContainerView.swift */; };
+		2642392F358E4C04AE2047D1 /* Vachanam/Adapters/ChatterboxAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DB45A401184B57BA19CBF9 /* Vachanam/Adapters/ChatterboxAdapter.swift */; };
+		265C2644135D41B18F9D087B /* Vachanam/Views/Annotations/StickyNoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E22E7386BD49FC94516880 /* Vachanam/Views/Annotations/StickyNoteView.swift */; };
+		2A9EFE8614A1404E877AA6E1 /* Vachanam/Views/Reader/TOCView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF96EC7E07C425DAEE6D216 /* Vachanam/Views/Reader/TOCView.swift */; };
+		2ABB0709734049FBA42D3EE4 /* Vachanam/Views/TTS/TTSControlBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3E1FF3562649249F139BCC /* Vachanam/Views/TTS/TTSControlBar.swift */; };
+		2B775FB801334AFC8E94FFB5 /* Vachanam/Views/Annotations/CanvasOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B02E5DF42F234C8F835F2BB0 /* Vachanam/Views/Annotations/CanvasOverlay.swift */; };
+		2FEE9E479B5643BB9230E96B /* Vachanam/Views/Settings/AppearanceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 248866E966C84C3ABC37094C /* Vachanam/Views/Settings/AppearanceSettingsView.swift */; };
+		302D6E11847148CC831486B7 /* Vachanam/PDF/TextExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA1E09F12514B4288619263 /* Vachanam/PDF/TextExtractor.swift */; };
+		369BF3C07CFA422BA7C2374A /* Vachanam/Resources/OpenDyslexic-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = D038EAF53EAE43889B986F66 /* Vachanam/Resources/OpenDyslexic-Regular.otf */; };
+		398E72198BB74681A0C063C1 /* Vachanam/TTS/TTSModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 229E1BCC297A4582AA2F93C1 /* Vachanam/TTS/TTSModelProtocol.swift */; };
+		3B5A5CAB841E4796BF73F9DC /* Vachanam/PDF/ReaderDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2454EBFA4E144EDCBB57A270 /* Vachanam/PDF/ReaderDocument.swift */; };
+		3BA5F3DCF9204E879E8AF732 /* VachanamTests/AnnotationTests/UndoRedoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BAEDCC8F68467488EA2072 /* VachanamTests/AnnotationTests/UndoRedoTests.swift */; };
+		3E131767CE544FA19F7CC07C /* Vachanam/Views/Annotations/ShapeToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A48C5C6966D456CAA015982 /* Vachanam/Views/Annotations/ShapeToolView.swift */; };
+		420F2D219E26435293309CE5 /* Vachanam/App/ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B72D4D7B186C42B5A3C8C3C6 /* Vachanam/App/ContentView.swift */; };
+		47A6EC8DD4364DE1B4A5C4C8 /* Vachanam/Views/Library/ReadingHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52535195712E45A1BF47CED5 /* Vachanam/Views/Library/ReadingHistoryView.swift */; };
+		4FC762165F9A499DAE84B6BA /* Vachanam/Views/Settings/ReadingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E278A790907F475D9C4951DC /* Vachanam/Views/Settings/ReadingSettingsView.swift */; };
+		51B71B85059545999445F941 /* Vachanam/Adapters/CosyVoice3Adapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732B76807D0747969BAAF796 /* Vachanam/Adapters/CosyVoice3Adapter.swift */; };
+		547CC78E0ABF487FBE38EAF3 /* Vachanam/Views/Highlight/WordHighlightOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0F7FCBECF5D4D56A19BF4C6 /* Vachanam/Views/Highlight/WordHighlightOverlay.swift */; };
+		55BA1ED38037495DA70AE84F /* Vachanam/App/VachanamApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2A1510D4C3473EA7EA9F8B /* Vachanam/App/VachanamApp.swift */; };
+		58A05F8D39D24AC5992F468F /* VachanamTests/PDFTests/TextExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7114F905AF52455B9E5F6AE3 /* VachanamTests/PDFTests/TextExtractorTests.swift */; };
+		595249D916BE48289CC43A8E /* Vachanam/Views/Models/ModelDownloadProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D6A6BBCF93D4B4A81ECA989 /* Vachanam/Views/Models/ModelDownloadProgress.swift */; };
+		59EFBDE6535F4EEB8C8DE337 /* VachanamUITests/ReaderFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ADDCBED8F944D49A1B11E13 /* VachanamUITests/ReaderFlowTests.swift */; };
+		5E7E88C88F854AC183362705 /* Vachanam/Views/Components/BookmarkButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9604E123F9F94F3B9EC50783 /* Vachanam/Views/Components/BookmarkButton.swift */; };
+		69113E2E793B4088A8E77F68 /* Vachanam/Accessibility/ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0C486BFB9348F69D00274B /* Vachanam/Accessibility/ThemeManager.swift */; };
+		6ACDE1E9FF20499F82C4A86A /* VachanamUITests/ModelManagementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3C8EEC9F874776B089D92B /* VachanamUITests/ModelManagementTests.swift */; };
+		731614B4AE2F458EBA80A534 /* Vachanam/Views/Reader/PDFReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC13F6A14BA4850AB7FBDD2 /* Vachanam/Views/Reader/PDFReaderView.swift */; };
+		74A160F09A334C3EA7DF2A40 /* Vachanam/Adapters/G2P/G2PProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD48ECCCCA9D4D169515EA00 /* Vachanam/Adapters/G2P/G2PProtocol.swift */; };
+		77AF42C974FC45EA9821ACCD /* Vachanam/Views/Library/DocumentLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2802800ECD43779ED3FCDF /* Vachanam/Views/Library/DocumentLibraryView.swift */; };
+		789D5938C1C247D291E54DD9 /* Vachanam/Views/Reader/ReadingModeToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EBBBB2A56DF46E9836BB67B /* Vachanam/Views/Reader/ReadingModeToggle.swift */; };
+		7A9E50FBCC0948D5B3111303 /* Vachanam/Views/Models/ModelManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BA1CBC9B2F4055BC6F44C6 /* Vachanam/Views/Models/ModelManagerView.swift */; };
+		7CC7DDAFC7DF4E9DAE74F0C8 /* Vachanam/PDF/BookmarkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E9F3B46DA647BFA441C89A /* Vachanam/PDF/BookmarkManager.swift */; };
+		858C66120CED466598EB49D0 /* Vachanam/Views/Library/DocumentCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FE4FCCA766F4131A7AA23D4 /* Vachanam/Views/Library/DocumentCard.swift */; };
+		8CF81BDDBC6E450D981B7613 /* VachanamTests/TTSTests/TTSModelProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76D356E74B704C689D1F988B /* VachanamTests/TTSTests/TTSModelProtocolTests.swift */; };
+		91ADF252846C47C590794736 /* VachanamTests/TTSTests/ModelManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87647D84D5664CF6B0B84C60 /* VachanamTests/TTSTests/ModelManagerTests.swift */; };
+		9529FDF8CBF64554ABD475C6 /* Vachanam/PDF/ReadingProgressTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5961A8116474204916F9DC2 /* Vachanam/PDF/ReadingProgressTracker.swift */; };
+		95790151B602428A9F6DB30D /* Vachanam/Views/Annotations/AnnotationExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1545F4026D7246BE8EFEFD16 /* Vachanam/Views/Annotations/AnnotationExportView.swift */; };
+		95C2481F45CB41E1AA7FEB91 /* Vachanam/Annotations/AnnotationExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E740A24CDD3E4932909A3826 /* Vachanam/Annotations/AnnotationExporter.swift */; };
+		974D5EBB137A423B9BDDB105 /* Vachanam/Audio/AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8F2C82FA22416E87CDDD1D /* Vachanam/Audio/AudioPlayer.swift */; };
+		99CFD762DF6F4BDAA3ACDC28 /* Vachanam/Adapters/KokoroAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5389B9AB314F49B79CC74F35 /* Vachanam/Adapters/KokoroAdapter.swift */; };
+		9D5C272D77BA453397A838C9 /* Vachanam/TTS/ModelRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54E538C0B15542B4A3341F4D /* Vachanam/TTS/ModelRegistry.swift */; };
+		9EBFD48E2C4D4D018F6B2F60 /* Vachanam/Views/Models/ModelCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F9B2C0025AE45D9872794AB /* Vachanam/Views/Models/ModelCard.swift */; };
+		A0B5E0C16A00467C897FF4EF /* Vachanam/TTS/DeviceCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = F80CE9AEA5A04E5B921CF6B3 /* Vachanam/TTS/DeviceCapability.swift */; };
+		A0BD9B1B041547408EDE1A50 /* Vachanam/Accessibility/FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ECD6E6D0B8E4E1A94CAF325 /* Vachanam/Accessibility/FontManager.swift */; };
+		A0BE578373C14FF38DF517A6 /* Vachanam/Views/Reader/PageThumbnailGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1AEBA6C7C2F4B1B8837C8BF /* Vachanam/Views/Reader/PageThumbnailGrid.swift */; };
+		A3D06DF6A2D44551B2F7FA1D /* Vachanam/Views/TTS/VoicePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00F800CA3804D909833904D /* Vachanam/Views/TTS/VoicePickerView.swift */; };
+		A40D7425F37B459DB5E6EABE /* Vachanam/Annotations/UndoRedoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAC43A6E34649958ED0F2F5 /* Vachanam/Annotations/UndoRedoManager.swift */; };
+		A961FC648F4D4226B2A97554 /* Vachanam/Views/Highlight/SentenceHighlightOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0DE994CE6864D958AF09E34 /* Vachanam/Views/Highlight/SentenceHighlightOverlay.swift */; };
+		B038433D1F06445FB24E6DFD /* Vachanam/TTS/ModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D232AFED05446CB18E241C /* Vachanam/TTS/ModelManager.swift */; };
+		B6B4EF72034D441C8290AE0A /* Vachanam/Audio/SleepTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920FB626EAFD4D4890E6D327 /* Vachanam/Audio/SleepTimer.swift */; };
+		B81291A484F64CF9BA673DD3 /* VachanamTests/AnnotationTests/AnnotationExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4E240FFB8074120BF2CD312 /* VachanamTests/AnnotationTests/AnnotationExporterTests.swift */; };
+		BE07F5FBCFB14530AD8C60DA /* VachanamUITests/AccessibilityUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 957BDC81D19A462B9FAADF3F /* VachanamUITests/AccessibilityUITests.swift */; };
+		C1DBA48C2E5C4852868B961B /* Vachanam/Views/Annotations/AnnotationToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B21B56FA0C942138256BF6E /* Vachanam/Views/Annotations/AnnotationToolbar.swift */; };
+		C6662119922F473D896B603D /* Vachanam/Adapters/G2P/MisakiG2P.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19AC068A5A574154A1E865C0 /* Vachanam/Adapters/G2P/MisakiG2P.swift */; };
+		C6B84EF01A5B43EC88284091 /* Vachanam/Views/Reader/ReaderTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46552E62CED2426C91CF6D15 /* Vachanam/Views/Reader/ReaderTextView.swift */; };
+		C6C23533DB954FC6A44D99E7 /* Vachanam/Views/Settings/SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1876FC9491A94AA0B0078C80 /* Vachanam/Views/Settings/SettingsView.swift */; };
+		CBAF28AE4C234003AFA477F1 /* Vachanam/Resources/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0552E59E83F5489FA314852A /* Vachanam/Resources/Assets.xcassets */; };
+		D282D0ED9C254A1096A9CC9F /* Vachanam/Views/Components/ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C58667F5C57B443FAC6E40AA /* Vachanam/Views/Components/ProgressBar.swift */; };
+		D69497C4908544A6A5AA1F99 /* Vachanam/App/AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356910ED7D9748909A50922F /* Vachanam/App/AppState.swift */; };
+		D778126A99DB44F89D448A7B /* Vachanam/Resources/OpenDyslexic-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 2ACE916F951A4CF78A287AC5 /* Vachanam/Resources/OpenDyslexic-Bold.otf */; };
+		D82234BF288148A6ABB51189 /* Vachanam/Views/Settings/AccessibilitySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39E0ADD8EB5041FE96957704 /* Vachanam/Views/Settings/AccessibilitySettingsView.swift */; };
+		E01AAD652C244E928262AFC3 /* Vachanam/TTS/TTSController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD7FF546A679443F8F401D72 /* Vachanam/TTS/TTSController.swift */; };
+		E9854E16803C44BAB0E8D8B8 /* Vachanam/Views/Annotations/TextBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E1C7C90177540C8855E6E05 /* Vachanam/Views/Annotations/TextBoxView.swift */; };
+		ED29ADC391884116AB0A8CE5 /* VachanamTests/TTSTests/DeviceCapabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7F1894A86394D95ADA35DCD /* VachanamTests/TTSTests/DeviceCapabilityTests.swift */; };
+		F152B15322A14AAFBA154B74 /* VachanamTests/AccessibilityTests/FontManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4689666098E146E58756193E /* VachanamTests/AccessibilityTests/FontManagerTests.swift */; };
+		F1ABADA204CE4FB8AB66D94C /* Vachanam/Adapters/Qwen3TTSAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B038C7E57C449B6A9020E34 /* Vachanam/Adapters/Qwen3TTSAdapter.swift */; };
+		F275F34677FA4FE1B5FA9D53 /* Vachanam/Annotations/AnnotationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4BCA9192A2495D8E56984A /* Vachanam/Annotations/AnnotationManager.swift */; };
+		F72E68DC33EB40BA8B30A279 /* Vachanam/Resources/model_registry.json in Resources */ = {isa = PBXBuildFile; fileRef = FF013D8755DE4FA1973AB34B /* Vachanam/Resources/model_registry.json */; };
+		FAFEAA258E99411284ED4AD4 /* VachanamTests/AnnotationTests/AnnotationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B1BD0151B60474483C3B12B /* VachanamTests/AnnotationTests/AnnotationManagerTests.swift */; };
+		FE66CDC6839E4B47B8FFF224 /* Vachanam/Views/TTS/SleepTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DF410553DC34146BEEE8341 /* Vachanam/Views/TTS/SleepTimerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -102,96 +102,96 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		688CF191F149421F9BC5CBC7 /* Vachanam.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vachanam.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B5E7512D4F5345E280DD71CC /* VachanamTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VachanamTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		03E22E7386BD49FC94516880 /* Vachanam/Views/Annotations/StickyNoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Annotations/StickyNoteView.swift; sourceTree = "<group>"; };
+		0552E59E83F5489FA314852A /* Vachanam/Resources/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Vachanam/Resources/Assets.xcassets; sourceTree = "<group>"; };
+		0B1BD0151B60474483C3B12B /* VachanamTests/AnnotationTests/AnnotationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamTests/AnnotationTests/AnnotationManagerTests.swift; sourceTree = "<group>"; };
 		0DA7AC26472D46869D2EC6C7 /* VachanamUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VachanamUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		356910ED7D9748909A50922F /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/App/AppState.swift"; sourceTree = "<group>"; };
-		B72D4D7B186C42B5A3C8C3C6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/App/ContentView.swift"; sourceTree = "<group>"; };
-		EF2A1510D4C3473EA7EA9F8B /* VachanamApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/App/VachanamApp.swift"; sourceTree = "<group>"; };
-		2454EBFA4E144EDCBB57A270 /* ReaderDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/PDF/ReaderDocument.swift"; sourceTree = "<group>"; };
-		D5961A8116474204916F9DC2 /* ReadingProgressTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/PDF/ReadingProgressTracker.swift"; sourceTree = "<group>"; };
-		7BA1E09F12514B4288619263 /* TextExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/PDF/TextExtractor.swift"; sourceTree = "<group>"; };
-		E2E9F3B46DA647BFA441C89A /* BookmarkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/PDF/BookmarkManager.swift"; sourceTree = "<group>"; };
-		BB4BCA9192A2495D8E56984A /* AnnotationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Annotations/AnnotationManager.swift"; sourceTree = "<group>"; };
-		DDAC43A6E34649958ED0F2F5 /* UndoRedoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Annotations/UndoRedoManager.swift"; sourceTree = "<group>"; };
-		E740A24CDD3E4932909A3826 /* AnnotationExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Annotations/AnnotationExporter.swift"; sourceTree = "<group>"; };
-		5389B9AB314F49B79CC74F35 /* KokoroAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Adapters/KokoroAdapter.swift"; sourceTree = "<group>"; };
-		9B038C7E57C449B6A9020E34 /* Qwen3TTSAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Adapters/Qwen3TTSAdapter.swift"; sourceTree = "<group>"; };
-		A8DB45A401184B57BA19CBF9 /* ChatterboxAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Adapters/ChatterboxAdapter.swift"; sourceTree = "<group>"; };
-		732B76807D0747969BAAF796 /* CosyVoice3Adapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Adapters/CosyVoice3Adapter.swift"; sourceTree = "<group>"; };
-		19AC068A5A574154A1E865C0 /* MisakiG2P.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Adapters/G2P/MisakiG2P.swift"; sourceTree = "<group>"; };
-		CD48ECCCCA9D4D169515EA00 /* G2PProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Adapters/G2P/G2PProtocol.swift"; sourceTree = "<group>"; };
-		AC8F2C82FA22416E87CDDD1D /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Audio/AudioPlayer.swift"; sourceTree = "<group>"; };
-		920FB626EAFD4D4890E6D327 /* SleepTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Audio/SleepTimer.swift"; sourceTree = "<group>"; };
-		1A721564CBF94EFEA6B2C61C /* AudioSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Audio/AudioSession.swift"; sourceTree = "<group>"; };
-		F80CE9AEA5A04E5B921CF6B3 /* DeviceCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/TTS/DeviceCapability.swift"; sourceTree = "<group>"; };
-		54E538C0B15542B4A3341F4D /* ModelRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/TTS/ModelRegistry.swift"; sourceTree = "<group>"; };
-		229E1BCC297A4582AA2F93C1 /* TTSModelProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/TTS/TTSModelProtocol.swift"; sourceTree = "<group>"; };
-		A1D232AFED05446CB18E241C /* ModelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/TTS/ModelManager.swift"; sourceTree = "<group>"; };
-		AD7FF546A679443F8F401D72 /* TTSController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/TTS/TTSController.swift"; sourceTree = "<group>"; };
-		666F546C17DC467AAD705FB1 /* TTSModelInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/TTS/TTSModelInfo.swift"; sourceTree = "<group>"; };
-		5ECD6E6D0B8E4E1A94CAF325 /* FontManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Accessibility/FontManager.swift"; sourceTree = "<group>"; };
-		8C0C486BFB9348F69D00274B /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Accessibility/ThemeManager.swift"; sourceTree = "<group>"; };
-		84F26AF9B4394AE082828F78 /* AccessibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Accessibility/AccessibilityManager.swift"; sourceTree = "<group>"; };
-		46552E62CED2426C91CF6D15 /* ReaderTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Reader/ReaderTextView.swift"; sourceTree = "<group>"; };
-		F2F3A3275F354308AFE83A01 /* ReaderContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Reader/ReaderContainerView.swift"; sourceTree = "<group>"; };
-		E1AEBA6C7C2F4B1B8837C8BF /* PageThumbnailGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Reader/PageThumbnailGrid.swift"; sourceTree = "<group>"; };
-		4CC13F6A14BA4850AB7FBDD2 /* PDFReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Reader/PDFReaderView.swift"; sourceTree = "<group>"; };
-		0FF96EC7E07C425DAEE6D216 /* TOCView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Reader/TOCView.swift"; sourceTree = "<group>"; };
-		7EBBBB2A56DF46E9836BB67B /* ReadingModeToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Reader/ReadingModeToggle.swift"; sourceTree = "<group>"; };
-		E278A790907F475D9C4951DC /* ReadingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Settings/ReadingSettingsView.swift"; sourceTree = "<group>"; };
-		1876FC9491A94AA0B0078C80 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Settings/SettingsView.swift"; sourceTree = "<group>"; };
-		39E0ADD8EB5041FE96957704 /* AccessibilitySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Settings/AccessibilitySettingsView.swift"; sourceTree = "<group>"; };
-		248866E966C84C3ABC37094C /* AppearanceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Settings/AppearanceSettingsView.swift"; sourceTree = "<group>"; };
-		2222CCF1C15A44C69580CC14 /* ReadingRuler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Highlight/ReadingRuler.swift"; sourceTree = "<group>"; };
-		B0DE994CE6864D958AF09E34 /* SentenceHighlightOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Highlight/SentenceHighlightOverlay.swift"; sourceTree = "<group>"; };
-		1119C75B5202421CB000A3E3 /* HighlightSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Highlight/HighlightSettingsView.swift"; sourceTree = "<group>"; };
-		A0F7FCBECF5D4D56A19BF4C6 /* WordHighlightOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Highlight/WordHighlightOverlay.swift"; sourceTree = "<group>"; };
-		FB2802800ECD43779ED3FCDF /* DocumentLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Library/DocumentLibraryView.swift"; sourceTree = "<group>"; };
-		52535195712E45A1BF47CED5 /* ReadingHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Library/ReadingHistoryView.swift"; sourceTree = "<group>"; };
-		6FE4FCCA766F4131A7AA23D4 /* DocumentCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Library/DocumentCard.swift"; sourceTree = "<group>"; };
-		8D6A6BBCF93D4B4A81ECA989 /* ModelDownloadProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Models/ModelDownloadProgress.swift"; sourceTree = "<group>"; };
-		87BA1CBC9B2F4055BC6F44C6 /* ModelManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Models/ModelManagerView.swift"; sourceTree = "<group>"; };
-		4F9B2C0025AE45D9872794AB /* ModelCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Models/ModelCard.swift"; sourceTree = "<group>"; };
-		8E1C7C90177540C8855E6E05 /* TextBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Annotations/TextBoxView.swift"; sourceTree = "<group>"; };
-		B02E5DF42F234C8F835F2BB0 /* CanvasOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Annotations/CanvasOverlay.swift"; sourceTree = "<group>"; };
-		1545F4026D7246BE8EFEFD16 /* AnnotationExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Annotations/AnnotationExportView.swift"; sourceTree = "<group>"; };
-		03E22E7386BD49FC94516880 /* StickyNoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Annotations/StickyNoteView.swift"; sourceTree = "<group>"; };
-		9B21B56FA0C942138256BF6E /* AnnotationToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Annotations/AnnotationToolbar.swift"; sourceTree = "<group>"; };
-		4A48C5C6966D456CAA015982 /* ShapeToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Annotations/ShapeToolView.swift"; sourceTree = "<group>"; };
-		9604E123F9F94F3B9EC50783 /* BookmarkButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Components/BookmarkButton.swift"; sourceTree = "<group>"; };
-		C58667F5C57B443FAC6E40AA /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/Components/ProgressBar.swift"; sourceTree = "<group>"; };
-		1F3E1FF3562649249F139BCC /* TTSControlBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/TTS/TTSControlBar.swift"; sourceTree = "<group>"; };
-		F00F800CA3804D909833904D /* VoicePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/TTS/VoicePickerView.swift"; sourceTree = "<group>"; };
-		3DF410553DC34146BEEE8341 /* SleepTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Vachanam/Views/TTS/SleepTimerView.swift"; sourceTree = "<group>"; };
-		7114F905AF52455B9E5F6AE3 /* TextExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamTests/PDFTests/TextExtractorTests.swift"; sourceTree = "<group>"; };
-		A4D9E491F16044BC8B818F73 /* BookmarkManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamTests/PDFTests/BookmarkManagerTests.swift"; sourceTree = "<group>"; };
-		4689666098E146E58756193E /* FontManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamTests/AccessibilityTests/FontManagerTests.swift"; sourceTree = "<group>"; };
-		E4E240FFB8074120BF2CD312 /* AnnotationExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamTests/AnnotationTests/AnnotationExporterTests.swift"; sourceTree = "<group>"; };
-		0B1BD0151B60474483C3B12B /* AnnotationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamTests/AnnotationTests/AnnotationManagerTests.swift"; sourceTree = "<group>"; };
-		D8BAEDCC8F68467488EA2072 /* UndoRedoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamTests/AnnotationTests/UndoRedoTests.swift"; sourceTree = "<group>"; };
-		87647D84D5664CF6B0B84C60 /* ModelManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamTests/TTSTests/ModelManagerTests.swift"; sourceTree = "<group>"; };
-		76D356E74B704C689D1F988B /* TTSModelProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamTests/TTSTests/TTSModelProtocolTests.swift"; sourceTree = "<group>"; };
-		B7F1894A86394D95ADA35DCD /* DeviceCapabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamTests/TTSTests/DeviceCapabilityTests.swift"; sourceTree = "<group>"; };
-		4D3C8EEC9F874776B089D92B /* ModelManagementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamUITests/ModelManagementTests.swift"; sourceTree = "<group>"; };
-		957BDC81D19A462B9FAADF3F /* AccessibilityUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamUITests/AccessibilityUITests.swift"; sourceTree = "<group>"; };
-		7ADDCBED8F944D49A1B11E13 /* ReaderFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VachanamUITests/ReaderFlowTests.swift"; sourceTree = "<group>"; };
-		FADAB5CC9E5B486EA9630DF7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Vachanam/Info.plist"; sourceTree = "<group>"; };
-		FF013D8755DE4FA1973AB34B /* model_registry.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "Vachanam/Resources/model_registry.json"; sourceTree = "<group>"; };
-		D038EAF53EAE43889B986F66 /* OpenDyslexic-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Vachanam/Resources/OpenDyslexic-Regular.otf"; sourceTree = "<group>"; };
-		2ACE916F951A4CF78A287AC5 /* OpenDyslexic-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Vachanam/Resources/OpenDyslexic-Bold.otf"; sourceTree = "<group>"; };
-		0552E59E83F5489FA314852A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Vachanam/Resources/Assets.xcassets"; sourceTree = "<group>"; };
+		0FF96EC7E07C425DAEE6D216 /* Vachanam/Views/Reader/TOCView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Reader/TOCView.swift; sourceTree = "<group>"; };
+		1119C75B5202421CB000A3E3 /* Vachanam/Views/Highlight/HighlightSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Highlight/HighlightSettingsView.swift; sourceTree = "<group>"; };
+		1545F4026D7246BE8EFEFD16 /* Vachanam/Views/Annotations/AnnotationExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Annotations/AnnotationExportView.swift; sourceTree = "<group>"; };
+		1876FC9491A94AA0B0078C80 /* Vachanam/Views/Settings/SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Settings/SettingsView.swift; sourceTree = "<group>"; };
+		19AC068A5A574154A1E865C0 /* Vachanam/Adapters/G2P/MisakiG2P.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Adapters/G2P/MisakiG2P.swift; sourceTree = "<group>"; };
+		1A721564CBF94EFEA6B2C61C /* Vachanam/Audio/AudioSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Audio/AudioSession.swift; sourceTree = "<group>"; };
+		1F3E1FF3562649249F139BCC /* Vachanam/Views/TTS/TTSControlBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/TTS/TTSControlBar.swift; sourceTree = "<group>"; };
+		2222CCF1C15A44C69580CC14 /* Vachanam/Views/Highlight/ReadingRuler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Highlight/ReadingRuler.swift; sourceTree = "<group>"; };
+		229E1BCC297A4582AA2F93C1 /* Vachanam/TTS/TTSModelProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/TTS/TTSModelProtocol.swift; sourceTree = "<group>"; };
+		2454EBFA4E144EDCBB57A270 /* Vachanam/PDF/ReaderDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/PDF/ReaderDocument.swift; sourceTree = "<group>"; };
+		248866E966C84C3ABC37094C /* Vachanam/Views/Settings/AppearanceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Settings/AppearanceSettingsView.swift; sourceTree = "<group>"; };
+		2ACE916F951A4CF78A287AC5 /* Vachanam/Resources/OpenDyslexic-Bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Vachanam/Resources/OpenDyslexic-Bold.otf"; sourceTree = "<group>"; };
+		356910ED7D9748909A50922F /* Vachanam/App/AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/App/AppState.swift; sourceTree = "<group>"; };
+		39E0ADD8EB5041FE96957704 /* Vachanam/Views/Settings/AccessibilitySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Settings/AccessibilitySettingsView.swift; sourceTree = "<group>"; };
+		3DF410553DC34146BEEE8341 /* Vachanam/Views/TTS/SleepTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/TTS/SleepTimerView.swift; sourceTree = "<group>"; };
+		46552E62CED2426C91CF6D15 /* Vachanam/Views/Reader/ReaderTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Reader/ReaderTextView.swift; sourceTree = "<group>"; };
+		4689666098E146E58756193E /* VachanamTests/AccessibilityTests/FontManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamTests/AccessibilityTests/FontManagerTests.swift; sourceTree = "<group>"; };
+		4A48C5C6966D456CAA015982 /* Vachanam/Views/Annotations/ShapeToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Annotations/ShapeToolView.swift; sourceTree = "<group>"; };
+		4CC13F6A14BA4850AB7FBDD2 /* Vachanam/Views/Reader/PDFReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Reader/PDFReaderView.swift; sourceTree = "<group>"; };
+		4D3C8EEC9F874776B089D92B /* VachanamUITests/ModelManagementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamUITests/ModelManagementTests.swift; sourceTree = "<group>"; };
+		4F9B2C0025AE45D9872794AB /* Vachanam/Views/Models/ModelCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Models/ModelCard.swift; sourceTree = "<group>"; };
+		52535195712E45A1BF47CED5 /* Vachanam/Views/Library/ReadingHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Library/ReadingHistoryView.swift; sourceTree = "<group>"; };
+		5389B9AB314F49B79CC74F35 /* Vachanam/Adapters/KokoroAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Adapters/KokoroAdapter.swift; sourceTree = "<group>"; };
+		54E538C0B15542B4A3341F4D /* Vachanam/TTS/ModelRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/TTS/ModelRegistry.swift; sourceTree = "<group>"; };
+		5ECD6E6D0B8E4E1A94CAF325 /* Vachanam/Accessibility/FontManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Accessibility/FontManager.swift; sourceTree = "<group>"; };
+		666F546C17DC467AAD705FB1 /* Vachanam/TTS/TTSModelInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/TTS/TTSModelInfo.swift; sourceTree = "<group>"; };
+		688CF191F149421F9BC5CBC7 /* Vachanam.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vachanam.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6FE4FCCA766F4131A7AA23D4 /* Vachanam/Views/Library/DocumentCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Library/DocumentCard.swift; sourceTree = "<group>"; };
+		7114F905AF52455B9E5F6AE3 /* VachanamTests/PDFTests/TextExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamTests/PDFTests/TextExtractorTests.swift; sourceTree = "<group>"; };
+		732B76807D0747969BAAF796 /* Vachanam/Adapters/CosyVoice3Adapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Adapters/CosyVoice3Adapter.swift; sourceTree = "<group>"; };
+		76D356E74B704C689D1F988B /* VachanamTests/TTSTests/TTSModelProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamTests/TTSTests/TTSModelProtocolTests.swift; sourceTree = "<group>"; };
+		7ADDCBED8F944D49A1B11E13 /* VachanamUITests/ReaderFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamUITests/ReaderFlowTests.swift; sourceTree = "<group>"; };
+		7BA1E09F12514B4288619263 /* Vachanam/PDF/TextExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/PDF/TextExtractor.swift; sourceTree = "<group>"; };
+		7EBBBB2A56DF46E9836BB67B /* Vachanam/Views/Reader/ReadingModeToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Reader/ReadingModeToggle.swift; sourceTree = "<group>"; };
+		84F26AF9B4394AE082828F78 /* Vachanam/Accessibility/AccessibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Accessibility/AccessibilityManager.swift; sourceTree = "<group>"; };
+		87647D84D5664CF6B0B84C60 /* VachanamTests/TTSTests/ModelManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamTests/TTSTests/ModelManagerTests.swift; sourceTree = "<group>"; };
+		87BA1CBC9B2F4055BC6F44C6 /* Vachanam/Views/Models/ModelManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Models/ModelManagerView.swift; sourceTree = "<group>"; };
+		8C0C486BFB9348F69D00274B /* Vachanam/Accessibility/ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Accessibility/ThemeManager.swift; sourceTree = "<group>"; };
+		8D6A6BBCF93D4B4A81ECA989 /* Vachanam/Views/Models/ModelDownloadProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Models/ModelDownloadProgress.swift; sourceTree = "<group>"; };
+		8E1C7C90177540C8855E6E05 /* Vachanam/Views/Annotations/TextBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Annotations/TextBoxView.swift; sourceTree = "<group>"; };
+		920FB626EAFD4D4890E6D327 /* Vachanam/Audio/SleepTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Audio/SleepTimer.swift; sourceTree = "<group>"; };
+		957BDC81D19A462B9FAADF3F /* VachanamUITests/AccessibilityUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamUITests/AccessibilityUITests.swift; sourceTree = "<group>"; };
+		9604E123F9F94F3B9EC50783 /* Vachanam/Views/Components/BookmarkButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Components/BookmarkButton.swift; sourceTree = "<group>"; };
+		9B038C7E57C449B6A9020E34 /* Vachanam/Adapters/Qwen3TTSAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Adapters/Qwen3TTSAdapter.swift; sourceTree = "<group>"; };
+		9B21B56FA0C942138256BF6E /* Vachanam/Views/Annotations/AnnotationToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Annotations/AnnotationToolbar.swift; sourceTree = "<group>"; };
+		A0F7FCBECF5D4D56A19BF4C6 /* Vachanam/Views/Highlight/WordHighlightOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Highlight/WordHighlightOverlay.swift; sourceTree = "<group>"; };
+		A1D232AFED05446CB18E241C /* Vachanam/TTS/ModelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/TTS/ModelManager.swift; sourceTree = "<group>"; };
+		A4D9E491F16044BC8B818F73 /* VachanamTests/PDFTests/BookmarkManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamTests/PDFTests/BookmarkManagerTests.swift; sourceTree = "<group>"; };
+		A8DB45A401184B57BA19CBF9 /* Vachanam/Adapters/ChatterboxAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Adapters/ChatterboxAdapter.swift; sourceTree = "<group>"; };
+		AC8F2C82FA22416E87CDDD1D /* Vachanam/Audio/AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Audio/AudioPlayer.swift; sourceTree = "<group>"; };
+		AD7FF546A679443F8F401D72 /* Vachanam/TTS/TTSController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/TTS/TTSController.swift; sourceTree = "<group>"; };
+		B02E5DF42F234C8F835F2BB0 /* Vachanam/Views/Annotations/CanvasOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Annotations/CanvasOverlay.swift; sourceTree = "<group>"; };
+		B0DE994CE6864D958AF09E34 /* Vachanam/Views/Highlight/SentenceHighlightOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Highlight/SentenceHighlightOverlay.swift; sourceTree = "<group>"; };
+		B5E7512D4F5345E280DD71CC /* VachanamTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VachanamTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B72D4D7B186C42B5A3C8C3C6 /* Vachanam/App/ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/App/ContentView.swift; sourceTree = "<group>"; };
+		B7F1894A86394D95ADA35DCD /* VachanamTests/TTSTests/DeviceCapabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamTests/TTSTests/DeviceCapabilityTests.swift; sourceTree = "<group>"; };
+		BB4BCA9192A2495D8E56984A /* Vachanam/Annotations/AnnotationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Annotations/AnnotationManager.swift; sourceTree = "<group>"; };
+		C58667F5C57B443FAC6E40AA /* Vachanam/Views/Components/ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Components/ProgressBar.swift; sourceTree = "<group>"; };
+		CD48ECCCCA9D4D169515EA00 /* Vachanam/Adapters/G2P/G2PProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Adapters/G2P/G2PProtocol.swift; sourceTree = "<group>"; };
+		D038EAF53EAE43889B986F66 /* Vachanam/Resources/OpenDyslexic-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Vachanam/Resources/OpenDyslexic-Regular.otf"; sourceTree = "<group>"; };
+		D5961A8116474204916F9DC2 /* Vachanam/PDF/ReadingProgressTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/PDF/ReadingProgressTracker.swift; sourceTree = "<group>"; };
+		D8BAEDCC8F68467488EA2072 /* VachanamTests/AnnotationTests/UndoRedoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamTests/AnnotationTests/UndoRedoTests.swift; sourceTree = "<group>"; };
+		DDAC43A6E34649958ED0F2F5 /* Vachanam/Annotations/UndoRedoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Annotations/UndoRedoManager.swift; sourceTree = "<group>"; };
+		E1AEBA6C7C2F4B1B8837C8BF /* Vachanam/Views/Reader/PageThumbnailGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Reader/PageThumbnailGrid.swift; sourceTree = "<group>"; };
+		E278A790907F475D9C4951DC /* Vachanam/Views/Settings/ReadingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Settings/ReadingSettingsView.swift; sourceTree = "<group>"; };
+		E2E9F3B46DA647BFA441C89A /* Vachanam/PDF/BookmarkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/PDF/BookmarkManager.swift; sourceTree = "<group>"; };
+		E4E240FFB8074120BF2CD312 /* VachanamTests/AnnotationTests/AnnotationExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VachanamTests/AnnotationTests/AnnotationExporterTests.swift; sourceTree = "<group>"; };
+		E740A24CDD3E4932909A3826 /* Vachanam/Annotations/AnnotationExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Annotations/AnnotationExporter.swift; sourceTree = "<group>"; };
+		EF2A1510D4C3473EA7EA9F8B /* Vachanam/App/VachanamApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/App/VachanamApp.swift; sourceTree = "<group>"; };
+		F00F800CA3804D909833904D /* Vachanam/Views/TTS/VoicePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/TTS/VoicePickerView.swift; sourceTree = "<group>"; };
+		F2F3A3275F354308AFE83A01 /* Vachanam/Views/Reader/ReaderContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Reader/ReaderContainerView.swift; sourceTree = "<group>"; };
+		F80CE9AEA5A04E5B921CF6B3 /* Vachanam/TTS/DeviceCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/TTS/DeviceCapability.swift; sourceTree = "<group>"; };
+		FADAB5CC9E5B486EA9630DF7 /* Vachanam/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Vachanam/Info.plist; sourceTree = "<group>"; };
+		FB2802800ECD43779ED3FCDF /* Vachanam/Views/Library/DocumentLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vachanam/Views/Library/DocumentLibraryView.swift; sourceTree = "<group>"; };
+		FF013D8755DE4FA1973AB34B /* Vachanam/Resources/model_registry.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Vachanam/Resources/model_registry.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		629996FCCE4F475F92076DC1 /* Frameworks */ = {
+		55D554A845084B97B856E34C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		55D554A845084B97B856E34C /* Frameworks */ = {
+		629996FCCE4F475F92076DC1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -208,113 +208,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		4A2703CFE9DF41CF92BDF466 = {
-			isa = PBXGroup;
-			children = (
-				979531793956434C8481996F /* Vachanam */,
-				93390CE6C7234ECF92C84302 /* VachanamTests */,
-				970C602006B94716B55A006E /* VachanamUITests */,
-				3AD2777C428C4852A75E2587 /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		979531793956434C8481996F /* Vachanam */ = {
-			isa = PBXGroup;
-			children = (
-				356910ED7D9748909A50922F /* AppState.swift */,
-				B72D4D7B186C42B5A3C8C3C6 /* ContentView.swift */,
-				EF2A1510D4C3473EA7EA9F8B /* VachanamApp.swift */,
-				2454EBFA4E144EDCBB57A270 /* ReaderDocument.swift */,
-				D5961A8116474204916F9DC2 /* ReadingProgressTracker.swift */,
-				7BA1E09F12514B4288619263 /* TextExtractor.swift */,
-				E2E9F3B46DA647BFA441C89A /* BookmarkManager.swift */,
-				BB4BCA9192A2495D8E56984A /* AnnotationManager.swift */,
-				DDAC43A6E34649958ED0F2F5 /* UndoRedoManager.swift */,
-				E740A24CDD3E4932909A3826 /* AnnotationExporter.swift */,
-				5389B9AB314F49B79CC74F35 /* KokoroAdapter.swift */,
-				9B038C7E57C449B6A9020E34 /* Qwen3TTSAdapter.swift */,
-				A8DB45A401184B57BA19CBF9 /* ChatterboxAdapter.swift */,
-				732B76807D0747969BAAF796 /* CosyVoice3Adapter.swift */,
-				19AC068A5A574154A1E865C0 /* MisakiG2P.swift */,
-				CD48ECCCCA9D4D169515EA00 /* G2PProtocol.swift */,
-				AC8F2C82FA22416E87CDDD1D /* AudioPlayer.swift */,
-				920FB626EAFD4D4890E6D327 /* SleepTimer.swift */,
-				1A721564CBF94EFEA6B2C61C /* AudioSession.swift */,
-				F80CE9AEA5A04E5B921CF6B3 /* DeviceCapability.swift */,
-				54E538C0B15542B4A3341F4D /* ModelRegistry.swift */,
-				229E1BCC297A4582AA2F93C1 /* TTSModelProtocol.swift */,
-				A1D232AFED05446CB18E241C /* ModelManager.swift */,
-				AD7FF546A679443F8F401D72 /* TTSController.swift */,
-				666F546C17DC467AAD705FB1 /* TTSModelInfo.swift */,
-				5ECD6E6D0B8E4E1A94CAF325 /* FontManager.swift */,
-				8C0C486BFB9348F69D00274B /* ThemeManager.swift */,
-				84F26AF9B4394AE082828F78 /* AccessibilityManager.swift */,
-				46552E62CED2426C91CF6D15 /* ReaderTextView.swift */,
-				F2F3A3275F354308AFE83A01 /* ReaderContainerView.swift */,
-				E1AEBA6C7C2F4B1B8837C8BF /* PageThumbnailGrid.swift */,
-				4CC13F6A14BA4850AB7FBDD2 /* PDFReaderView.swift */,
-				0FF96EC7E07C425DAEE6D216 /* TOCView.swift */,
-				7EBBBB2A56DF46E9836BB67B /* ReadingModeToggle.swift */,
-				E278A790907F475D9C4951DC /* ReadingSettingsView.swift */,
-				1876FC9491A94AA0B0078C80 /* SettingsView.swift */,
-				39E0ADD8EB5041FE96957704 /* AccessibilitySettingsView.swift */,
-				248866E966C84C3ABC37094C /* AppearanceSettingsView.swift */,
-				2222CCF1C15A44C69580CC14 /* ReadingRuler.swift */,
-				B0DE994CE6864D958AF09E34 /* SentenceHighlightOverlay.swift */,
-				1119C75B5202421CB000A3E3 /* HighlightSettingsView.swift */,
-				A0F7FCBECF5D4D56A19BF4C6 /* WordHighlightOverlay.swift */,
-				FB2802800ECD43779ED3FCDF /* DocumentLibraryView.swift */,
-				52535195712E45A1BF47CED5 /* ReadingHistoryView.swift */,
-				6FE4FCCA766F4131A7AA23D4 /* DocumentCard.swift */,
-				8D6A6BBCF93D4B4A81ECA989 /* ModelDownloadProgress.swift */,
-				87BA1CBC9B2F4055BC6F44C6 /* ModelManagerView.swift */,
-				4F9B2C0025AE45D9872794AB /* ModelCard.swift */,
-				8E1C7C90177540C8855E6E05 /* TextBoxView.swift */,
-				B02E5DF42F234C8F835F2BB0 /* CanvasOverlay.swift */,
-				1545F4026D7246BE8EFEFD16 /* AnnotationExportView.swift */,
-				03E22E7386BD49FC94516880 /* StickyNoteView.swift */,
-				9B21B56FA0C942138256BF6E /* AnnotationToolbar.swift */,
-				4A48C5C6966D456CAA015982 /* ShapeToolView.swift */,
-				9604E123F9F94F3B9EC50783 /* BookmarkButton.swift */,
-				C58667F5C57B443FAC6E40AA /* ProgressBar.swift */,
-				1F3E1FF3562649249F139BCC /* TTSControlBar.swift */,
-				F00F800CA3804D909833904D /* VoicePickerView.swift */,
-				3DF410553DC34146BEEE8341 /* SleepTimerView.swift */,
-				FADAB5CC9E5B486EA9630DF7 /* Info.plist */,
-				FF013D8755DE4FA1973AB34B /* model_registry.json */,
-				D038EAF53EAE43889B986F66 /* OpenDyslexic-Regular.otf */,
-				2ACE916F951A4CF78A287AC5 /* OpenDyslexic-Bold.otf */,
-				0552E59E83F5489FA314852A /* Assets.xcassets */,
-			);
-			path = ".";
-			sourceTree = "<group>";
-		};
-		93390CE6C7234ECF92C84302 /* VachanamTests */ = {
-			isa = PBXGroup;
-			children = (
-				7114F905AF52455B9E5F6AE3 /* TextExtractorTests.swift */,
-				A4D9E491F16044BC8B818F73 /* BookmarkManagerTests.swift */,
-				4689666098E146E58756193E /* FontManagerTests.swift */,
-				E4E240FFB8074120BF2CD312 /* AnnotationExporterTests.swift */,
-				0B1BD0151B60474483C3B12B /* AnnotationManagerTests.swift */,
-				D8BAEDCC8F68467488EA2072 /* UndoRedoTests.swift */,
-				87647D84D5664CF6B0B84C60 /* ModelManagerTests.swift */,
-				76D356E74B704C689D1F988B /* TTSModelProtocolTests.swift */,
-				B7F1894A86394D95ADA35DCD /* DeviceCapabilityTests.swift */,
-			);
-			path = ".";
-			sourceTree = "<group>";
-		};
-		970C602006B94716B55A006E /* VachanamUITests */ = {
-			isa = PBXGroup;
-			children = (
-				4D3C8EEC9F874776B089D92B /* ModelManagementTests.swift */,
-				957BDC81D19A462B9FAADF3F /* AccessibilityUITests.swift */,
-				7ADDCBED8F944D49A1B11E13 /* ReaderFlowTests.swift */,
-			);
-			path = ".";
-			sourceTree = "<group>";
-		};
 		3AD2777C428C4852A75E2587 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -325,39 +218,116 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		4A2703CFE9DF41CF92BDF466 = {
+			isa = PBXGroup;
+			children = (
+				979531793956434C8481996F /* . */,
+				93390CE6C7234ECF92C84302 /* . */,
+				970C602006B94716B55A006E /* . */,
+				3AD2777C428C4852A75E2587 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		93390CE6C7234ECF92C84302 /* . */ = {
+			isa = PBXGroup;
+			children = (
+				7114F905AF52455B9E5F6AE3 /* VachanamTests/PDFTests/TextExtractorTests.swift */,
+				A4D9E491F16044BC8B818F73 /* VachanamTests/PDFTests/BookmarkManagerTests.swift */,
+				4689666098E146E58756193E /* VachanamTests/AccessibilityTests/FontManagerTests.swift */,
+				E4E240FFB8074120BF2CD312 /* VachanamTests/AnnotationTests/AnnotationExporterTests.swift */,
+				0B1BD0151B60474483C3B12B /* VachanamTests/AnnotationTests/AnnotationManagerTests.swift */,
+				D8BAEDCC8F68467488EA2072 /* VachanamTests/AnnotationTests/UndoRedoTests.swift */,
+				87647D84D5664CF6B0B84C60 /* VachanamTests/TTSTests/ModelManagerTests.swift */,
+				76D356E74B704C689D1F988B /* VachanamTests/TTSTests/TTSModelProtocolTests.swift */,
+				B7F1894A86394D95ADA35DCD /* VachanamTests/TTSTests/DeviceCapabilityTests.swift */,
+			);
+			path = .;
+			sourceTree = "<group>";
+		};
+		970C602006B94716B55A006E /* . */ = {
+			isa = PBXGroup;
+			children = (
+				4D3C8EEC9F874776B089D92B /* VachanamUITests/ModelManagementTests.swift */,
+				957BDC81D19A462B9FAADF3F /* VachanamUITests/AccessibilityUITests.swift */,
+				7ADDCBED8F944D49A1B11E13 /* VachanamUITests/ReaderFlowTests.swift */,
+			);
+			path = .;
+			sourceTree = "<group>";
+		};
+		979531793956434C8481996F /* . */ = {
+			isa = PBXGroup;
+			children = (
+				356910ED7D9748909A50922F /* Vachanam/App/AppState.swift */,
+				B72D4D7B186C42B5A3C8C3C6 /* Vachanam/App/ContentView.swift */,
+				EF2A1510D4C3473EA7EA9F8B /* Vachanam/App/VachanamApp.swift */,
+				2454EBFA4E144EDCBB57A270 /* Vachanam/PDF/ReaderDocument.swift */,
+				D5961A8116474204916F9DC2 /* Vachanam/PDF/ReadingProgressTracker.swift */,
+				7BA1E09F12514B4288619263 /* Vachanam/PDF/TextExtractor.swift */,
+				E2E9F3B46DA647BFA441C89A /* Vachanam/PDF/BookmarkManager.swift */,
+				BB4BCA9192A2495D8E56984A /* Vachanam/Annotations/AnnotationManager.swift */,
+				DDAC43A6E34649958ED0F2F5 /* Vachanam/Annotations/UndoRedoManager.swift */,
+				E740A24CDD3E4932909A3826 /* Vachanam/Annotations/AnnotationExporter.swift */,
+				5389B9AB314F49B79CC74F35 /* Vachanam/Adapters/KokoroAdapter.swift */,
+				9B038C7E57C449B6A9020E34 /* Vachanam/Adapters/Qwen3TTSAdapter.swift */,
+				A8DB45A401184B57BA19CBF9 /* Vachanam/Adapters/ChatterboxAdapter.swift */,
+				732B76807D0747969BAAF796 /* Vachanam/Adapters/CosyVoice3Adapter.swift */,
+				19AC068A5A574154A1E865C0 /* Vachanam/Adapters/G2P/MisakiG2P.swift */,
+				CD48ECCCCA9D4D169515EA00 /* Vachanam/Adapters/G2P/G2PProtocol.swift */,
+				AC8F2C82FA22416E87CDDD1D /* Vachanam/Audio/AudioPlayer.swift */,
+				920FB626EAFD4D4890E6D327 /* Vachanam/Audio/SleepTimer.swift */,
+				1A721564CBF94EFEA6B2C61C /* Vachanam/Audio/AudioSession.swift */,
+				F80CE9AEA5A04E5B921CF6B3 /* Vachanam/TTS/DeviceCapability.swift */,
+				54E538C0B15542B4A3341F4D /* Vachanam/TTS/ModelRegistry.swift */,
+				229E1BCC297A4582AA2F93C1 /* Vachanam/TTS/TTSModelProtocol.swift */,
+				A1D232AFED05446CB18E241C /* Vachanam/TTS/ModelManager.swift */,
+				AD7FF546A679443F8F401D72 /* Vachanam/TTS/TTSController.swift */,
+				666F546C17DC467AAD705FB1 /* Vachanam/TTS/TTSModelInfo.swift */,
+				5ECD6E6D0B8E4E1A94CAF325 /* Vachanam/Accessibility/FontManager.swift */,
+				8C0C486BFB9348F69D00274B /* Vachanam/Accessibility/ThemeManager.swift */,
+				84F26AF9B4394AE082828F78 /* Vachanam/Accessibility/AccessibilityManager.swift */,
+				46552E62CED2426C91CF6D15 /* Vachanam/Views/Reader/ReaderTextView.swift */,
+				F2F3A3275F354308AFE83A01 /* Vachanam/Views/Reader/ReaderContainerView.swift */,
+				E1AEBA6C7C2F4B1B8837C8BF /* Vachanam/Views/Reader/PageThumbnailGrid.swift */,
+				4CC13F6A14BA4850AB7FBDD2 /* Vachanam/Views/Reader/PDFReaderView.swift */,
+				0FF96EC7E07C425DAEE6D216 /* Vachanam/Views/Reader/TOCView.swift */,
+				7EBBBB2A56DF46E9836BB67B /* Vachanam/Views/Reader/ReadingModeToggle.swift */,
+				E278A790907F475D9C4951DC /* Vachanam/Views/Settings/ReadingSettingsView.swift */,
+				1876FC9491A94AA0B0078C80 /* Vachanam/Views/Settings/SettingsView.swift */,
+				39E0ADD8EB5041FE96957704 /* Vachanam/Views/Settings/AccessibilitySettingsView.swift */,
+				248866E966C84C3ABC37094C /* Vachanam/Views/Settings/AppearanceSettingsView.swift */,
+				2222CCF1C15A44C69580CC14 /* Vachanam/Views/Highlight/ReadingRuler.swift */,
+				B0DE994CE6864D958AF09E34 /* Vachanam/Views/Highlight/SentenceHighlightOverlay.swift */,
+				1119C75B5202421CB000A3E3 /* Vachanam/Views/Highlight/HighlightSettingsView.swift */,
+				A0F7FCBECF5D4D56A19BF4C6 /* Vachanam/Views/Highlight/WordHighlightOverlay.swift */,
+				FB2802800ECD43779ED3FCDF /* Vachanam/Views/Library/DocumentLibraryView.swift */,
+				52535195712E45A1BF47CED5 /* Vachanam/Views/Library/ReadingHistoryView.swift */,
+				6FE4FCCA766F4131A7AA23D4 /* Vachanam/Views/Library/DocumentCard.swift */,
+				8D6A6BBCF93D4B4A81ECA989 /* Vachanam/Views/Models/ModelDownloadProgress.swift */,
+				87BA1CBC9B2F4055BC6F44C6 /* Vachanam/Views/Models/ModelManagerView.swift */,
+				4F9B2C0025AE45D9872794AB /* Vachanam/Views/Models/ModelCard.swift */,
+				8E1C7C90177540C8855E6E05 /* Vachanam/Views/Annotations/TextBoxView.swift */,
+				B02E5DF42F234C8F835F2BB0 /* Vachanam/Views/Annotations/CanvasOverlay.swift */,
+				1545F4026D7246BE8EFEFD16 /* Vachanam/Views/Annotations/AnnotationExportView.swift */,
+				03E22E7386BD49FC94516880 /* Vachanam/Views/Annotations/StickyNoteView.swift */,
+				9B21B56FA0C942138256BF6E /* Vachanam/Views/Annotations/AnnotationToolbar.swift */,
+				4A48C5C6966D456CAA015982 /* Vachanam/Views/Annotations/ShapeToolView.swift */,
+				9604E123F9F94F3B9EC50783 /* Vachanam/Views/Components/BookmarkButton.swift */,
+				C58667F5C57B443FAC6E40AA /* Vachanam/Views/Components/ProgressBar.swift */,
+				1F3E1FF3562649249F139BCC /* Vachanam/Views/TTS/TTSControlBar.swift */,
+				F00F800CA3804D909833904D /* Vachanam/Views/TTS/VoicePickerView.swift */,
+				3DF410553DC34146BEEE8341 /* Vachanam/Views/TTS/SleepTimerView.swift */,
+				FADAB5CC9E5B486EA9630DF7 /* Vachanam/Info.plist */,
+				FF013D8755DE4FA1973AB34B /* Vachanam/Resources/model_registry.json */,
+				D038EAF53EAE43889B986F66 /* Vachanam/Resources/OpenDyslexic-Regular.otf */,
+				2ACE916F951A4CF78A287AC5 /* Vachanam/Resources/OpenDyslexic-Bold.otf */,
+				0552E59E83F5489FA314852A /* Vachanam/Resources/Assets.xcassets */,
+			);
+			path = .;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
-/* Begin PBXTargetDependency section */
-		90520E2EEC3944A292563AF5 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 89D8476A737B4BCBA8973994 /* Vachanam */;
-			targetProxy = 108581EB4CED42989E944959 /* PBXContainerItemProxy */;
-		};
-		7A9AFEFB7017401BAEFB8CE3 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 89D8476A737B4BCBA8973994 /* Vachanam */;
-			targetProxy = B77719AABB444F93AA4306DF /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin PBXNativeTarget section */
-		89D8476A737B4BCBA8973994 /* Vachanam */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 694CBD7DA5F147A2A6144026 /* Build configuration list for PBXNativeTarget "Vachanam" */;
-			buildPhases = (
-				25D357FFE3BC45E0BC960BF1 /* Sources */,
-				629996FCCE4F475F92076DC1 /* Frameworks */,
-				723E16D6B2F14B3A8B90484C /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = Vachanam;
-			productName = Vachanam;
-			productReference = 688CF191F149421F9BC5CBC7 /* Vachanam.app */;
-			productType = "com.apple.product-type.application";
-		};
 		0D3B6E4E81684072A8A30C74 /* VachanamTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B4DD064864FC47B4A4F038B9 /* Build configuration list for PBXNativeTarget "VachanamTests" */;
@@ -392,6 +362,23 @@
 			productReference = 0DA7AC26472D46869D2EC6C7 /* VachanamUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		89D8476A737B4BCBA8973994 /* Vachanam */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 694CBD7DA5F147A2A6144026 /* Build configuration list for PBXNativeTarget "Vachanam" */;
+			buildPhases = (
+				25D357FFE3BC45E0BC960BF1 /* Sources */,
+				629996FCCE4F475F92076DC1 /* Frameworks */,
+				723E16D6B2F14B3A8B90484C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Vachanam;
+			productName = Vachanam;
+			productReference = 688CF191F149421F9BC5CBC7 /* Vachanam.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -399,16 +386,16 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastUpgradeCheck = 1530;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
-					89D8476A737B4BCBA8973994 = {
-						CreatedOnToolsVersion = 15.3;
-					};
 					0D3B6E4E81684072A8A30C74 = {
 						TestTargetID = 89D8476A737B4BCBA8973994;
 					};
 					6013742B8E944FD2AEAF007E = {
 						TestTargetID = 89D8476A737B4BCBA8973994;
+					};
+					89D8476A737B4BCBA8973994 = {
+						CreatedOnToolsVersion = 15.3;
 					};
 				};
 			};
@@ -437,10 +424,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F72E68DC33EB40BA8B30A279 /* model_registry.json in Resources */,
-				369BF3C07CFA422BA7C2374A /* OpenDyslexic-Regular.otf in Resources */,
-				D778126A99DB44F89D448A7B /* OpenDyslexic-Bold.otf in Resources */,
-				CBAF28AE4C234003AFA477F1 /* Assets.xcassets in Resources */,
+				F72E68DC33EB40BA8B30A279 /* Vachanam/Resources/model_registry.json in Resources */,
+				369BF3C07CFA422BA7C2374A /* Vachanam/Resources/OpenDyslexic-Regular.otf in Resources */,
+				D778126A99DB44F89D448A7B /* Vachanam/Resources/OpenDyslexic-Bold.otf in Resources */,
+				CBAF28AE4C234003AFA477F1 /* Vachanam/Resources/Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -451,65 +438,65 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D69497C4908544A6A5AA1F99 /* AppState.swift in Sources */,
-				420F2D219E26435293309CE5 /* ContentView.swift in Sources */,
-				55BA1ED38037495DA70AE84F /* VachanamApp.swift in Sources */,
-				3B5A5CAB841E4796BF73F9DC /* ReaderDocument.swift in Sources */,
-				9529FDF8CBF64554ABD475C6 /* ReadingProgressTracker.swift in Sources */,
-				302D6E11847148CC831486B7 /* TextExtractor.swift in Sources */,
-				7CC7DDAFC7DF4E9DAE74F0C8 /* BookmarkManager.swift in Sources */,
-				F275F34677FA4FE1B5FA9D53 /* AnnotationManager.swift in Sources */,
-				A40D7425F37B459DB5E6EABE /* UndoRedoManager.swift in Sources */,
-				95C2481F45CB41E1AA7FEB91 /* AnnotationExporter.swift in Sources */,
-				99CFD762DF6F4BDAA3ACDC28 /* KokoroAdapter.swift in Sources */,
-				F1ABADA204CE4FB8AB66D94C /* Qwen3TTSAdapter.swift in Sources */,
-				2642392F358E4C04AE2047D1 /* ChatterboxAdapter.swift in Sources */,
-				51B71B85059545999445F941 /* CosyVoice3Adapter.swift in Sources */,
-				C6662119922F473D896B603D /* MisakiG2P.swift in Sources */,
-				74A160F09A334C3EA7DF2A40 /* G2PProtocol.swift in Sources */,
-				974D5EBB137A423B9BDDB105 /* AudioPlayer.swift in Sources */,
-				B6B4EF72034D441C8290AE0A /* SleepTimer.swift in Sources */,
-				05306A1C988E44F9B1B482F8 /* AudioSession.swift in Sources */,
-				A0B5E0C16A00467C897FF4EF /* DeviceCapability.swift in Sources */,
-				9D5C272D77BA453397A838C9 /* ModelRegistry.swift in Sources */,
-				398E72198BB74681A0C063C1 /* TTSModelProtocol.swift in Sources */,
-				B038433D1F06445FB24E6DFD /* ModelManager.swift in Sources */,
-				E01AAD652C244E928262AFC3 /* TTSController.swift in Sources */,
-				1487F1C0C82848C8BDF5C315 /* TTSModelInfo.swift in Sources */,
-				A0BD9B1B041547408EDE1A50 /* FontManager.swift in Sources */,
-				69113E2E793B4088A8E77F68 /* ThemeManager.swift in Sources */,
-				058442F0EBAE4930997631CE /* AccessibilityManager.swift in Sources */,
-				C6B84EF01A5B43EC88284091 /* ReaderTextView.swift in Sources */,
-				2230A761940C4CBFBC278BB5 /* ReaderContainerView.swift in Sources */,
-				A0BE578373C14FF38DF517A6 /* PageThumbnailGrid.swift in Sources */,
-				731614B4AE2F458EBA80A534 /* PDFReaderView.swift in Sources */,
-				2A9EFE8614A1404E877AA6E1 /* TOCView.swift in Sources */,
-				789D5938C1C247D291E54DD9 /* ReadingModeToggle.swift in Sources */,
-				4FC762165F9A499DAE84B6BA /* ReadingSettingsView.swift in Sources */,
-				C6C23533DB954FC6A44D99E7 /* SettingsView.swift in Sources */,
-				D82234BF288148A6ABB51189 /* AccessibilitySettingsView.swift in Sources */,
-				2FEE9E479B5643BB9230E96B /* AppearanceSettingsView.swift in Sources */,
-				17B2CCC74D22464E99FB3377 /* ReadingRuler.swift in Sources */,
-				A961FC648F4D4226B2A97554 /* SentenceHighlightOverlay.swift in Sources */,
-				00375242C42C4B63B13BC088 /* HighlightSettingsView.swift in Sources */,
-				547CC78E0ABF487FBE38EAF3 /* WordHighlightOverlay.swift in Sources */,
-				77AF42C974FC45EA9821ACCD /* DocumentLibraryView.swift in Sources */,
-				47A6EC8DD4364DE1B4A5C4C8 /* ReadingHistoryView.swift in Sources */,
-				858C66120CED466598EB49D0 /* DocumentCard.swift in Sources */,
-				595249D916BE48289CC43A8E /* ModelDownloadProgress.swift in Sources */,
-				7A9E50FBCC0948D5B3111303 /* ModelManagerView.swift in Sources */,
-				9EBFD48E2C4D4D018F6B2F60 /* ModelCard.swift in Sources */,
-				E9854E16803C44BAB0E8D8B8 /* TextBoxView.swift in Sources */,
-				2B775FB801334AFC8E94FFB5 /* CanvasOverlay.swift in Sources */,
-				95790151B602428A9F6DB30D /* AnnotationExportView.swift in Sources */,
-				265C2644135D41B18F9D087B /* StickyNoteView.swift in Sources */,
-				C1DBA48C2E5C4852868B961B /* AnnotationToolbar.swift in Sources */,
-				3E131767CE544FA19F7CC07C /* ShapeToolView.swift in Sources */,
-				5E7E88C88F854AC183362705 /* BookmarkButton.swift in Sources */,
-				D282D0ED9C254A1096A9CC9F /* ProgressBar.swift in Sources */,
-				2ABB0709734049FBA42D3EE4 /* TTSControlBar.swift in Sources */,
-				A3D06DF6A2D44551B2F7FA1D /* VoicePickerView.swift in Sources */,
-				FE66CDC6839E4B47B8FFF224 /* SleepTimerView.swift in Sources */,
+				D69497C4908544A6A5AA1F99 /* Vachanam/App/AppState.swift in Sources */,
+				420F2D219E26435293309CE5 /* Vachanam/App/ContentView.swift in Sources */,
+				55BA1ED38037495DA70AE84F /* Vachanam/App/VachanamApp.swift in Sources */,
+				3B5A5CAB841E4796BF73F9DC /* Vachanam/PDF/ReaderDocument.swift in Sources */,
+				9529FDF8CBF64554ABD475C6 /* Vachanam/PDF/ReadingProgressTracker.swift in Sources */,
+				302D6E11847148CC831486B7 /* Vachanam/PDF/TextExtractor.swift in Sources */,
+				7CC7DDAFC7DF4E9DAE74F0C8 /* Vachanam/PDF/BookmarkManager.swift in Sources */,
+				F275F34677FA4FE1B5FA9D53 /* Vachanam/Annotations/AnnotationManager.swift in Sources */,
+				A40D7425F37B459DB5E6EABE /* Vachanam/Annotations/UndoRedoManager.swift in Sources */,
+				95C2481F45CB41E1AA7FEB91 /* Vachanam/Annotations/AnnotationExporter.swift in Sources */,
+				99CFD762DF6F4BDAA3ACDC28 /* Vachanam/Adapters/KokoroAdapter.swift in Sources */,
+				F1ABADA204CE4FB8AB66D94C /* Vachanam/Adapters/Qwen3TTSAdapter.swift in Sources */,
+				2642392F358E4C04AE2047D1 /* Vachanam/Adapters/ChatterboxAdapter.swift in Sources */,
+				51B71B85059545999445F941 /* Vachanam/Adapters/CosyVoice3Adapter.swift in Sources */,
+				C6662119922F473D896B603D /* Vachanam/Adapters/G2P/MisakiG2P.swift in Sources */,
+				74A160F09A334C3EA7DF2A40 /* Vachanam/Adapters/G2P/G2PProtocol.swift in Sources */,
+				974D5EBB137A423B9BDDB105 /* Vachanam/Audio/AudioPlayer.swift in Sources */,
+				B6B4EF72034D441C8290AE0A /* Vachanam/Audio/SleepTimer.swift in Sources */,
+				05306A1C988E44F9B1B482F8 /* Vachanam/Audio/AudioSession.swift in Sources */,
+				A0B5E0C16A00467C897FF4EF /* Vachanam/TTS/DeviceCapability.swift in Sources */,
+				9D5C272D77BA453397A838C9 /* Vachanam/TTS/ModelRegistry.swift in Sources */,
+				398E72198BB74681A0C063C1 /* Vachanam/TTS/TTSModelProtocol.swift in Sources */,
+				B038433D1F06445FB24E6DFD /* Vachanam/TTS/ModelManager.swift in Sources */,
+				E01AAD652C244E928262AFC3 /* Vachanam/TTS/TTSController.swift in Sources */,
+				1487F1C0C82848C8BDF5C315 /* Vachanam/TTS/TTSModelInfo.swift in Sources */,
+				A0BD9B1B041547408EDE1A50 /* Vachanam/Accessibility/FontManager.swift in Sources */,
+				69113E2E793B4088A8E77F68 /* Vachanam/Accessibility/ThemeManager.swift in Sources */,
+				058442F0EBAE4930997631CE /* Vachanam/Accessibility/AccessibilityManager.swift in Sources */,
+				C6B84EF01A5B43EC88284091 /* Vachanam/Views/Reader/ReaderTextView.swift in Sources */,
+				2230A761940C4CBFBC278BB5 /* Vachanam/Views/Reader/ReaderContainerView.swift in Sources */,
+				A0BE578373C14FF38DF517A6 /* Vachanam/Views/Reader/PageThumbnailGrid.swift in Sources */,
+				731614B4AE2F458EBA80A534 /* Vachanam/Views/Reader/PDFReaderView.swift in Sources */,
+				2A9EFE8614A1404E877AA6E1 /* Vachanam/Views/Reader/TOCView.swift in Sources */,
+				789D5938C1C247D291E54DD9 /* Vachanam/Views/Reader/ReadingModeToggle.swift in Sources */,
+				4FC762165F9A499DAE84B6BA /* Vachanam/Views/Settings/ReadingSettingsView.swift in Sources */,
+				C6C23533DB954FC6A44D99E7 /* Vachanam/Views/Settings/SettingsView.swift in Sources */,
+				D82234BF288148A6ABB51189 /* Vachanam/Views/Settings/AccessibilitySettingsView.swift in Sources */,
+				2FEE9E479B5643BB9230E96B /* Vachanam/Views/Settings/AppearanceSettingsView.swift in Sources */,
+				17B2CCC74D22464E99FB3377 /* Vachanam/Views/Highlight/ReadingRuler.swift in Sources */,
+				A961FC648F4D4226B2A97554 /* Vachanam/Views/Highlight/SentenceHighlightOverlay.swift in Sources */,
+				00375242C42C4B63B13BC088 /* Vachanam/Views/Highlight/HighlightSettingsView.swift in Sources */,
+				547CC78E0ABF487FBE38EAF3 /* Vachanam/Views/Highlight/WordHighlightOverlay.swift in Sources */,
+				77AF42C974FC45EA9821ACCD /* Vachanam/Views/Library/DocumentLibraryView.swift in Sources */,
+				47A6EC8DD4364DE1B4A5C4C8 /* Vachanam/Views/Library/ReadingHistoryView.swift in Sources */,
+				858C66120CED466598EB49D0 /* Vachanam/Views/Library/DocumentCard.swift in Sources */,
+				595249D916BE48289CC43A8E /* Vachanam/Views/Models/ModelDownloadProgress.swift in Sources */,
+				7A9E50FBCC0948D5B3111303 /* Vachanam/Views/Models/ModelManagerView.swift in Sources */,
+				9EBFD48E2C4D4D018F6B2F60 /* Vachanam/Views/Models/ModelCard.swift in Sources */,
+				E9854E16803C44BAB0E8D8B8 /* Vachanam/Views/Annotations/TextBoxView.swift in Sources */,
+				2B775FB801334AFC8E94FFB5 /* Vachanam/Views/Annotations/CanvasOverlay.swift in Sources */,
+				95790151B602428A9F6DB30D /* Vachanam/Views/Annotations/AnnotationExportView.swift in Sources */,
+				265C2644135D41B18F9D087B /* Vachanam/Views/Annotations/StickyNoteView.swift in Sources */,
+				C1DBA48C2E5C4852868B961B /* Vachanam/Views/Annotations/AnnotationToolbar.swift in Sources */,
+				3E131767CE544FA19F7CC07C /* Vachanam/Views/Annotations/ShapeToolView.swift in Sources */,
+				5E7E88C88F854AC183362705 /* Vachanam/Views/Components/BookmarkButton.swift in Sources */,
+				D282D0ED9C254A1096A9CC9F /* Vachanam/Views/Components/ProgressBar.swift in Sources */,
+				2ABB0709734049FBA42D3EE4 /* Vachanam/Views/TTS/TTSControlBar.swift in Sources */,
+				A3D06DF6A2D44551B2F7FA1D /* Vachanam/Views/TTS/VoicePickerView.swift in Sources */,
+				FE66CDC6839E4B47B8FFF224 /* Vachanam/Views/TTS/SleepTimerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -517,15 +504,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				58A05F8D39D24AC5992F468F /* TextExtractorTests.swift in Sources */,
-				0D3C1E60A308409382C99691 /* BookmarkManagerTests.swift in Sources */,
-				F152B15322A14AAFBA154B74 /* FontManagerTests.swift in Sources */,
-				B81291A484F64CF9BA673DD3 /* AnnotationExporterTests.swift in Sources */,
-				FAFEAA258E99411284ED4AD4 /* AnnotationManagerTests.swift in Sources */,
-				3BA5F3DCF9204E879E8AF732 /* UndoRedoTests.swift in Sources */,
-				91ADF252846C47C590794736 /* ModelManagerTests.swift in Sources */,
-				8CF81BDDBC6E450D981B7613 /* TTSModelProtocolTests.swift in Sources */,
-				ED29ADC391884116AB0A8CE5 /* DeviceCapabilityTests.swift in Sources */,
+				58A05F8D39D24AC5992F468F /* VachanamTests/PDFTests/TextExtractorTests.swift in Sources */,
+				0D3C1E60A308409382C99691 /* VachanamTests/PDFTests/BookmarkManagerTests.swift in Sources */,
+				F152B15322A14AAFBA154B74 /* VachanamTests/AccessibilityTests/FontManagerTests.swift in Sources */,
+				B81291A484F64CF9BA673DD3 /* VachanamTests/AnnotationTests/AnnotationExporterTests.swift in Sources */,
+				FAFEAA258E99411284ED4AD4 /* VachanamTests/AnnotationTests/AnnotationManagerTests.swift in Sources */,
+				3BA5F3DCF9204E879E8AF732 /* VachanamTests/AnnotationTests/UndoRedoTests.swift in Sources */,
+				91ADF252846C47C590794736 /* VachanamTests/TTSTests/ModelManagerTests.swift in Sources */,
+				8CF81BDDBC6E450D981B7613 /* VachanamTests/TTSTests/TTSModelProtocolTests.swift in Sources */,
+				ED29ADC391884116AB0A8CE5 /* VachanamTests/TTSTests/DeviceCapabilityTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -533,52 +520,44 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6ACDE1E9FF20499F82C4A86A /* ModelManagementTests.swift in Sources */,
-				BE07F5FBCFB14530AD8C60DA /* AccessibilityUITests.swift in Sources */,
-				59EFBDE6535F4EEB8C8DE337 /* ReaderFlowTests.swift in Sources */,
+				6ACDE1E9FF20499F82C4A86A /* VachanamUITests/ModelManagementTests.swift in Sources */,
+				BE07F5FBCFB14530AD8C60DA /* VachanamUITests/AccessibilityUITests.swift in Sources */,
+				59EFBDE6535F4EEB8C8DE337 /* VachanamUITests/ReaderFlowTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin XCBuildConfiguration section */
-		49681E49CF2B461A997E9A4F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				ENABLE_TESTABILITY = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				SDKROOT = iphoneos;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-				DEBUG_INFORMATION_FORMAT = "dwarf";
-				SUPPORTS_MACCATALYST = YES;
-				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
-			};
-			name = Debug;
+/* Begin PBXTargetDependency section */
+		7A9AFEFB7017401BAEFB8CE3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 89D8476A737B4BCBA8973994 /* Vachanam */;
+			targetProxy = B77719AABB444F93AA4306DF /* PBXContainerItemProxy */;
 		};
-		485E1C2557A04494BE89443D /* Release */ = {
+		90520E2EEC3944A292563AF5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 89D8476A737B4BCBA8973994 /* Vachanam */;
+			targetProxy = 108581EB4CED42989E944959 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0572CCE5CD4D477BB7E156E3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				ENABLE_NS_ASSERTIONS = NO;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				SDKROOT = iphoneos;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.0;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Vachanam/Info.plist;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vachanam.reader;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = YES;
-				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 2;
 			};
 			name = Release;
 		};
@@ -595,42 +574,133 @@
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.vachanam.reader;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				TARGETED_DEVICE_FAMILY = "2";
 				SUPPORTS_MACCATALYST = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 2;
 			};
 			name = Debug;
 		};
-		0572CCE5CD4D477BB7E156E3 /* Release */ = {
+		27CB6312AE3C42FFAEDBCB43 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_TESTABILITY = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Vachanam/Info.plist;
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vachanam.reader;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vachanam.reader.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				TARGETED_DEVICE_FAMILY = "2";
 				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = 2;
+				TEST_TARGET_NAME = Vachanam;
 			};
 			name = Release;
 		};
-		A181B49B346C4FC3BDD25E28 /* Debug */ = {
+		351D8AC9683B4C019BBFF9E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vachanam.reader.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vachanam.reader.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vachanam.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vachanam";
-				TARGETED_DEVICE_FAMILY = "2";
 				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = 2;
+				TEST_TARGET_NAME = Vachanam;
+			};
+			name = Debug;
+		};
+		485E1C2557A04494BE89443D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTS_MACCATALYST = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		49681E49CF2B461A997E9A4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTS_MACCATALYST = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -642,37 +712,25 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.vachanam.reader.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vachanam.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vachanam";
-				TARGETED_DEVICE_FAMILY = "2";
 				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = 2;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vachanam.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vachanam";
 			};
 			name = Release;
 		};
-		351D8AC9683B4C019BBFF9E1 /* Debug */ = {
+		A181B49B346C4FC3BDD25E28 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vachanam.reader.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vachanam.reader.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_TARGET_NAME = Vachanam;
-				TARGETED_DEVICE_FAMILY = "2";
 				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = 2;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vachanam.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vachanam";
 			};
 			name = Debug;
-		};
-		27CB6312AE3C42FFAEDBCB43 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				GENERATE_INFOPLIST_FILE = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vachanam.reader.uitests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_TARGET_NAME = Vachanam;
-				TARGETED_DEVICE_FAMILY = "2";
-				SUPPORTS_MACCATALYST = YES;
-			};
-			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
@@ -695,15 +753,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B4DD064864FC47B4A4F038B9 /* Build configuration list for PBXNativeTarget "VachanamTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				A181B49B346C4FC3BDD25E28 /* Debug */,
-				54193976FEA04BD997A37DB6 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		9750D42A713744A1B884AD19 /* Build configuration list for PBXNativeTarget "VachanamUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -713,8 +762,16 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		B4DD064864FC47B4A4F038B9 /* Build configuration list for PBXNativeTarget "VachanamTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A181B49B346C4FC3BDD25E28 /* Debug */,
+				54193976FEA04BD997A37DB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = 54ED2C98082F44C88C43FB57 /* Project object */;
 }
