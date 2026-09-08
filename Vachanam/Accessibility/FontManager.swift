@@ -107,7 +107,7 @@ public class FontManager: ObservableObject {
         // Attempt to register any bundled OpenDyslexic TTF font files
         let fontNames = ["OpenDyslexic-Regular", "OpenDyslexic-Bold"]
         for fontName in fontNames {
-            if let fontURL = Bundle.main.url(forResource: fontName, withExtension: "ttf") {
+            if let fontURL = Bundle.main.url(forResource: fontName, withExtension: "otf") {
                 var error: Unmanaged<CFError>?
                 CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error)
             }

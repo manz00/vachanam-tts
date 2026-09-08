@@ -46,6 +46,12 @@ def create_project():
     assets_uuid = generate_uuid()
     assets_b_uuid = generate_uuid()
     
+    font_reg_uuid = generate_uuid()
+    font_reg_b_uuid = generate_uuid()
+    
+    font_bold_uuid = generate_uuid()
+    font_bold_b_uuid = generate_uuid()
+    
     proj_uuid = generate_uuid()
     main_group_uuid = generate_uuid()
     app_group_uuid = generate_uuid()
@@ -119,6 +125,8 @@ def create_project():
         pbx.append(f"\t\t{b_uuid} /* {fname} in Sources */ = {{isa = PBXBuildFile; fileRef = {f_uuid} /* {fname} */; }};")
         
     pbx.append(f"\t\t{registry_b_uuid} /* model_registry.json in Resources */ = {{isa = PBXBuildFile; fileRef = {registry_uuid} /* model_registry.json */; }};")
+    pbx.append(f"\t\t{font_reg_b_uuid} /* OpenDyslexic-Regular.otf in Resources */ = {{isa = PBXBuildFile; fileRef = {font_reg_uuid} /* OpenDyslexic-Regular.otf */; }};")
+    pbx.append(f"\t\t{font_bold_b_uuid} /* OpenDyslexic-Bold.otf in Resources */ = {{isa = PBXBuildFile; fileRef = {font_bold_uuid} /* OpenDyslexic-Bold.otf */; }};")
     pbx.append(f"\t\t{assets_b_uuid} /* Assets.xcassets in Resources */ = {{isa = PBXBuildFile; fileRef = {assets_uuid} /* Assets.xcassets */; }};")
     pbx.append("/* End PBXBuildFile section */")
     pbx.append("")
@@ -152,6 +160,8 @@ def create_project():
         
     pbx.append(f"\t\t{plist_uuid} /* Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = \"Vachanam/Info.plist\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{registry_uuid} /* model_registry.json */ = {{isa = PBXFileReference; lastKnownFileType = text.json; path = \"Vachanam/Resources/model_registry.json\"; sourceTree = \"<group>\"; }};")
+    pbx.append(f"\t\t{font_reg_uuid} /* OpenDyslexic-Regular.otf */ = {{isa = PBXFileReference; lastKnownFileType = file; path = \"Vachanam/Resources/OpenDyslexic-Regular.otf\"; sourceTree = \"<group>\"; }};")
+    pbx.append(f"\t\t{font_bold_uuid} /* OpenDyslexic-Bold.otf */ = {{isa = PBXFileReference; lastKnownFileType = file; path = \"Vachanam/Resources/OpenDyslexic-Bold.otf\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{assets_uuid} /* Assets.xcassets */ = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = \"Vachanam/Resources/Assets.xcassets\"; sourceTree = \"<group>\"; }};")
     pbx.append("/* End PBXFileReference section */")
     pbx.append("")
@@ -204,6 +214,8 @@ def create_project():
         pbx.append(f"\t\t\t\t{f_uuid} /* {fname} */,")
     pbx.append(f"\t\t\t\t{plist_uuid} /* Info.plist */,")
     pbx.append(f"\t\t\t\t{registry_uuid} /* model_registry.json */,")
+    pbx.append(f"\t\t\t\t{font_reg_uuid} /* OpenDyslexic-Regular.otf */,")
+    pbx.append(f"\t\t\t\t{font_bold_uuid} /* OpenDyslexic-Bold.otf */,")
     pbx.append(f"\t\t\t\t{assets_uuid} /* Assets.xcassets */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\tpath = \".\";")
@@ -369,6 +381,8 @@ def create_project():
     pbx.append("\t\t\tbuildActionMask = 2147483647;")
     pbx.append("\t\t\tfiles = (")
     pbx.append(f"\t\t\t\t{registry_b_uuid} /* model_registry.json in Resources */,")
+    pbx.append(f"\t\t\t\t{font_reg_b_uuid} /* OpenDyslexic-Regular.otf in Resources */,")
+    pbx.append(f"\t\t\t\t{font_bold_b_uuid} /* OpenDyslexic-Bold.otf in Resources */,")
     pbx.append(f"\t\t\t\t{assets_b_uuid} /* Assets.xcassets in Resources */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
