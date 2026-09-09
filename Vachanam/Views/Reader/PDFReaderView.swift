@@ -158,6 +158,7 @@ public struct PDFReaderView: UIViewRepresentable {
     
     public func makeUIView(context: Context) -> PDFView {
         PDFDocumentViewHitTestSanitizer.applyIfNeeded()
+        PDFLoggingSanitizer.shared.install()
         let pdfView = VachanamPDFView()
         pdfView.document = document.pdfDocument
         pdfView.autoScales = true

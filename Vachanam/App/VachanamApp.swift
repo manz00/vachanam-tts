@@ -13,6 +13,7 @@ public struct VachanamApp: App {
     
     public init() {
         setenv("MLX_METAL_GPU_ARCH", "appleg14g", 0)
+        PDFLoggingSanitizer.shared.install()
         AudioSession.shared.configureSession()
         AudioSession.shared.setupRemoteCommands(
             onPlay: {

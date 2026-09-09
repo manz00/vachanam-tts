@@ -61,8 +61,18 @@ public struct HighlightSettingsView: View {
                     }
                 }
                 
-                Section(header: Text("Auto-Scroll")) {
+                Section(
+                    header: Text("Auto-Scroll"),
+                    footer: Text(accessibilityManager.autoScrollFollowMode.description)
+                ) {
                     Toggle("Follow Voice Smoothly", isOn: $accessibilityManager.isAutoScrollEnabled)
+                    if accessibilityManager.isAutoScrollEnabled {
+                        Picker("Behavior", selection: $accessibilityManager.autoScrollFollowMode) {
+                            ForEach(AutoScrollFollowMode.allCases.filter { $0 != .off }) { mode in
+                                Text(mode.rawValue).tag(mode)
+                            }
+                        }
+                    }
                 }
             }
             .navigationTitle("Reading Assistance")

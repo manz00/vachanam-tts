@@ -133,6 +133,7 @@ public class PlaybackCoordinator: ObservableObject {
     
     public func loadDocument(_ document: SemanticDocument, initialSentenceID: Int = 0) {
         stop()
+        activeAudioResult = nil
         
         self.activeSemanticDocument = document
         
@@ -231,10 +232,11 @@ public class PlaybackCoordinator: ObservableObject {
         self.visiblePageIndex = word.pageIndex
         onPageChanged?(word.pageIndex)
         
-        // Fast-path: If user taps within the currently active chunk and audio is available, seek immediately
+        // Fast-path: If user taps within the currently active chunk and audio player is active, seek immediately
         if self.currentChunkID == chunk.chunkID,
            let audioResult = self.activeAudioResult,
            audioResult.duration > 0,
+           AudioPlayer.shared.hasActiveAudioPlayer,
            let wordIdxInChunk = chunk.wordIDs.firstIndex(of: wordID) {
             
             var seekTime: TimeInterval = 0.0
@@ -503,16 +505,42 @@ public class PlaybackCoordinator: ObservableObject {
     
     private func speakWithAppleTTS(text: String, profile: ResolvedVoiceProfile, chunk: TTSChunk, startWordID: Int, requestID: UUID) {
         var textToSpeak = text
-        var wordOffset = 0
-        if let doc = activeSemanticDocument,
-           let startIdx = chunk.wordIDs.firstIndex(of: startWordID),
-           startIdx > 0 {
+        var effectiveWords: [SemanticWord] = []
+        
+        if let doc = activeSemanticDocument {
             let chunkWords = chunk.wordIDs.compactMap { doc.word(id: $0) }
-            if startIdx < chunkWords.count {
-                let remainingWords = chunkWords[startIdx...]
+            if let startIdx = chunk.wordIDs.firstIndex(of: startWordID), startIdx > 0, startIdx < chunkWords.count {
+                let remainingWords = Array(chunkWords[startIdx...])
+                effectiveWords = remainingWords
                 textToSpeak = remainingWords.map { $0.text }.joined(separator: " ")
-                wordOffset = startIdx
+            } else {
+                effectiveWords = chunkWords
+                textToSpeak = chunkWords.map { $0.text }.joined(separator: " ")
             }
+        }
+        
+        // Map spoken words to their exact character ranges within textToSpeak
+        var spokenWordRanges: [(word: SemanticWord, range: NSRange)] = []
+        let nsText = textToSpeak as NSString
+        var searchPos = 0
+        for word in effectiveWords {
+            let wordLen = (word.text as NSString).length
+            if searchPos < nsText.length {
+                let remainingLen = nsText.length - searchPos
+                let match = nsText.range(
+                    of: word.text,
+                    options: [.caseInsensitive, .diacriticInsensitive],
+                    range: NSRange(location: searchPos, length: remainingLen)
+                )
+                if match.location != NSNotFound {
+                    spokenWordRanges.append((word, match))
+                    searchPos = match.location + match.length
+                    continue
+                }
+            }
+            let fallbackRange = NSRange(location: min(searchPos, nsText.length), length: min(wordLen, max(0, nsText.length - searchPos)))
+            spokenWordRanges.append((word, fallbackRange))
+            searchPos = min(nsText.length, searchPos + wordLen + 1)
         }
         
         AudioPlayer.shared.speakText(
@@ -524,12 +552,13 @@ public class PlaybackCoordinator: ObservableObject {
                 guard let self = self, self.currentRequestID == requestID else { return }
                 guard let doc = self.activeSemanticDocument else { return }
                 
-                // Map speech range to semantic word
-                let chunkWords = chunk.wordIDs.compactMap { doc.word(id: $0) }
-                let effectiveWords = Array(chunkWords.dropFirst(wordOffset))
-                if let matched = effectiveWords.first(where: { NSIntersectionRange($0.sentenceRange, charRange).length > 0 }) {
-                    if self.currentWordID != matched.globalWordID {
-                        self.setCursor(forWord: matched, inSentence: doc.sentence(id: matched.sentenceID)!)
+                // Match speech range to mapped spokenWordRanges
+                if let matchedItem = spokenWordRanges.first(where: { NSIntersectionRange($0.range, charRange).length > 0 }) ??
+                   spokenWordRanges.min(by: { abs($0.range.location - charRange.location) < abs($1.range.location - charRange.location) }) {
+                    let matched = matchedItem.word
+                    if self.currentWordID != matched.globalWordID,
+                       let semSentence = doc.sentence(id: matched.sentenceID) {
+                        self.setCursor(forWord: matched, inSentence: semSentence)
                     }
                 }
             },
@@ -810,7 +839,25 @@ public class PlaybackCoordinator: ObservableObject {
         if self.currentSentenceID != sentence.sentenceID {
             self.currentSentenceID = sentence.sentenceID
             self.currentSentenceIndex = sentence.sentenceID
-            self.currentSentence = SentenceItem(from: sentence)
+            var sentenceItem = SentenceItem(from: sentence)
+            
+            // Defensive runtime check: Ensure single-line sentences don't have inflated heights
+            let validWordBounds = sentence.words.map { $0.bounds }.filter { !$0.isEmpty && $0.width > 0 }
+            if !validWordBounds.isEmpty {
+                let wordsUnion = validWordBounds.reduce(validWordBounds[0]) { $0.union($1) }
+                if sentenceItem.bounds.isEmpty || (sentenceItem.lineBounds.count == 1 && sentenceItem.bounds.height > 60) {
+                    sentenceItem = SentenceItem(
+                        text: sentence.text,
+                        range: sentenceItem.range,
+                        bounds: wordsUnion,
+                        lineBounds: sentenceItem.lineBounds.isEmpty ? [wordsUnion] : sentenceItem.lineBounds,
+                        words: sentenceItem.words,
+                        pageIndex: sentence.primaryPageIndex,
+                        sentenceIndex: sentence.sentenceID
+                    )
+                }
+            }
+            self.currentSentence = sentenceItem
         }
         
         // If playing and word moves to another page, notify page change

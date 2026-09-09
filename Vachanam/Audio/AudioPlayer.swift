@@ -9,6 +9,19 @@
 import Foundation
 import AVFoundation
 import Combine
+#if canImport(QuartzCore)
+import QuartzCore
+#endif
+
+private class AudioDisplayLinkProxy {
+    weak var target: AudioPlayer?
+    init(target: AudioPlayer) {
+        self.target = target
+    }
+    @objc func onTick(_ link: CADisplayLink) {
+        target?.handleDisplayLinkTick()
+    }
+}
 
 public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVSpeechSynthesizerDelegate {
     public static let shared = AudioPlayer()
@@ -21,6 +34,9 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
     @Published public var currentDuration: TimeInterval = 0.0
     
     private var playbackTimer: AnyCancellable?
+    #if os(iOS) || targetEnvironment(macCatalyst)
+    private var displayLink: CADisplayLink?
+    #endif
     private var onCompleteHandler: (() -> Void)?
     private var onWordRangeHandler: ((NSRange) -> Void)?
     
@@ -85,12 +101,16 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
             avPlayer?.delegate = self
             avPlayer?.enableRate = true
             avPlayer?.rate = speed
+            avPlayer?.prepareToPlay()
             if clampedStart > 0 {
                 avPlayer?.currentTime = clampedStart
             }
-            avPlayer?.prepareToPlay()
             
             if avPlayer?.play() == true {
+                if clampedStart > 0 {
+                    avPlayer?.currentTime = clampedStart
+                }
+                self.currentTime = clampedStart
                 isPlaying = true
                 AmbientSoundscapePlayer.shared.handleTTSPlayStarted()
                 startPlaybackTimer(speed: speed)
@@ -101,6 +121,10 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
             print("AVAudioPlayer error: \(error.localizedDescription)")
             onComplete?()
         }
+    }
+    
+    public var hasActiveAudioPlayer: Bool {
+        return avPlayer != nil
     }
     
     public func seek(to time: TimeInterval) {
@@ -118,7 +142,7 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
         }
         avPlayer?.pause()
         isPlaying = false
-        playbackTimer?.cancel()
+        stopPlaybackTimer()
         AmbientSoundscapePlayer.shared.handleTTSPaused()
     }
     
@@ -152,7 +176,7 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
         avPlayer = nil
         isPlaying = false
         currentTime = 0.0
-        playbackTimer?.cancel()
+        stopPlaybackTimer()
         if stopAmbient {
             AmbientSoundscapePlayer.shared.handleTTSStopped()
         }
@@ -161,19 +185,39 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
     // MARK: - Timers & Delegates
     
     private func startPlaybackTimer(speed: Float) {
-        playbackTimer?.cancel()
-        playbackTimer = Timer.publish(every: 0.04, on: .main, in: .common)
+        stopPlaybackTimer()
+        #if os(iOS) || targetEnvironment(macCatalyst)
+        let proxy = AudioDisplayLinkProxy(target: self)
+        let link = CADisplayLink(target: proxy, selector: #selector(AudioDisplayLinkProxy.onTick(_:)))
+        link.add(to: .main, forMode: .common)
+        self.displayLink = link
+        #endif
+        // High-precision 60fps fallback timer for headless test environments
+        playbackTimer = Timer.publish(every: 0.016, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                guard let self = self, let player = self.avPlayer, self.isPlaying else { return }
-                self.currentTime = player.currentTime
+                self?.handleDisplayLinkTick()
             }
+    }
+    
+    private func stopPlaybackTimer() {
+        #if os(iOS) || targetEnvironment(macCatalyst)
+        displayLink?.invalidate()
+        displayLink = nil
+        #endif
+        playbackTimer?.cancel()
+        playbackTimer = nil
+    }
+    
+    @objc func handleDisplayLinkTick() {
+        guard let player = self.avPlayer, self.isPlaying else { return }
+        self.currentTime = player.currentTime
     }
     
     public func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         DispatchQueue.main.async {
             self.isPlaying = false
-            self.playbackTimer?.cancel()
+            self.stopPlaybackTimer()
             self.onCompleteHandler?()
         }
     }

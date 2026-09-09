@@ -19,12 +19,16 @@ public struct TextNormalizer {
         
         var result = text
         
-        // Remove soft hyphens (\u{00AD}) and zero-width characters
+        // Remove soft hyphens (\u{00AD}), zero-width characters, and unmapped font replacement artifacts (\u{FFFD})
         result = result.replacingOccurrences(of: "\u{00AD}", with: "")
         result = result.replacingOccurrences(of: "\u{200B}", with: "") // zero-width space
         result = result.replacingOccurrences(of: "\u{200C}", with: "") // zero-width non-joiner
         result = result.replacingOccurrences(of: "\u{200D}", with: "") // zero-width joiner
         result = result.replacingOccurrences(of: "\u{FEFF}", with: "") // zero-width no-break space (BOM)
+        result = result.replacingOccurrences(of: "\u{FFFD}", with: "") // Unicode replacement character (from .notdef/unmapped font glyphs)
+        
+        // Remove unprintable control characters and private-use font artifacts from unmapped CMaps
+        result = result.replacingOccurrences(of: "[\u{0000}-\u{0008}\u{000B}\u{000C}\u{000E}-\u{001F}\u{E000}-\u{F8FF}]", with: "", options: .regularExpression)
         
         // Common typographical ligatures to standard characters
         let ligatures: [(String, String)] = [
@@ -246,15 +250,15 @@ public struct TextNormalizer {
         // Standalone ⊤ or ᵀ
         result = result.replacingOccurrences(of: #"\b[⊤ᵀ]\b|[⊤ᵀ]"#, with: " transpose", options: .regularExpression)
         
-        // Matrix / variable inverse: A^-1, A⁻¹, A^{-1}
+        // Matrix / variable inverse: A^-1, A⁻¹, A^{-1}, A-1, A−1, (AB)-1, (AB)−1
         result = result.replacingOccurrences(
-            of: #"(?:(?<=\b[a-zA-Z0-9])|(?<=\)))\s*(?:\^|ˆ)\s*(?:[-−]1|\{[-−]1\})\b|(?<=[a-zA-Z0-9\)])⁻¹"#,
+            of: #"(?:(?<=\b[A-Z0-9])|(?<=\)))\s*(?:\^|ˆ)?\s*(?:[-−]1|\{[-−]1\})\b|(?<=[a-zA-Z0-9\)])⁻¹"#,
             with: " inverse",
             options: .regularExpression
         )
-        // Inverse transpose: A^-T, A^{-T}, A^-⊤
+        // Inverse transpose: A^-T, A^{-T}, A^-⊤, A-T, A−T, A-⊤, A−⊤
         result = result.replacingOccurrences(
-            of: #"(?:(?<=\b[a-zA-Z0-9])|(?<=\)))\s*(?:\^|ˆ)\s*(?:[-−][T⊤ᵀ]|\{[-−][T⊤ᵀ]\})\b"#,
+            of: #"(?:(?<=\b[A-Z0-9])|(?<=\)))\s*(?:\^|ˆ)?\s*(?:[-−][T⊤ᵀ]|\{[-−][T⊤ᵀ]\})\b"#,
             with: " inverse transpose",
             options: .regularExpression
         )
@@ -435,6 +439,23 @@ public struct TextNormalizer {
         result = result.replacingOccurrences(
             of: #"(?<=[0-9])-(?=[0-9])"#,
             with: " minus ",
+            options: .regularExpression
+        )
+        
+        // Leading math operators and punctuation
+        result = result.replacingOccurrences(
+            of: #"^\s*\+\s*(?=[a-zA-Z0-9\(\-])"#,
+            with: "plus ",
+            options: .regularExpression
+        )
+        result = result.replacingOccurrences(
+            of: #"^\s*[−-]\s*(?=[0-9a-zA-Z\(\-])"#,
+            with: "minus ",
+            options: .regularExpression
+        )
+        result = result.replacingOccurrences(
+            of: #"^\s*,\s*"#,
+            with: "",
             options: .regularExpression
         )
         

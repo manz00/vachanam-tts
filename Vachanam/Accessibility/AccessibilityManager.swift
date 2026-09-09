@@ -100,13 +100,23 @@ public class AccessibilityManager: ObservableObject {
     @Published public var isAutoScrollEnabled: Bool = true {
         didSet {
             UserDefaults.standard.set(isAutoScrollEnabled, forKey: "isAutoScrollEnabled")
+            if !isAutoScrollEnabled {
+                if autoScrollFollowMode != .off {
+                    autoScrollFollowMode = .off
+                }
+            } else if autoScrollFollowMode == .off {
+                autoScrollFollowMode = .promptWhenScrolled
+            }
         }
     }
     
     @Published public var autoScrollFollowMode: AutoScrollFollowMode = .promptWhenScrolled {
         didSet {
             UserDefaults.standard.set(autoScrollFollowMode.rawValue, forKey: "autoScrollFollowMode")
-            isAutoScrollEnabled = (autoScrollFollowMode != .off)
+            let shouldBeEnabled = (autoScrollFollowMode != .off)
+            if isAutoScrollEnabled != shouldBeEnabled {
+                isAutoScrollEnabled = shouldBeEnabled
+            }
         }
     }
     

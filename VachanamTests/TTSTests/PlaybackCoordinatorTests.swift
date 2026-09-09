@@ -5,6 +5,7 @@
 
 import XCTest
 import PDFKit
+import AVFoundation
 @testable import Vachanam
 
 final class PlaybackCoordinatorTests: XCTestCase {
@@ -144,6 +145,36 @@ final class PlaybackCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.cursor?.globalWordID, targetWord.globalWordID)
         
         coordinator.stop()
+    }
+    
+    func testAudioPlayerStartsAtSpecifiedStartTimeOffsetWithoutResettingToZero() {
+        // Synthesize 4 seconds of silence PCM buffer
+        let format = AVAudioFormat(standardFormatWithSampleRate: 16000, channels: 1)!
+        let pcm = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 16000 * 4)!
+        pcm.frameLength = 16000 * 4
+        
+        let result = TTSAudioResult(
+            audioData: Data(repeating: 0, count: 16000 * 4 * 2),
+            pcmBuffer: pcm,
+            sampleRate: 16000,
+            duration: 4.0,
+            wordTimestamps: [
+                WordTimestamp(word: "First", startTime: 0.0, endTime: 1.0),
+                WordTimestamp(word: "sentence", startTime: 1.0, endTime: 2.0),
+                WordTimestamp(word: "target", startTime: 2.0, endTime: 3.0),
+                WordTimestamp(word: "word", startTime: 3.0, endTime: 4.0)
+            ]
+        )
+        
+        let player = AudioPlayer.shared
+        // Request playback starting at word "target" at 2.0s
+        player.play(result: result, speed: 1.0, startTime: 2.0)
+        
+        // Assert player starts at 2.0s and was not reset to 0.0 by prepareToPlay
+        XCTAssertGreaterThanOrEqual(player.currentTime, 1.95, "AudioPlayer must start at or after requested startTime")
+        XCTAssertTrue(player.hasActiveAudioPlayer, "AudioPlayer must have an active player instance")
+        
+        player.stop()
     }
 }
 

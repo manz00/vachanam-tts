@@ -98,26 +98,38 @@ public struct RawParagraph {
                         result = combinedLinePart + " " + remainingNextLine
                     }
                 } else {
-                    // Check if previous line is on the same horizontal baseline as current line (e.g. bold lead-in heading)
-                    let prevLine = lines[i - 1]
-                    let currLine = lines[i]
-                    let isSameBaseline = abs(prevLine.bounds.midY - currLine.bounds.midY) < 4.0 && currLine.bounds.minX >= (prevLine.bounds.maxX - 2.0)
-                    if isSameBaseline {
-                        let prevTrimmed = prevLine.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                        let words = prevTrimmed.split(whereSeparator: { $0.isWhitespace })
-                        let endsWithPunctuation = prevTrimmed.hasSuffix(".") || prevTrimmed.hasSuffix(":") || prevTrimmed.hasSuffix(";") || prevTrimmed.hasSuffix("!") || prevTrimmed.hasSuffix("?") || prevTrimmed.hasSuffix("—")
-                        let endsWithMathOrContinuation = prevTrimmed.hasSuffix("→") || prevTrimmed.hasSuffix("⟶") || prevTrimmed.hasSuffix("+") || prevTrimmed.hasSuffix("=") || prevTrimmed.hasSuffix("-") || prevTrimmed.hasSuffix(",") || prevTrimmed.hasSuffix("(")
-                        let isTitleCased = words.count > 0 && words.allSatisfy { w in
-                            guard let first = w.first else { return false }
-                            return first.isUppercase || first.isNumber
-                        }
-                        if words.count <= 6 && !endsWithPunctuation && !endsWithMathOrContinuation && isTitleCased {
-                            result += ". " + lineText
+                    // Check if current line is an exponent or superscript attached to previous line (e.g. A followed by -1, T, ⊤, or 2)
+                    let isSuperscriptExponent = (lineText == "−1" || lineText == "-1" || lineText == "T" || lineText == "⊤" || lineText == "2" || lineText == "3") &&
+                        (result.hasSuffix("A") || result.hasSuffix("B") || result.hasSuffix("C") || result.hasSuffix("D") ||
+                         result.hasSuffix("M") || result.hasSuffix("X") || result.hasSuffix("W") || result.hasSuffix(")") || result.hasSuffix("]"))
+                    
+                    if isSuperscriptExponent {
+                        result += lineText
+                    } else if lineText.hasPrefix(",") || lineText.hasPrefix(";") {
+                        // Avoid double space before comma or semicolon (e.g. matrix followed by ", equation (2.4)")
+                        result += lineText
+                    } else {
+                        // Check if previous line is on the same horizontal baseline as current line (e.g. bold lead-in heading)
+                        let prevLine = lines[i - 1]
+                        let currLine = lines[i]
+                        let isSameBaseline = abs(prevLine.bounds.midY - currLine.bounds.midY) < 4.0 && currLine.bounds.minX >= (prevLine.bounds.maxX - 2.0)
+                        if isSameBaseline {
+                            let prevTrimmed = prevLine.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let words = prevTrimmed.split(whereSeparator: { $0.isWhitespace })
+                            let endsWithPunctuation = prevTrimmed.hasSuffix(".") || prevTrimmed.hasSuffix(":") || prevTrimmed.hasSuffix(";") || prevTrimmed.hasSuffix("!") || prevTrimmed.hasSuffix("?") || prevTrimmed.hasSuffix("—")
+                            let endsWithMathOrContinuation = prevTrimmed.hasSuffix("→") || prevTrimmed.hasSuffix("⟶") || prevTrimmed.hasSuffix("+") || prevTrimmed.hasSuffix("=") || prevTrimmed.hasSuffix("-") || prevTrimmed.hasSuffix(",") || prevTrimmed.hasSuffix("(")
+                            let isTitleCased = words.count > 0 && words.allSatisfy { w in
+                                guard let first = w.first else { return false }
+                                return first.isUppercase || first.isNumber
+                            }
+                            if words.count <= 6 && !endsWithPunctuation && !endsWithMathOrContinuation && isTitleCased {
+                                result += ". " + lineText
+                            } else {
+                                result += " " + lineText
+                            }
                         } else {
                             result += " " + lineText
                         }
-                    } else {
-                        result += " " + lineText
                     }
                 }
             }
@@ -417,22 +429,51 @@ public class ParagraphDetector {
             let previousLine = currentBlockLines.last!
             let verticalGap = previousLine.bounds.minY - currentLine.bounds.maxY
             
-            // Heuristics for paragraph break:
-            // 1. Vertical gap is significantly larger than regular line spacing
-            let isLargeGap = verticalGap > (medianHeight * 1.5)
-            
-            // 2. Previous line ended with terminal punctuation and current line has noticeable left indent or previous line was short
             let prevTrimmed = previousLine.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            let currTrimmed = currentLine.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            
             let hasTerminalPunctuation = prevTrimmed.hasSuffix(".") || prevTrimmed.hasSuffix("?") || prevTrimmed.hasSuffix("!") || prevTrimmed.hasSuffix(":") || prevTrimmed.hasSuffix("—") || prevTrimmed.hasSuffix("\"") || prevTrimmed.hasSuffix("”") || prevTrimmed.hasSuffix(")")
             
-            // Indentation check: Indented by at least 5pt from the column base margin or previous line
+            // Check if either line indicates that currentLine is an unbroken continuation (displayed math, formula, preposition, or clause)
+            let continuationConjunctions = ["by", "with", "where", "for", "and", "or", "that", "is", "are", "as", "to", "then", "of", "in", "such", "than", "from", "equals", "defined", "given", "assume", "let"]
+            let prevEndsWithContinuation = prevTrimmed.hasSuffix(",") || prevTrimmed.hasSuffix("=") || prevTrimmed.hasSuffix("+") ||
+                prevTrimmed.hasSuffix("-") || prevTrimmed.hasSuffix("−") || prevTrimmed.hasSuffix("→") || prevTrimmed.hasSuffix("⟶") ||
+                prevTrimmed.hasSuffix("(") || prevTrimmed.hasSuffix("[") || prevTrimmed.hasSuffix("{") ||
+                continuationConjunctions.contains(where: { prevTrimmed.lowercased().hasSuffix(" \($0)") || prevTrimmed.lowercased() == $0 })
+            
+            let currStartsWithContinuation: Bool
+            if let firstChar = currTrimmed.first {
+                currStartsWithContinuation = firstChar.isLowercase ||
+                    ["+", "-", "−", "=", "×", "÷", "·", "±", "…", "···", ",", ")", "]", "}", "→", "⟶"].contains(String(firstChar)) ||
+                    currTrimmed.hasPrefix("...") || currTrimmed.hasPrefix("···") || currTrimmed.hasPrefix("…") ||
+                    currTrimmed.hasPrefix("where ") || currTrimmed.hasPrefix("with ") || currTrimmed.hasPrefix("and ")
+            } else {
+                currStartsWithContinuation = false
+            }
+            
+            let isSuperscriptOrFragment = currTrimmed == "−1" || currTrimmed == "-1" || currTrimmed == "T" || currTrimmed == "⊤" ||
+                (currTrimmed.count <= 3 && (currTrimmed.hasPrefix("-") || currTrimmed.hasPrefix("−")))
+            
+            // Heuristics for paragraph break:
+            // 1. Vertical gap is significantly larger than regular line spacing.
+            // In LaTeX / academic typography, displayed equations have an above/below display skip (1.5x-2.0x line height).
+            // A gap constitutes a true paragraph break only if:
+            // - The previous line ended with terminal punctuation, OR
+            // - The gap is an immense section gap (> 3.0x line height) and the line is not a math/clause continuation.
+            let isLargeGap = (verticalGap > (medianHeight * 1.5) && hasTerminalPunctuation) ||
+                             (verticalGap > (medianHeight * 3.0) && !prevEndsWithContinuation && !currStartsWithContinuation && !isSuperscriptOrFragment)
+            
+            // 2. Indentation check: Indented by at least 5pt from the column base margin or previous line
             let isIndented = (currentLine.bounds.minX >= (baseMargin + 5.0)) || (currentLine.bounds.minX >= (previousLine.bounds.minX + 5.0))
             
-            // Short terminal line check: The previous line ended well before the column right margin
+            // 3. Short terminal line check: The previous line ended well before the column right margin
             let columnMaxX = lines.map { $0.bounds.maxX }.max() ?? 400.0
             let isPreviousLineShort = previousLine.bounds.maxX < (columnMaxX - 25.0)
             
-            if isLargeGap || (hasTerminalPunctuation && (isIndented || isPreviousLineShort)) {
+            let shouldBreakParagraph = !prevEndsWithContinuation && !currStartsWithContinuation && !isSuperscriptOrFragment &&
+                (isLargeGap || (hasTerminalPunctuation && (isIndented || isPreviousLineShort)))
+            
+            if shouldBreakParagraph {
                 flushCurrentBlock()
                 let isIndentedQuote = currentLine.bounds.minX > (baseMargin + medianHeight * 2.0)
                 currentBlockType = isIndentedQuote ? .quote : defaultBlockType

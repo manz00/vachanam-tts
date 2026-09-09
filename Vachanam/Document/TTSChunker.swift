@@ -65,7 +65,13 @@ public class TTSChunker {
         
         func finalizeCurrentChunk(isLastChunkOfBlock: Bool) {
             guard !currentSentenceIDs.isEmpty else { return }
-            let combinedText = currentTexts.joined(separator: " ")
+            let cleanTexts = currentTexts.map { text in
+                text.replacingOccurrences(of: "[ ]{2,}", with: " ", options: .regularExpression)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+            }.filter { !$0.isEmpty }
+            var combinedText = cleanTexts.joined(separator: " ")
+            combinedText = combinedText.replacingOccurrences(of: "[ ]{2,}", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
             let estimatedDuration = Double(currentWordCount) / 2.8 // ~168 words per minute
             let pause = pauseDuration(for: currentBlockType, isLastChunkOfBlock: isLastChunkOfBlock)
             
@@ -103,18 +109,19 @@ public class TTSChunker {
             let sBlockType = sentence.blockType
             
             // Boundary checks:
-            // 1. If currently accumulating and sentence belongs to a new block, finalize!
-            let isNewBlock = (currentBlockID != nil && currentBlockID != sBlockID)
-            
-            // 2. Standalone blocks (headings, list items, furniture, marginalia) must never be merged with other sentences!
+            // 1. Standalone blocks (headings, list items, furniture, marginalia) must never be merged with other sentences!
             let isStandaloneType = (sBlockType == .heading || sBlockType == .listItem || sBlockType == .caption || sBlockType == .footnote || sBlockType == .sidenote || sBlockType == .symbolTable)
             let currentIsStandalone = (currentBlockType == .heading || currentBlockType == .listItem || currentBlockType == .caption || currentBlockType == .footnote || currentBlockType == .sidenote || currentBlockType == .symbolTable)
+            
+            // 2. If sentence belongs to a new block, finalize if standalone or if we have met minWordsPerChunk
+            let isNewBlock = (currentBlockID != nil && currentBlockID != sBlockID)
+            let shouldBreakOnNewBlock = isNewBlock && (isStandaloneType || currentIsStandalone || currentWordCount >= minWordsPerChunk)
             
             // 3. Word and sentence count budget within paragraph
             let wouldExceedWords = (currentWordCount + sentenceWordCount) > targetMaxWordsPerChunk
             let wouldExceedSentences = currentSentenceIDs.count >= maxSentencesPerChunk
             
-            if !currentSentenceIDs.isEmpty && (isNewBlock || isStandaloneType || currentIsStandalone || wouldExceedWords || wouldExceedSentences) {
+            if !currentSentenceIDs.isEmpty && (shouldBreakOnNewBlock || isStandaloneType || currentIsStandalone || wouldExceedWords || wouldExceedSentences) {
                 // If isNewBlock, then the current chunk is the last chunk of its block
                 finalizeCurrentChunk(isLastChunkOfBlock: isNewBlock || currentIsStandalone)
             }
@@ -140,8 +147,10 @@ public class TTSChunker {
             if isStandaloneType {
                 finalizeCurrentChunk(isLastChunkOfBlock: true)
             } else if isEndOfBlock && !currentSentenceIDs.isEmpty {
-                // When reaching the end of a block (like paragraph), finalize with the paragraph boundary pause
-                finalizeCurrentChunk(isLastChunkOfBlock: true)
+                let nextIsStandalone = nextSentence != nil && (nextSentence!.blockType == .heading || nextSentence!.blockType == .listItem || nextSentence!.blockType == .caption || nextSentence!.blockType == .footnote || nextSentence!.blockType == .sidenote || nextSentence!.blockType == .symbolTable)
+                if isEndOfDocument || nextIsStandalone || currentWordCount >= minWordsPerChunk {
+                    finalizeCurrentChunk(isLastChunkOfBlock: true)
+                }
             }
         }
         

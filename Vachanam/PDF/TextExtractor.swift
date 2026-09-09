@@ -94,68 +94,70 @@ public class TextExtractor {
     
     /// Extracts structured sentences and bounding boxes from a given PDFPage.
     public func extractSentences(from page: PDFPage, pageIndex: Int) -> [SentenceItem] {
-        guard let pageText = page.string, !pageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return []
-        }
-        
-        let tokenizer = NLTokenizer(unit: .sentence)
-        tokenizer.string = pageText
-        
-        var sentences: [SentenceItem] = []
-        let fullRange = pageText.startIndex..<pageText.endIndex
-        var sIndex = 0
-        
-        tokenizer.enumerateTokens(in: fullRange) { tokenRange, _ in
-            let sentenceString = String(pageText[tokenRange])
-            let nsSentenceRange = NSRange(tokenRange, in: pageText)
-            let trimmedText = sentenceString.trimmingCharacters(in: .whitespacesAndNewlines)
+        PDFLoggingSanitizer.suppressingStderr {
+            guard let pageText = page.string, !pageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return []
+            }
             
-            guard !trimmedText.isEmpty else { return true }
+            let tokenizer = NLTokenizer(unit: .sentence)
+            tokenizer.string = pageText
             
-            // Extract bounding rect and per-line bounding rects for the entire sentence
-            var sentenceBounds = CGRect.zero
-            var lineBounds: [CGRect] = []
+            var sentences: [SentenceItem] = []
+            let fullRange = pageText.startIndex..<pageText.endIndex
+            var sIndex = 0
             
-            if let sentenceSelection = page.selection(for: nsSentenceRange) {
-                sentenceBounds = sentenceSelection.bounds(for: page)
-                let lineSelections = sentenceSelection.selectionsByLine()
-                lineBounds = lineSelections.compactMap { line in
-                    let b = line.bounds(for: page)
-                    return b.isEmpty ? nil : b
+            tokenizer.enumerateTokens(in: fullRange) { tokenRange, _ in
+                let sentenceString = String(pageText[tokenRange])
+                let nsSentenceRange = NSRange(tokenRange, in: pageText)
+                let trimmedText = sentenceString.trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                guard !trimmedText.isEmpty else { return true }
+                
+                // Extract bounding rect and per-line bounding rects for the entire sentence
+                var sentenceBounds = CGRect.zero
+                var lineBounds: [CGRect] = []
+                
+                if let sentenceSelection = page.selection(for: nsSentenceRange) {
+                    sentenceBounds = sentenceSelection.bounds(for: page)
+                    let lineSelections = sentenceSelection.selectionsByLine()
+                    lineBounds = lineSelections.compactMap { line in
+                        let b = line.bounds(for: page)
+                        return b.isEmpty ? nil : b
+                    }
                 }
+                
+                // Extract individual words within this sentence with precise 0-based sentence ranges
+                let words = self.extractWords(
+                    from: page,
+                    sentenceText: trimmedText,
+                    nsSentenceRange: nsSentenceRange,
+                    pageText: pageText,
+                    pageIndex: pageIndex
+                )
+                
+                // If overall bounds was zero, unite word bounds
+                if sentenceBounds == .zero && !words.isEmpty {
+                    sentenceBounds = words.reduce(words[0].bounds) { $0.union($1.bounds) }
+                }
+                if lineBounds.isEmpty && !sentenceBounds.isEmpty {
+                    lineBounds = [sentenceBounds]
+                }
+                
+                sentences.append(SentenceItem(
+                    text: trimmedText,
+                    range: nsSentenceRange,
+                    bounds: sentenceBounds,
+                    lineBounds: lineBounds,
+                    words: words,
+                    pageIndex: pageIndex,
+                    sentenceIndex: sIndex
+                ))
+                sIndex += 1
+                return true
             }
             
-            // Extract individual words within this sentence with precise 0-based sentence ranges
-            let words = self.extractWords(
-                from: page,
-                sentenceText: trimmedText,
-                nsSentenceRange: nsSentenceRange,
-                pageText: pageText,
-                pageIndex: pageIndex
-            )
-            
-            // If overall bounds was zero, unite word bounds
-            if sentenceBounds == .zero && !words.isEmpty {
-                sentenceBounds = words.reduce(words[0].bounds) { $0.union($1.bounds) }
-            }
-            if lineBounds.isEmpty && !sentenceBounds.isEmpty {
-                lineBounds = [sentenceBounds]
-            }
-            
-            sentences.append(SentenceItem(
-                text: trimmedText,
-                range: nsSentenceRange,
-                bounds: sentenceBounds,
-                lineBounds: lineBounds,
-                words: words,
-                pageIndex: pageIndex,
-                sentenceIndex: sIndex
-            ))
-            sIndex += 1
-            return true
+            return sentences
         }
-        
-        return sentences
     }
     
     /// Extracts individual words with bounding rects inside a specified sentence.
