@@ -18,7 +18,7 @@ public class AudioSession {
         #if os(iOS) || targetEnvironment(macCatalyst)
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers, .allowBluetoothHFP, .allowBluetoothA2DP])
+            try session.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers, .allowBluetoothHFP, .allowBluetoothA2DP])
             try session.setActive(true)
         } catch {
             print("Failed to configure AVAudioSession: \(error.localizedDescription)")

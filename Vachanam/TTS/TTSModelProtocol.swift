@@ -100,6 +100,7 @@ public protocol TTSModelProtocol: AnyObject {
     func unloadModel()
     func synthesize(text: String, voice: String?, speed: Float) async throws -> TTSAudioResult
     func synthesize(text: String, voice: String?, speed: Float, pauseDuration: TimeInterval) async throws -> TTSAudioResult
+    func synthesize(text: String, voice: String?, speed: Float, targetWords: [String]?) async throws -> TTSAudioResult
     func synthesize(text: String, voice: String?, speed: Float, pauseDuration: TimeInterval, targetWords: [String]?) async throws -> TTSAudioResult
     func streamSynthesize(text: String, voice: String?, speed: Float) -> AsyncThrowingStream<TTSAudioResult, Error>
 }
@@ -109,6 +110,10 @@ public extension TTSModelProtocol {
     
     func synthesize(text: String, voice: String?, speed: Float, pauseDuration: TimeInterval) async throws -> TTSAudioResult {
         return try await synthesize(text: text, voice: voice, speed: speed, pauseDuration: pauseDuration, targetWords: nil)
+    }
+    
+    func synthesize(text: String, voice: String?, speed: Float, targetWords: [String]?) async throws -> TTSAudioResult {
+        return try await synthesize(text: text, voice: voice, speed: speed, pauseDuration: 0.0, targetWords: targetWords)
     }
     
     func synthesize(text: String, voice: String?, speed: Float, pauseDuration: TimeInterval, targetWords: [String]?) async throws -> TTSAudioResult {

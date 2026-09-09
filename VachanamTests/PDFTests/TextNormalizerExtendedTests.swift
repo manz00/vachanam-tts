@@ -49,7 +49,7 @@ final class TextNormalizerExtendedTests: XCTestCase {
         let normalizer = TextNormalizer.shared
         XCTAssertEqual(
             normalizer.normalizeForSpeech("• Word-by-word synchronized reading."),
-            "Word-by-word synchronized reading."
+            "Word by word synchronized reading."
         )
         XCTAssertEqual(
             normalizer.normalizeForSpeech("◦ Dyslexia reading ruler."),
@@ -57,7 +57,7 @@ final class TextNormalizerExtendedTests: XCTestCase {
         )
         XCTAssertEqual(
             normalizer.normalizeForSpeech("▪ Distraction-free reader mode."),
-            "Distraction-free reader mode."
+            "Distraction free reader mode."
         )
         XCTAssertEqual(
             normalizer.normalizeForSpeech("● Full Apple Pencil drawing support."),
@@ -70,6 +70,37 @@ final class TextNormalizerExtendedTests: XCTestCase {
         XCTAssertEqual(
             normalizer.normalizeForSpeech("* Asterisk bullet item"),
             "Asterisk bullet item"
+        )
+    }
+    
+    func testHyphenAndDashSpokenNormalization() {
+        let normalizer = TextNormalizer.shared
+        // Intra-word hyphens in compound words
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("Accessibility-First on-device speech"),
+            "Accessibility First on device speech"
+        )
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("It features text-to-speech and karaoke-style highlights."),
+            "It features text to speech and karaoke style highlights."
+        )
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("Built-in state-of-the-art models"),
+            "Built in state of the art models"
+        )
+        // Numeric ranges
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("Read pages 10-20 or 1-2 chapters."),
+            "Read pages 10 to 20 or 1 to 2 chapters."
+        )
+        // Parenthetical dashes (em-dash, en-dash, spaced hyphens)
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("Vachanam — an accessibility reader — is fast."),
+            "Vachanam, an accessibility reader, is fast."
+        )
+        XCTAssertEqual(
+            normalizer.normalizeForSpeech("Features - like bookmarks - are offline."),
+            "Features, like bookmarks, are offline."
         )
     }
 }

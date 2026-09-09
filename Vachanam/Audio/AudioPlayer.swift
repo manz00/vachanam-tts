@@ -38,7 +38,7 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
         onWordRange: ((NSRange) -> Void)? = nil,
         onComplete: (() -> Void)? = nil
     ) {
-        stop()
+        stop(stopAmbient: false)
         
         AudioSession.shared.configureSession()
         
@@ -59,13 +59,14 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
         utterance.pitchMultiplier = min(max(pitch, 0.5), 2.0)
         
         isPlaying = true
+        AmbientSoundscapePlayer.shared.handleTTSPlayStarted()
         speechSynthesizer?.speak(utterance)
     }
     
     // MARK: - Neural Audio / WAV Buffer Playback
     
     public func play(result: TTSAudioResult, speed: Float = 1.0, startTime: TimeInterval = 0.0, onComplete: (() -> Void)? = nil) {
-        stop()
+        stop(stopAmbient: false)
         
         AudioSession.shared.configureSession()
         
@@ -89,6 +90,7 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
             
             if avPlayer?.play() == true {
                 isPlaying = true
+                AmbientSoundscapePlayer.shared.handleTTSPlayStarted()
                 startPlaybackTimer(speed: speed)
             } else {
                 onComplete?()
@@ -113,23 +115,26 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
         avPlayer?.pause()
         isPlaying = false
         playbackTimer?.cancel()
+        AmbientSoundscapePlayer.shared.handleTTSPaused()
     }
     
     public func resume() {
         if let synth = speechSynthesizer, synth.isPaused {
             synth.continueSpeaking()
             isPlaying = true
+            AmbientSoundscapePlayer.shared.handleTTSResumed()
             return
         }
         
         if let player = avPlayer, !player.isPlaying {
             player.play()
             isPlaying = true
+            AmbientSoundscapePlayer.shared.handleTTSResumed()
             startPlaybackTimer(speed: player.rate)
         }
     }
     
-    public func stop() {
+    public func stop(stopAmbient: Bool = true) {
         onCompleteHandler = nil
         onWordRangeHandler = nil
         if let synth = speechSynthesizer, synth.isSpeaking {
@@ -140,6 +145,9 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
         isPlaying = false
         currentTime = 0.0
         playbackTimer?.cancel()
+        if stopAmbient {
+            AmbientSoundscapePlayer.shared.handleTTSStopped()
+        }
     }
     
     // MARK: - Timers & Delegates

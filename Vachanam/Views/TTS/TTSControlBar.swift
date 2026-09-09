@@ -11,10 +11,13 @@ public struct TTSControlBar: View {
     public let documentTitle: String
     @ObservedObject var ttsController = TTSController.shared
     @ObservedObject var sleepTimer = SleepTimer.shared
+    @ObservedObject var soundscapePlayer = AmbientSoundscapePlayer.shared
+    @ObservedObject var coordinator = PlaybackCoordinator.shared
     
     @State private var isVoicePickerPresented: Bool = false
     @State private var isSleepTimerPresented: Bool = false
     @State private var isFixPronunciationPresented: Bool = false
+    @State private var isSoundscapePickerPresented: Bool = false
     
     public init(documentTitle: String) {
         self.documentTitle = documentTitle
@@ -123,6 +126,21 @@ public struct TTSControlBar: View {
                             .fill(ttsController.isModelLoaded ? Color.green : Color.white.opacity(0.4))
                             .frame(width: 6, height: 6)
                     }
+                    
+                    if coordinator.playbackMode == .preGenerated {
+                        HStack(spacing: 3) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 9))
+                                .foregroundColor(Color.amberAccent)
+                            Text("Pre-gen")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .foregroundColor(Color.amberAccent)
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.amberAccent.opacity(0.20))
+                        .cornerRadius(6)
+                    }
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
@@ -139,6 +157,25 @@ public struct TTSControlBar: View {
                     .foregroundColor(.white.opacity(0.80))
             }
             .accessibilityLabel("Fix Pronunciation")
+            
+            // Ambient Focus Soundscapes
+            Button {
+                isSoundscapePickerPresented = true
+            } label: {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "headphones")
+                        .font(.system(size: 15))
+                        .foregroundColor(soundscapePlayer.currentPreset != nil ? Color.amberAccent : .white.opacity(0.80))
+                    
+                    if soundscapePlayer.currentPreset != nil {
+                        Circle()
+                            .fill(soundscapePlayer.isPlaying ? Color.tealAccent : Color.amberAccent)
+                            .frame(width: 6, height: 6)
+                            .offset(x: 4, y: -4)
+                    }
+                }
+            }
+            .accessibilityLabel("Ambient Soundscapes")
             
             // Sleep Timer
             Button {
@@ -162,6 +199,9 @@ public struct TTSControlBar: View {
                 .fill(Color(red: 0.10, green: 0.14, blue: 0.20).opacity(0.95))
                 .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 6)
         )
+        .sheet(isPresented: $isSoundscapePickerPresented) {
+            SoundscapePickerSheet()
+        }
         .sheet(isPresented: $isVoicePickerPresented) {
             VoicePickerView()
         }

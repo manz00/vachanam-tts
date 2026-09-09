@@ -57,6 +57,11 @@ public enum PlaybackScope: Equatable, Sendable {
     }
 }
 
+public enum PlaybackMode: String, Sendable {
+    case liveSynthesis
+    case preGenerated
+}
+
 public class PlaybackCoordinator: ObservableObject {
     public static let shared = PlaybackCoordinator()
     
@@ -64,6 +69,8 @@ public class PlaybackCoordinator: ObservableObject {
     @Published public var isPlaying: Bool = false
     @Published public var isPaused: Bool = false
     @Published public var isGenerating: Bool = false
+    @Published public var playbackMode: PlaybackMode = .liveSynthesis
+    @Published public var preGeneratedManifest: AudiobookManifest?
     
     // Authoritative Cursor & Scope
     @Published public var cursor: PlaybackCursor?
@@ -122,6 +129,15 @@ public class PlaybackCoordinator: ObservableObject {
             }
         } else {
             clearCursor()
+        }
+        
+        // Auto-detect pre-generated audiobook bundle
+        if let manifest = AudiobookBundleLoader.shared.loadBundle(for: document) {
+            self.playbackMode = .preGenerated
+            self.preGeneratedManifest = manifest
+        } else {
+            self.playbackMode = .liveSynthesis
+            self.preGeneratedManifest = nil
         }
     }
     
@@ -295,6 +311,15 @@ public class PlaybackCoordinator: ObservableObject {
         let pronRev = PronunciationManager.shared.revisionHash(for: doc.documentID)
         let normalizedSpokenText = TextNormalizer.shared.normalizeForSpeech(chunk.text)
         let processedSpokenText = PronunciationManager.shared.applyPronunciations(to: normalizedSpokenText, documentID: doc.documentID)
+        
+        // 0. Check for Pre-generated Audiobook Bundle
+        if playbackMode == .preGenerated, let manifest = preGeneratedManifest,
+           let (_, exportChunk) = AudiobookBundleLoader.shared.findExportChunk(forGlobalWordID: targetWordID, in: manifest),
+           let preResult = PreGeneratedPlaybackAdapter.shared.loadAudioResult(for: exportChunk, in: manifest) {
+            self.isGenerating = false
+            self.startAudioPlayback(result: preResult, chunk: chunk, startWordID: targetWordID, requestID: requestID)
+            return
+        }
         
         // 1. Check Audio Cache
         let cacheKey = TTSAudioCache.shared.makeKey(

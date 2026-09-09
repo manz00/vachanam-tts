@@ -14,6 +14,7 @@ public struct DocumentLibraryView: View {
     public let onSelectDocument: (ReaderDocument) -> Void
     
     @State private var isFilePickerPresented: Bool = false
+    @State private var isWebArticleImportPresented: Bool = false
     @State private var isSettingsPresented: Bool = false
     @State private var isModelManagerPresented: Bool = false
     @State private var searchText: String = ""
@@ -32,12 +33,12 @@ public struct DocumentLibraryView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     // Header Banner
-                    HStack {
+                    HStack(alignment: .center, spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Your Library")
                                 .font(.largeTitle.bold())
                                 .foregroundColor(.white)
-                            Text("Accessibility-first PDF reader with on-device neural voice")
+                            Text("Accessibility-first reader with on-device neural voice (PDF, EPUB, MD, Web)")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
@@ -45,9 +46,21 @@ public struct DocumentLibraryView: View {
                         Spacer()
                         
                         Button {
+                            isWebArticleImportPresented = true
+                        } label: {
+                            Label("Web Article", systemImage: "globe")
+                                .font(.headline)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(Color.tealAccent.opacity(0.20))
+                                .foregroundColor(Color.tealAccent)
+                                .cornerRadius(10)
+                        }
+                        
+                        Button {
                             isFilePickerPresented = true
                         } label: {
-                            Label("Open PDF", systemImage: "plus")
+                            Label("Open Document", systemImage: "plus")
                                 .font(.headline)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 10)
@@ -101,7 +114,8 @@ public struct DocumentLibraryView: View {
                                     progressFraction: record.progressFraction,
                                     progressPercent: record.progressPercentString,
                                     pageCount: record.totalPages,
-                                    lastOpenedDate: record.lastOpened
+                                    lastOpenedDate: record.lastOpened,
+                                    format: record.format
                                 ) {
                                     let url = resolveDocumentURL(for: record)
                                     if url.path != record.documentPath {
@@ -150,7 +164,13 @@ public struct DocumentLibraryView: View {
             }
             .fileImporter(
                 isPresented: $isFilePickerPresented,
-                allowedContentTypes: [.pdf],
+                allowedContentTypes: [
+                    .pdf,
+                    .epub,
+                    .plainText,
+                    UTType(filenameExtension: "md") ?? .plainText,
+                    UTType("net.daringfireball.markdown") ?? .plainText
+                ],
                 allowsMultipleSelection: false
             ) { result in
                 switch result {
@@ -175,6 +195,9 @@ public struct DocumentLibraryView: View {
                 case .failure(let error):
                     print("File picker error: \(error.localizedDescription)")
                 }
+            }
+            .sheet(isPresented: $isWebArticleImportPresented) {
+                WebArticleImportSheet(onDocumentImported: onSelectDocument)
             }
             .sheet(isPresented: $isSettingsPresented) {
                 SettingsView()

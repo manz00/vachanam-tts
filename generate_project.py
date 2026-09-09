@@ -57,6 +57,9 @@ def create_project():
     kokoro_models_uuid = generate_uuid()
     kokoro_models_b_uuid = generate_uuid()
     
+    soundscapes_uuid = generate_uuid()
+    soundscapes_b_uuid = generate_uuid()
+    
     spm_pkg_ref_uuid = generate_uuid()
     spm_kokorotts_dep_uuid = generate_uuid()
     spm_kokorotts_build_file_uuid = generate_uuid()
@@ -139,6 +142,7 @@ def create_project():
     pbx.append(f"\t\t{font_bold_b_uuid} /* OpenDyslexic-Bold.otf in Resources */ = {{isa = PBXBuildFile; fileRef = {font_bold_uuid} /* OpenDyslexic-Bold.otf */; }};")
     pbx.append(f"\t\t{assets_b_uuid} /* Assets.xcassets in Resources */ = {{isa = PBXBuildFile; fileRef = {assets_uuid} /* Assets.xcassets */; }};")
     pbx.append(f"\t\t{kokoro_models_b_uuid} /* KokoroModels in Resources */ = {{isa = PBXBuildFile; fileRef = {kokoro_models_uuid} /* KokoroModels */; }};")
+    pbx.append(f"\t\t{soundscapes_b_uuid} /* Soundscapes in Resources */ = {{isa = PBXBuildFile; fileRef = {soundscapes_uuid} /* Soundscapes */; }};")
     pbx.append("/* End PBXBuildFile section */")
     pbx.append("")
     
@@ -194,6 +198,7 @@ def create_project():
     pbx.append(f"\t\t{font_bold_uuid} /* OpenDyslexic-Bold.otf */ = {{isa = PBXFileReference; lastKnownFileType = file; path = \"Vachanam/Resources/OpenDyslexic-Bold.otf\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{assets_uuid} /* Assets.xcassets */ = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = \"Vachanam/Resources/Assets.xcassets\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{kokoro_models_uuid} /* KokoroModels */ = {{isa = PBXFileReference; lastKnownFileType = folder; path = \"Vachanam/Resources/KokoroModels\"; sourceTree = \"<group>\"; }};")
+    pbx.append(f"\t\t{soundscapes_uuid} /* Soundscapes */ = {{isa = PBXFileReference; lastKnownFileType = folder; path = \"Vachanam/Resources/Soundscapes\"; sourceTree = \"<group>\"; }};")
     pbx.append("/* End PBXFileReference section */")
     pbx.append("")
     
@@ -251,6 +256,7 @@ def create_project():
     pbx.append(f"\t\t\t\t{font_bold_uuid} /* OpenDyslexic-Bold.otf */,")
     pbx.append(f"\t\t\t\t{assets_uuid} /* Assets.xcassets */,")
     pbx.append(f"\t\t\t\t{kokoro_models_uuid} /* KokoroModels */,")
+    pbx.append(f"\t\t\t\t{soundscapes_uuid} /* Soundscapes */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\tpath = \".\";")
     pbx.append("\t\t\tsourceTree = \"<group>\";")
@@ -429,6 +435,7 @@ def create_project():
     pbx.append(f"\t\t\t\t{font_bold_b_uuid} /* OpenDyslexic-Bold.otf in Resources */,")
     pbx.append(f"\t\t\t\t{assets_b_uuid} /* Assets.xcassets in Resources */,")
     pbx.append(f"\t\t\t\t{kokoro_models_b_uuid} /* KokoroModels in Resources */,")
+    pbx.append(f"\t\t\t\t{soundscapes_b_uuid} /* Soundscapes in Resources */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
     pbx.append("\t\t};")

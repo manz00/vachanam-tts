@@ -217,13 +217,6 @@ public struct PDFReaderView: UIViewRepresentable {
             if let doc = PlaybackCoordinator.shared.activeSemanticDocument,
                let word = doc.findWord(at: pointInPage, onPageIndex: pageIndex) {
                 PlaybackCoordinator.shared.play(fromWordID: word.globalWordID)
-            } else if let selection = page.selectionForWord(at: pointInPage),
-                      let wordBounds = Optional(selection.bounds(for: page)),
-                      !wordBounds.isEmpty {
-                if let doc = PlaybackCoordinator.shared.activeSemanticDocument,
-                   let word = doc.words(forPageIndex: pageIndex).first(where: { $0.bounds.intersects(wordBounds) }) {
-                    PlaybackCoordinator.shared.play(fromWordID: word.globalWordID)
-                }
             }
         }
         

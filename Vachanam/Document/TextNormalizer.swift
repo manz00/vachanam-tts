@@ -78,6 +78,29 @@ public struct TextNormalizer {
             options: .regularExpression
         )
         
+        // 1. Numeric ranges: 10-20, 1990-2000 -> 10 to 20, 1990 to 2000
+        result = result.replacingOccurrences(
+            of: #"(?<=\d)\s*[-‐‑‒–—]\s*(?=\d)"#,
+            with: " to ",
+            options: .regularExpression
+        )
+        
+        // 2. Intra-word hyphens in compound words: "on-device", "accessibility-focused", "word-by-word"
+        // Replace with single space so neural TTS synthesizes fluent connected speech without silent punctuation pauses
+        result = result.replacingOccurrences(
+            of: #"(?<=\p{L})[-‐‑‒–—](?=\p{L})"#,
+            with: " ",
+            options: .regularExpression
+        )
+        
+        // 3. Parenthetical dashes: em-dashes, en-dashes, spaced hyphens, double hyphens
+        // Convert to comma pause for smooth conversational clause transitions instead of abrupt silence
+        result = result.replacingOccurrences(
+            of: #"\s*[—–]\s*|\s+-\s+|\s*--+\s*"#,
+            with: ", ",
+            options: .regularExpression
+        )
+        
         // Currencies: $100 -> 100 dollars, €50 -> 50 euros, etc.
         result = result.replacingOccurrences(
             of: #"\$(\d+(?:\.\d{1,2})?)\b"#,

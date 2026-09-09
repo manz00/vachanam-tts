@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-public struct ReadingRecord: Identifiable, Codable, Equatable {
+public struct ReadingRecord: Identifiable, Codable, Equatable, Hashable {
     public var id: String { documentPath }
     public let documentPath: String
     public let title: String
@@ -25,6 +25,10 @@ public struct ReadingRecord: Identifiable, Codable, Equatable {
     public var progressPercentString: String {
         let percent = Int(progressFraction * 100)
         return "\(min(max(percent, 0), 100))%"
+    }
+    
+    public var format: DocumentFormat {
+        DocumentFormat.detect(from: URL(fileURLWithPath: documentPath))
     }
     
     public init(documentPath: String, title: String, currentPage: Int, totalPages: Int, lastOpened: Date = Date(), estimatedRemainingMinutes: Int = 0) {

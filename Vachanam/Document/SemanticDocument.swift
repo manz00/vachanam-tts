@@ -350,8 +350,8 @@ public class SemanticDocument: ObservableObject, @unchecked Sendable {
     }
     
     /// Spatial hit-testing: finds the word at a given point on a specific PDF page.
-    public func findWord(at point: CGPoint, onPageIndex pageIndex: Int, hitPadding: CGFloat = 6.0) -> SemanticWord? {
-        guard let pageWords = wordsByPage[pageIndex] else { return nil }
+    public func findWord(at point: CGPoint, onPageIndex pageIndex: Int, hitPadding: CGFloat = 12.0, maxSearchRadius: CGFloat = 36.0) -> SemanticWord? {
+        guard let pageWords = wordsByPage[pageIndex], !pageWords.isEmpty else { return nil }
         
         // Exact bounds match first
         for word in pageWords {
@@ -360,7 +360,7 @@ public class SemanticDocument: ObservableObject, @unchecked Sendable {
             }
         }
         
-        // Match with small hit padding (finger touch on iPad)
+        // Match with hit padding (finger touch on iPad or mouse click nearby)
         var closestWord: SemanticWord? = nil
         var minDistance: CGFloat = .infinity
         
@@ -373,6 +373,20 @@ public class SemanticDocument: ObservableObject, @unchecked Sendable {
                     minDistance = dist
                     closestWord = word
                 }
+            }
+        }
+        
+        if let found = closestWord {
+            return found
+        }
+        
+        // Fallback: If tapped near a word (e.g. within maxSearchRadius)
+        for word in pageWords {
+            let center = CGPoint(x: word.bounds.midX, y: word.bounds.midY)
+            let dist = hypot(point.x - center.x, point.y - center.y)
+            if dist < maxSearchRadius && dist < minDistance {
+                minDistance = dist
+                closestWord = word
             }
         }
         

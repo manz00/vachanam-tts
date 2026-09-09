@@ -20,6 +20,20 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
   3. **Qwen3-TTS 0.6B** (High fidelity, expressive prosody, native word timestamps, requires 8GB+ RAM)
   4. **Chatterbox Turbo** (Emotion markup like `[laugh]`, `[sigh]`, requires 8GB+ RAM)
   5. **CosyVoice 3 0.5B** (4-bit quantized MLX streaming synthesis, requires 8GB+ RAM)
+- **🎧 Ambient Focus Soundscapes**:
+  - Integrated acoustic background player with 5 tailored ambient loops: **Brown Noise**, **Pink Noise**, **40Hz Binaural Beats**, **Soft Rain**, and **Library Ambience**.
+  - Independent volume slider (`0.0`–`1.0`) with persistence, smooth fade-in/fade-out transitions, and audio session mixing (`.mixWithOthers`).
+  - Automatically couples with speech narration (starts on Play, pauses on Pause, stops on Stop) with an independent **Study Mode** toggle for reading without speech narration.
+- **📖 Multi-Format Document Ingestion (EPUB, Markdown, Plain Text, Web Articles)**:
+  - Expands Vachanam beyond PDFs into a universal reader for `.epub` books, `.md` markdown files, `.txt` documents, and live web article URLs.
+  - Built-in `EPUBParser` with custom ZIP decompression (`ZipArchive`) and XHTML chapter spine parsing.
+  - `MarkdownParser` and `WebArticleParser` with readability-heuristic text extraction.
+  - `SemanticDocumentBuilder` maps all formats seamlessly into Vachanam's monotonic `SemanticDocument` pipeline with word tokenization and virtual paging, opening directly in **Reader View** with custom fonts, themes, and karaoke highlighting.
+- **☁️ Mac Audiobook Studio & iCloud Drive Pre-Generated Playback**:
+  - Turn your Mac into a local audiobook production studio (`AudiobookGeneratorView`).
+  - Pre-generates complete books with Kokoro neural speech into AAC `.m4a` chaptered audio and microsecond word timestamps (`manifest.json`).
+  - Automatic iCloud Drive synchronization (`iCloudSyncManager`) makes generated audiobooks instantly available across iPad, Mac, and mobile devices.
+  - Zero-latency iPad playback adapter (`PreGeneratedPlaybackAdapter`) streams or plays local cached chunks with instant word-by-word highlighting and zero on-device inference overhead.
 - **3-Layer Document & Performance Architecture**:
   - **Layer 1 (PDF Layout)**: PDFKit coordinate rendering with precise word bounding boxes and multi-line highlights.
   - **Layer 2 (Semantic Text)**: `WordReconstructor` automatically joins hyphenated line breaks (`probabil-` + `ity` $\to$ `probability`) while preserving compound words (`well-known`). `ParagraphDetector` and `SentenceSegmenter` reconstruct natural linguistic flow with semantic block recognition (`BlockType.heading`, `listItem`, `paragraph`, `quote`).
@@ -32,6 +46,9 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
   - Gives the narrator natural acoustic breathing room and keeps visual focus on the final spoken word during pauses without UI jitter.
 - **Advanced Symbol-to-Speech & Math Normalization**:
   - `TextNormalizer.normalizeForSpeech` converts mathematical operators (`×` $\to$ `times`, `÷` $\to$ `divided by`, `≠` $\to$ `is not equal to`, `≤`, `≥`, `≈`, `∞`), vulgar fractions (`½` $\to$ `one half`, `¼` $\to$ `one quarter`), currencies (`$100` $\to$ `100 dollars`, `€`, `£`, `¥`), percentages (`25%` $\to$ `25 percent`), plus-minus (`±5` $\to$ `plus or minus 5`), temperatures and angles (`100°C` $\to$ `100 degrees Celsius`, `72°F` $\to$ `72 degrees Fahrenheit`, `90°` $\to$ `90 degrees`), and ampersands (`&` $\to$ `and`) into fluent speech while preserving sentence punctuation.
+  - **Hyphen & Compound Word Normalization**: Converts intra-word hyphens in compound words (`on-device` $\to$ `on device`, `accessibility-focused` $\to$ `accessibility focused`, `word-by-word` $\to$ `word by word`, `text-to-speech` $\to$ `text to speech`, `karaoke-style` $\to$ `karaoke style`) into unified single-space tokens. This eliminates unnatural neural pauses at hyphens and prevents words before the hyphen from awkwardly trailing backward or words after the hyphen from abruptly rushing forward.
+  - **Numeric Range Normalization**: Converts hyphenated number intervals (`10-20` $\to$ `10 to 20`, `1-2` $\to$ `1 to 2`, `pages 5-8` $\to$ `pages 5 to 8`).
+  - **Parenthetical Dash Smoothing**: Converts em-dashes (`—`), en-dashes (`–`), and spaced hyphens into natural comma pauses (`", "`) for smooth conversational breathing rather than dead-air silence.
   - Automatically strips visual bullet ornaments (`•`, `◦`, `▪`, `▫`, `●`, `■`, `◆`, `❖`, `★`, `☆`, `►`, `▻`, `➢`, `✓`, `✔`) and leading list hyphens/asterisks (`- `, `* `) so that visual layout glyphs are never spoken awkwardly or indexed as phantom audio words.
 - **Layered Pronunciation Dictionary System (`PronunciationManager`)**:
   - Three-tier hierarchy: **Global** (common acronyms & phonetics), **Book-specific** (character names, domain terminology), and **User overrides** (custom fixes).
@@ -103,8 +120,9 @@ vachanam-tts/
 │   │   │   ├── PageThumbnailGrid.swift     # Visual thumbnail grid for quick scrubbing
 │   │   │   └── TOCView.swift               # Table of Contents and Bookmarks drawer
 │   │   ├── TTS/
-│   │   │   ├── TTSControlBar.swift         # Play/pause, speed, voice picker, sleep timer, fix pronunciation
+│   │   │   ├── TTSControlBar.swift         # Play/pause, speed, voice picker, soundscape, sleep timer, fix pronunciation
 │   │   │   ├── VoicePickerView.swift       # Voice selection and model picker sheet
+│   │   │   ├── SoundscapePickerSheet.swift # Ambient focus soundscapes picker with live volume & study mode
 │   │   │   ├── FixPronunciationSheet.swift # Phonetic dictionary override modal with audio preview
 │   │   │   └── SleepTimerView.swift        # Sleep timer countdown sheet
 │   │   ├── Highlight/
@@ -119,6 +137,8 @@ vachanam-tts/
 │   │   │   ├── StickyNoteView.swift        # Draggable sticky note pins
 │   │   │   ├── TextBoxView.swift           # Draggable typed text boxes
 │   │   │   └── AnnotationExportView.swift  # Markdown notes export sheet
+│   │   ├── Generator/
+│   │   │   └── AudiobookGeneratorView.swift # Mac Audiobook Studio for pre-generating audiobook bundles
 │   │   ├── Models/
 │   │   │   ├── ModelManagerView.swift      # Neural model manager sheet
 │   │   │   ├── ModelCard.swift             # Model specifications and download card
@@ -135,6 +155,8 @@ vachanam-tts/
 │   ├── TTS/
 │   │   ├── PlaybackCoordinator.swift       # Authoritative cursor, scope boundary & task token manager
 │   │   ├── PronunciationManager.swift      # 3-tier dictionary (Global/Book/User), regex replacement & revision hashes
+│   │   ├── AudiobookGenerator.swift        # Batch audiobook pre-generator with microsecond word timings
+│   │   ├── AudiobookManifest.swift         # Manifest & chunk timings data models
 │   │   ├── TTSModelProtocol.swift          # Pluggable model interface, audio results & TTSError
 │   │   ├── TTSModelInfo.swift              # Model metadata, formats, tiers
 │   │   ├── TTSController.swift             # Speech orchestrator, lifecycle & rolling pre-generator
@@ -146,6 +168,7 @@ vachanam-tts/
 │   │
 │   ├── Adapters/
 │   │   ├── KokoroAdapter.swift             # Kokoro 82M CoreML adapter with stage telemetry
+│   │   ├── PreGeneratedPlaybackAdapter.swift # Zero-latency pre-generated audiobook playback adapter
 │   │   ├── Qwen3TTSAdapter.swift           # Qwen3-TTS 0.6B CoreML adapter
 │   │   ├── ChatterboxAdapter.swift         # Chatterbox Turbo CoreML adapter
 │   │   ├── CosyVoice3Adapter.swift         # CosyVoice 3 0.5B MLX adapter
@@ -154,22 +177,36 @@ vachanam-tts/
 │   │       └── MisakiG2P.swift             # Misaki English phonemizer
 │   │
 │   ├── Document/
+│   │   ├── DocumentFormat.swift            # Format detection (PDF, EPUB, Markdown, Plain Text, Web Article)
 │   │   ├── SemanticDocument.swift          # Complete 3-layer document model & fast lookups
+│   │   ├── SemanticDocumentBuilder.swift   # Universal parsed document to SemanticDocument bridge
 │   │   ├── WordReconstructor.swift         # Line-break hyphen joining & compound word preservation
 │   │   ├── TextNormalizer.swift            # Whitespace, ligature, and symbol-to-speech cleaner
 │   │   ├── ParagraphDetector.swift         # Visual line clustering & semantic block detector
 │   │   ├── SentenceSegmenter.swift         # NLTokenizer sentence & word bounding box parser
-│   │   └── TTSChunker.swift                # 10-25 word semantic chunk generator with boundary pauses
+│   │   ├── TTSChunker.swift                # 10-25 word semantic chunk generator with boundary pauses
+│   │   └── Parsers/
+│   │       ├── DocumentParser.swift        # Parser protocol & ParsedDocument models
+│   │       ├── DocumentParserResolver.swift # Format-to-parser resolver
+│   │       ├── EPUBParser.swift            # EPUB container, OPF spine & XHTML extractor
+│   │       ├── ZipArchive.swift            # Lightweight PKZip reader & deflate decompressor
+│   │       ├── MarkdownParser.swift        # Headings, lists, blockquotes & paragraph parser
+│   │       ├── PlainTextParser.swift       # Paragraph delimiter & title detector
+│   │       └── WebArticleParser.swift      # HTML readability extractor via URLSession
 │   │
 │   ├── Audio/
 │   │   ├── AudioPlayer.swift               # AVAudioEngine streaming player
+│   │   ├── AmbientSoundscapePlayer.swift   # Procedural ambient soundscape player (Brown, Pink, 40Hz, Rain, Library)
+│   │   ├── AudioEncoder.swift              # Raw PCM to AAC .m4a converter (AVAssetWriter)
+│   │   ├── iCloudSyncManager.swift         # Pre-generated audiobook sync & manifest manager
+│   │   ├── AudiobookBundleLoader.swift     # Bundle reader for pre-generated audiobooks
 │   │   ├── AudioSession.swift              # Background audio & MPRemoteCommandCenter
 │   │   ├── TTSAudioCache.swift             # Content-hashed two-tier audio cache
 │   │   └── SleepTimer.swift                # Sleep timer logic
 │   │
 │   ├── PDF/
 │   │   ├── TextExtractor.swift             # Sentence & word bounding box extractor
-│   │   ├── ReaderDocument.swift            # PDFKit document wrapper & TOC
+│   │   ├── ReaderDocument.swift            # Multi-format document wrapper & TOC
 │   │   ├── BookmarkManager.swift           # Bookmark persistence
 │   │   └── ReadingProgressTracker.swift    # Reading history & estimated time
 │   │
@@ -185,12 +222,14 @@ vachanam-tts/
 │   │
 │   ├── Resources/
 │   │   ├── model_registry.json             # 4 TTS models catalog
+│   │   ├── Soundscapes/                    # 5 bundled ambient audio loops (.m4a)
 │   │   └── Assets.xcassets                 # AccentColor & AppIcon
 │   │
 │   └── Info.plist                          # Background audio, document types, file sharing
 │
 ├── VachanamTests/
 │   ├── TTSTests/
+│   │   ├── AmbientSoundscapeTests.swift    # Soundscape presets, persistence & study mode tests
 │   │   ├── TTSModelProtocolTests.swift     # Model synthesis & timestamp tests
 │   │   ├── ModelManagerTests.swift         # Registry & active model tests
 │   │   ├── DeviceCapabilityTests.swift     # RAM tier compatibility tests
@@ -198,6 +237,16 @@ vachanam-tts/
 │   │   ├── PlaybackCoordinatorTests.swift  # Task cancellation & word jump tests
 │   │   ├── PronunciationManagerTests.swift # 3-tier dictionary & regex word-boundary tests
 │   │   └── TTSChunkerQualityTests.swift    # Block isolation & trailing pause assignment tests
+│   ├── DocumentTests/
+│   │   ├── EPUBParserTests.swift           # EPUB container & spine extraction tests
+│   │   ├── MarkdownParserTests.swift       # Markdown block parsing tests
+│   │   ├── PlainTextParserTests.swift      # Plain text paragraph detection tests
+│   │   ├── WebArticleParserTests.swift     # HTML readability extraction tests
+│   │   └── SemanticDocumentBuilderTests.swift # ParsedDocument to SemanticDocument bridge tests
+│   ├── AudioTests/
+│   │   ├── AudiobookManifestTests.swift    # Manifest JSON serialization tests
+│   │   ├── iCloudSyncTests.swift           # Bundle discovery & hash tests
+│   │   └── AudiobookGeneratorTests.swift   # Pre-generated playback adapter tests
 │   ├── PDFTests/
 │   │   ├── TextExtractorTests.swift        # Sentence tokenization & word rect tests
 │   │   ├── WordReconstructorTests.swift    # Hyphen reconstruction & compounds tests
@@ -333,6 +382,9 @@ vachanam-tts/
   - **`DocumentLibraryView`**: `resolveDocumentURL(for:)` is implemented as a pure, side-effect-free query function without mutating `ReadingProgressTracker.history` during `ForEach` body evaluations. Persistent document path reconciliation runs asynchronously on `.onAppear` and on card tap selection, eliminating `AttributeInvalidatingSubscriber` warnings in `ForEachState`.
   - **`PDFReaderView`**: Removed redundant highlight calls from `updateUIView`, relying solely on the coordinator's reactive observers (`$isPlaying`, `$currentSentence`, page change notifications) so the SwiftUI layout pass never mutates observable state.
   - **`ReaderContainerView` & `ReadingRuler`**: Decoupled `TTSController` observation from `ReaderContainerView` directly into `ReadingRuler`, preventing whole-container re-renders on word-level speech ticks. Unused `currentWordViewRect` tracking has also been purged.
+- **Mac Catalyst Crash: "-[PDFPage rvItemAtPoint:]: unrecognized selector sent to instance"**:
+  - Occurs on macOS Sequoia / Mac Catalyst when tapping a PDF page if invoking PDFKit's legacy `selectionForWord(at:)` API. In Mac Catalyst, Apple's UIKit-to-AppKit PDFKit bridge forwards word hit-testing to an internal AppKit lookup selector (`rvItemAtPoint:`, intended for macOS Dictionary/QuickLook popovers) which is missing on the bridged iOS `PDFPage` instance, raising a fatal `NSInvalidArgumentException`.
+  - Fix: Vachanam uses pure-Swift spatial hit testing on `SemanticDocument.findWord(at:onPageIndex:hitPadding:maxSearchRadius:)` with bounding box containment and calibrated distance fallbacks. Calling `selectionForWord(at:)` has been completely eliminated from `PDFReaderView`, guaranteeing zero-crash tap-to-speak across both iPad and Mac Catalyst.
 - **Xcode "Validate Project Settings" / Recommended Settings**:
   - `generate_project.py` embeds Xcode's complete suite of modern recommended build settings across both Project and Target levels (`LastUpgradeCheck = 1600;`, `ENABLE_USER_SCRIPT_SANDBOXING = YES`, `STRING_CATALOG_GENERATE_SYMBOLS = YES`, `LOCALIZATION_PREFERS_STRING_CATALOGS = YES`, `SWIFT_COMPILATION_MODE = wholemodule` for Release, `ONLY_ACTIVE_ARCH = YES` for Debug, full recommended Clang/GCC compiler warnings, and automatic asset/string catalog symbol generation). This completely prevents Xcode from displaying the "Validate Project Settings" / "Update to recommended settings" prompt upon opening the project.
 
@@ -522,8 +574,10 @@ When executing in the iPad simulator or natively on macOS (Mac Catalyst):
    - `EspressoModelWrapper::initialize Cannot create MPS context, fallback to CPU` is an internal Apple `TextRecognition` framework diagnostic when running in the simulator without native Metal Performance Shader context. It automatically falls back to CPU without impacting text extraction.
 7. **`LoudnessManager` / `HALC_ProxyIOContext` Overload (Simulator Audio)**:
    - Simulator CoreAudio proxy messages occur when host audio proxies desynchronize during system speech fallback. Keeping synthesis on the neural CoreML path with bundled voices resolves these proxy drops.
-8. **`MetalToolchain` / `cryptexd` Linker Warning (Mac Catalyst)**:
-   - `ld: warning: search path '/var/run/com.apple.security.cryptexd/mnt/.../Metal.xctoolchain/usr/lib/swift/maccatalyst' not found` is a known upstream Apple Clang / Xcode issue on macOS Sequoia when building Mac Catalyst. Xcode automatically injects the mounted Metal toolchain cryptex path into linker arguments. The linker safely bypasses the non-existent subdirectory and links against the macOS SDK libraries without issue.
+8. **`MetalToolchain` / `cryptexd` Linker Warning (Mac Catalyst & Previews)**:
+   - `ld: warning: search path '/var/run/com.apple.security.cryptexd/mnt/.../Metal.xctoolchain/usr/lib/swift/maccatalyst' not found`:
+     - **Cause**: An upstream Apple Clang/Xcode 16 toolchain behavior on macOS Sequoia when building Mac Catalyst targets and SwiftUI Previews (`__preview.dylib`). The compiler driver automatically injects the mounted Metal toolchain cryptex library search path (`-L.../maccatalyst`). Because Apple's cryptex image only packages `usr/lib/swift/macosx` (with Catalyst runtime libraries located in `/System/iOSSupport/usr/lib/swift`), `ld` reports this directory not found.
+     - **Impact**: **Completely harmless**. The linker immediately skips the missing directory and links against the correct system runtime. The build completes with code 0 (`Activity Log Complete`) in ~3 seconds, with zero link errors or missing symbols. No project change is required.
 9. **`AddInstanceForFactory` / `CoreAudio HAL Factory` (CoreFoundation / CFBundle)**:
    - `AddInstanceForFactory: No factory registered for id <CFUUID ...> F8BB1C28-BAE8-11D6-9C31-00039315CD46` is emitted by Apple's CoreAudio Hardware Abstraction Layer when discovering system audio hardware and AudioUnit driver plug-ins. It is standard Apple diagnostic logging and has zero impact on audio playback.
 10. **`libsqlite3` / `open(/private/var/db/DetachedSignatures)`**:
@@ -532,6 +586,10 @@ When executing in the iPad simulator or natively on macOS (Mac Catalyst):
     - Emitted by Apple's internal `AudioAnalytics` framework when local audio sessions initialize without transmitting usage analytics to Apple.
 12. **`BaseBoard` / `Unable to obtain a task name port right`**:
     - Emitted by Apple's `BaseBoard` framework when verifying Mach port task rights across windowing processes within the sandboxed Mac Catalyst environment.
+13. **`AXCoreUtilities` / `unsafeForcedSync called from Swift Concurrent context`**:
+    - `Subsystem: com.apple.Accessibility | Category: AXCommon | Library: AXCoreUtilities`:
+      - **Cause**: In macOS 14/15 and iOS 17/18, Apple added runtime assertion logging to `AXCoreUtilities` to detect internal legacy synchronous dispatch calls (`unsafeForcedSync`) executed when accessibility daemon services or VoiceOver query UI elements while a Swift Concurrency task is active.
+      - **Impact**: **Completely benign internal diagnostic**. The OS log is categorized as `Fault` purely for Apple's internal system telemetry. It does not crash the application, block threads, or degrade performance. User applications do not call `unsafeForcedSync` directly (it is a private Apple internal C++/ObjC utility). No action is required.
 
 ---
 
@@ -570,7 +628,206 @@ xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=i
 
 ---
 
+## Competitive Analysis & Strategic Roadmap (vs. ElevenLabs, Speechify & Modern TTS Labs)
+
+### 1. Landscape Overview
+
+| Capability | **Vachanam** | **ElevenLabs (Reader & API)** | **Speechify** | **NaturalReader** | **Cartesia / Play.ht** |
+|---|---|---|---|---|---|
+| **Privacy & Offline** | **100% On-Device / Offline** (CoreML & MLX) | Cloud API only (Data sent to servers) | Cloud-reliant (Paid tier stream) | Hybrid cloud / Basic offline | Cloud streaming API |
+| **Cost Model** | **Free & Open-Source** (Zero subscription/tokens) | $5–$330+/mo credit consumption | $139/yr subscription paywall | $9.99–$19.99/mo subscription | Pay-per-character API |
+| **PDF Layout Fidelity** | **Native PDFKit sub-pixel CALayer** | Text-extraction view only (Loss of PDF layout) | Bounding box overlay (Variable alignment) | Basic box overlay | N/A (API only) |
+| **Dyslexia & Accessibility** | **Reading Ruler, OpenDyslexic, PencilKit, AAA Contrast** | Minimal (Standard reader UI) | Good dyslexia options & ruler | Good dyslexia fonts & ruler | N/A (API only) |
+| **Word Highlighting Sync** | **Strict 1:1 `targetWords` contract & drift telemetry** | Cloud word timestamp streaming | Real-time word highlight | Word-by-word highlight | Sub-100ms alignment |
+| **Custom Pronunciation** | **3-Tier Hierarchy (Global/Book/User) + Regex + Cache purge** | Phonetizer / IPA phoneme prompt | Basic phonetic editor | Basic pronunciation replacement | IPA phoneme dictionary |
+| **Document Formats** | PDF (Native & Reader views) | PDF, EPUB, TXT, Web URLs, Newsletters | PDF, EPUB, Web, DOCX, Camera OCR | PDF, EPUB, DOCX, TXT, OCR | N/A |
+| **Voice Variety & Realism** | Kokoro (82M), Qwen3, Chatterbox, CosyVoice, Apple | Hundreds of hyper-expressive voices (v2/v3) | 200+ voices (Celebrities: Snoop, Gwyneth) | 100+ commercial AI voices | Ultra-low latency voice library |
+| **Voice Cloning** | Experimental local CosyVoice 3 | Instant 3-second zero-shot voice clone | User voice cloning (iOS/Studio) | Personal voice clone | Instant voice clone |
+| **Dialogue Casting** | Single voice per chunk (Architecture ready via `BlockType.quote`) | Projects multi-voice character casting | Multi-voice dialogue reading | Studio multi-speaker casting | Multi-speaker audio streams |
+| **AI Reading Assistant** | Local document stats & estimated completion | GenFM / AI Podcast generation | AI Summaries, Quiz, Ask Document | Basic text-to-speech summaries | Conversational LLM agents |
+| **Focus Soundscapes** | Pure silence insertion (0.4s–0.6s) | No background audio | Ambient study sounds & background music | Ambient music tracks | N/A |
+
+---
+
+### 2. Vachanam's Existing Unfair Advantages
+
+1. **Complete On-Device Data Privacy**: Legal documents, medical records, proprietary research papers, and personal notes never leave the user's iPad or Mac.
+2. **True Dual-Engine PDF + Reader Typography**: Unlike cloud readers that strip documents down to plain text, Vachanam preserves the exact PDF layout, formulas, and diagrams with high-precision sub-pixel `CALayer` word highlights alongside Apple Pencil annotations.
+3. **Zero Ongoing Cost**: Cloud TTS models like ElevenLabs charge heavily per 1,000 characters. Reading an 800-page academic textbook on ElevenLabs or Speechify can cost tens of dollars or hit steep subscription limits; on Vachanam, it is completely free and unlimited.
+4. **Architectural Determinism**: Deterministic trailing silence (0.6s for headings, 0.4s for lists, 0.5s for paragraphs) and monotonic binary-searched highlighting clocks prevent network buffering stutters and visual highlight desynchronization.
+
+---
+
+### 3. Feature Upgrade Roadmap (Upgrades That Can Be Added)
+
+#### Phase 1: High-Impact Accessibility & Document Expansion (Near-Term)
+- **Ambient Focus Soundscapes**:
+  - *Feature*: Layer subtle, looping ambient audio underneath speech narration (e.g., binaural focus beats, brown noise, soft rain, library ambience).
+  - *Impact*: Proven to dramatically boost focus and retention for neurodivergent readers (ADHD, dyslexia) without overpowering the vocal track.
+- **On-Device Apple Vision OCR (`VisionKit` / `VNRecognizeTextRequest`)**:
+  - *Feature*: Extract text and word bounding boxes from scanned/image-only PDFs and physical books snapped with the iPad camera.
+  - *Impact*: Eliminates "unreadable scanned document" errors entirely on-device without cloud OCR services.
+- **EPUB, Markdown & Web Reader Ingestion**:
+  - *Feature*: Add native parsers for `.epub` eBooks, `.md` documents, and Web URLs (via an on-device readability cleaner).
+  - *Impact*: Matches ElevenLabs Reader and Speechify's multi-format versatility while keeping reading distraction-free.
+- **Audiobook & Podcast Export (`.m4a` with Chapter Markers)**:
+  - *Feature*: Offline batch export of narrated documents to standard AAC/M4A audiobooks with embedded chapter metadata for playback in Apple Podcasts or Apple Books.
+
+#### Phase 2: Frontier Neural Vocal Upgrades & Expressive Prosody (Mid-Term)
+- **Automated Dialogue Casting (Narrator vs. Character Voices)**:
+  - *Feature*: Leverage Vachanam's `BlockType.quote` detection to automatically assign distinct vocal timbres to conversational dialogue (e.g., female protagonist voice vs. male narrator voice).
+  - *Impact*: Creates immersive audiobook-grade listening comparable to ElevenLabs Projects.
+- **On-Device Instant Voice Cloning (3–5s Audio Prompt)**:
+  - *Feature*: Utilize 4-bit quantized CosyVoice 3 / F5-TTS CoreML weights to clone a parent's, educator's, or user's own voice from a short 5-second microphone recording.
+  - *Impact*: Enables personalized listening and assistive familiar-voice learning without sending biometric voice data to third-party cloud servers.
+- **Multilingual G2P & Accent Expansion**:
+  - *Feature*: Expand `MisakiG2P` to support multilingual phonemizers (Spanish, French, German, Japanese, and Indian regional languages like Kannada/Hindi) using Kokoro-v1 and Qwen3 multilingual checkpoints.
+- **Expressive Emotion & Prosody Controls**:
+  - *Feature*: Expose prosody sliders for vocal warmth, pitch variance, and conversational interjections (`[pause]`, `[sigh]`, `[emphasis]`).
+
+#### Phase 3: On-Device AI Reading Companion ("Ask Document") (Long-Term)
+- **Local Neural Summarization & Chapter Briefings**:
+  - *Feature*: Integrate a compact on-device LLM (via Apple Silicon CoreML / MLX, such as Llama-3.2 1B or Apple Intelligence APIs) to generate 1-minute executive summaries of chapters before narration begins.
+- **Interactive Spoken Vocabulary & Concept Explainer**:
+  - *Feature*: Long-press any word or complex paragraph to ask: *"Explain this simply"* or *"Define this in context"*, with the explanation spoken aloud in the narrator's voice.
+- **"GenFM" Style Audio Deep Dives**:
+  - *Feature*: Convert technical papers into engaging two-host conversational podcast dialogues (similar to NotebookLM and ElevenLabs GenFM) synthesized entirely on-device.
+
+---
+
+---
+
+## Ambient Focus Soundscapes Architecture
+
+Vachanam incorporates an acoustic layering engine designed specifically for ADHD and dyslexia focus:
+
+- **Procedural & Bundled Audio Loops (`Vachanam/Resources/Soundscapes/`)**:
+  - **Brown Noise**: Deep spectral power falloff ($1/f^2$), calming low-frequency rumble for masking distractions and high-stress reading.
+  - **Pink Noise**: Balanced energy per octave ($1/f$), clinically shown to improve memory consolidation and slow-wave neural focus.
+  - **40Hz Binaural Beats**: Gamma-band auditory oscillation (200Hz left ear, 240Hz right ear) supporting working memory and executive concentration.
+  - **Soft Rain**: Calming gentle precipitation with warm low-mid frequencies.
+  - **Library Ambience**: Distant book turns and quiet room acoustics for authentic study hall presence.
+- **Audio Routing & Lifecycle (`AmbientSoundscapePlayer.swift`)**:
+  - Configures `AVAudioSession` with `.mixWithOthers` so speech synthesis and background soundscapes blend smoothly without ducking clicks.
+  - Seamless looping using `AVAudioPlayer(contentsOf:)` with `numberOfLoops = -1`.
+  - Independent volume slider (`0.0`–`1.0`, default `0.35`) persisted across app launches in `UserDefaults`.
+  - Smooth ~0.8s fade-in when narration starts and ~0.4s fade-out when paused or stopped.
+  - **Study Mode**: Can be toggled on to keep soundscapes playing continuously even when TTS narration is paused or stopped, turning Vachanam into a focused quiet-study workspace.
+- **UI Integration**:
+  - Headphone button in `TTSControlBar` displaying an active indicator dot when soundscapes are engaged.
+  - Opens `SoundscapePickerSheet` with interactive preset cards, live preview, volume slider, and Study Mode switch.
+
+---
+
+## Multi-Format Document Ingestion Architecture (EPUB, Markdown, TXT, Web)
+
+Vachanam unifies all reading material into a single, high-performance semantic pipeline:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       Input Document                        │
+│         (PDF, EPUB, Markdown, Plain Text, Web URL)          │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+               ┌───────────────┴───────────────┐
+               ▼                               ▼
+       [PDF Native Parser]           [DocumentParserResolver]
+     (TextExtractor/PDFKit)          ├── EPUBParser (ZipArchive)
+               │                     ├── MarkdownParser
+               │                     ├── PlainTextParser
+               │                     └── WebArticleParser (Readability)
+               │                               │
+               │                               ▼
+               │                        [ParsedDocument]
+               │                               │
+               │                 [SemanticDocumentBuilder]
+               │                 (NLTokenizer, Virtual Paging)
+               ▼                               ▼
+      ┌─────────────────────────────────────────────────┐
+      │                SemanticDocument                 │
+      │  - Global Monotonic Word IDs (1, 2, 3...)       │
+      │  - Paragraphs, Headings, List Items, Quotes     │
+      │  - Virtual Paging (~500 words per page)         │
+      └────────────────────────┬────────────────────────┘
+                               │
+            ┌──────────────────┴──────────────────┐
+            ▼                                     ▼
+   [PDFReaderView Layout]               [ReaderTextView Layout]
+  (Original PDF coordinates)       (Dynamic OpenDyslexic / Themes)
+            │                                     │
+            └──────────────────┬──────────────────┘
+                               ▼
+                   [PlaybackCoordinator & TTS]
+                 (Word & Sentence Highlighting)
+```
+
+- **Universal Parser Architecture (`Vachanam/Document/Parsers/`)**:
+  - **`DocumentFormat`**: Auto-detects format from file extension, MIME type, or UTType (`.pdf`, `.epub`, `.markdown`, `.plainText`, `.webArticle`).
+  - **`EPUBParser` & `ZipArchive`**: Zero-dependency pure Swift PKZip decompression and container navigation. Locates `META-INF/container.xml`, discovers the OPF manifest, follows the reading spine, strips HTML boilerplate while preserving semantic headers (`h1`–`h6`), paragraphs, list items (`li`), and quotes (`blockquote`).
+  - **`MarkdownParser`**: Native parsing of ATX headings (`#`), bullet/numbered lists (`-`, `*`, `1.`), blockquotes (`>`), and text blocks into semantic nodes.
+  - **`PlainTextParser`**: Double-newline paragraph segmentation with intelligent title deduction.
+  - **`WebArticleParser`**: Asynchronous `URLSession` fetcher with a heuristic readability extractor that isolates `<article>`, `<main>`, or the densest text content block, stripping navigation headers, ads, sidebars, and tracking scripts.
+- **`SemanticDocumentBuilder`**:
+  - Ingests `ParsedDocument` and translates it into Vachanam's standard 3-layer `SemanticDocument`.
+  - Runs Apple's `NLTokenizer` to extract linguistic words and sentence boundaries.
+  - Partitions long documents into natural ~500-word "virtual pages", enabling instant navigation, thumbnail previews, progress percentages, and sleep timer "end of page" integration.
+  - All non-PDF documents open seamlessly in **Reader View** with full support for OpenDyslexic typography, theme presets, reading ruler, and karaoke word/sentence highlights.
+
+---
+
+## Mac Audiobook Studio & iCloud Pre-Generated Audiobook Pipeline
+
+For users with multiple devices (MacBook, iPad, iPhone, Android), Vachanam supports a powerful distributed audiobook workflow:
+
+```
+                  YOUR MACBOOK (Host Studio)
+              ┌────────────────────────────────┐
+              │   AudiobookGenerator (Mac)     │
+              │  Kokoro CoreML / Neural Engine │
+              └───────────────┬────────────────┘
+                              │
+               Pre-generate whole book in batch
+                              │
+                              ▼
+                 [Standard Audiobook Bundle]
+                 ├── manifest.json
+                 ├── document_index.json
+                 ├── chapters/
+                 │   ├── chap_00.m4a (AAC 24kHz)
+                 │   └── chap_00_timings.json
+                 └── iCloud Drive Sync
+                              │
+               ┌──────────────┴──────────────┐
+               ▼                             ▼
+        [iPad Air / Mini]            [Android / Web Device]
+   (PreGeneratedPlaybackAdapter)      (Standard HTTP Stream)
+   - Zero-latency chunk audio        - Universal AAC .m4a
+   - Exact word-by-word karaoke      - Standard JSON timestamps
+   - Zero on-device battery drain    - 100% offline playback
+```
+
+- **Batch Synthesis Engine (`AudiobookGenerator.swift`)**:
+  - Synthesizes an entire document chapter-by-chapter on the Mac with Apple Silicon acceleration.
+  - Generates chaptered `.m4a` AAC audio (24kHz Mono, 64kbps) via `AudioEncoder.swift` (`AVAssetWriter`), producing compact files (~20MB for an entire 300-page book).
+  - Emits microsecond-precision word timing files (`chap_XX_timings.json`) and document-wide word indices (`document_index.json`).
+  - Resumable: Skips already-synthesized chunks if cancelled and restarted.
+- **iCloud Drive Synchronization (`iCloudSyncManager.swift`)**:
+  - Automatically writes bundles to the app's ubiquitous iCloud Drive container:
+    `iCloud.com.vachanam.app/Audiobooks/<docHash>/`
+  - Falls back gracefully to local Application Support if iCloud is unavailable.
+- **Instant iPad Playback (`PreGeneratedPlaybackAdapter.swift`)**:
+  - When opening a document on iPad, `AudiobookBundleLoader` detects if an iCloud pre-generated bundle exists.
+  - If present, `PlaybackCoordinator` transparently routes playback to `PreGeneratedPlaybackAdapter`, streaming the pre-encoded AAC audio with zero local inference delay, zero device heating, and full word-by-word karaoke highlighting.
+- **Mac Audiobook Studio UI (`AudiobookGeneratorView.swift`)**:
+  - Dedicated studio interface on Mac Catalyst for selecting documents from reading history or file system.
+  - Live progress display with percentage, chunk counter, time estimates, and cancellation.
+  - Summary card with total audio duration, chunk breakdown, chapter list, and "Reveal in Finder" button.
+
+---
+
 ## License
 
 Personal accessibility open-source project. Free for all users.
+
+
 

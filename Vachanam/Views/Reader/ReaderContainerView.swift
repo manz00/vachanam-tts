@@ -164,7 +164,22 @@ public struct ReaderContainerView: View {
             
             Spacer()
             
-            ReadingModeToggle(selectedMode: $readingMode)
+            if document.format == .pdf {
+                ReadingModeToggle(selectedMode: $readingMode)
+            } else {
+                HStack(spacing: 6) {
+                    Image(systemName: document.format.systemImage)
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.amberAccent)
+                    Text(document.format.badgeText)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Color.white.opacity(0.12))
+                .cornerRadius(12)
+            }
             
             Spacer()
             
@@ -222,18 +237,56 @@ public struct ReaderContainerView: View {
     }
     
     private func initializeDocument() {
-        let pdf = document.pdfDocument
         let docTitle = document.title
         let docID = document.id
+        let docFormat = document.format
+        let pdfDoc = document.pdfDocument
+        let existingSemDoc = document.semanticDocument
+        let fileURL = document.fileURL
+        let targetDoc = document
         
         PlaybackCoordinator.shared.setVisiblePageIndex(currentPageIndex)
         
+        if docFormat != .pdf {
+            readingMode = .readerView
+        }
+        
         Task.detached(priority: .userInitiated) {
-            let semDoc = SentenceSegmenter.shared.parseDocument(
-                pdfDocument: pdf,
-                title: docTitle,
-                documentID: docID
-            )
+            let semDoc: SemanticDocument
+            if docFormat == .pdf {
+                semDoc = SentenceSegmenter.shared.parseDocument(
+                    pdfDocument: pdfDoc,
+                    title: docTitle,
+                    documentID: docID
+                )
+            } else if let existing = existingSemDoc {
+                semDoc = existing
+            } else {
+                do {
+                    let parsed = try await DocumentParserResolver.shared.parse(
+                        source: .fileURL(fileURL),
+                        format: docFormat
+                    )
+                    let built = SemanticDocumentBuilder.shared.build(from: parsed, documentID: docID)
+                    await MainActor.run {
+                        targetDoc.semanticDocument = built
+                        targetDoc.parsedDocument = parsed
+                        targetDoc.pageCount = built.pageCount
+                    }
+                    semDoc = built
+                } catch {
+                    print("Failed to parse non-PDF document: \(error.localizedDescription)")
+                    let fallback = ParsedDocument(
+                        title: docTitle,
+                        format: docFormat,
+                        chapters: [ParsedChapter(title: docTitle, blocks: [
+                            ParsedBlock(type: .paragraph, text: "Could not load document: \(error.localizedDescription)")
+                        ])]
+                    )
+                    semDoc = SemanticDocumentBuilder.shared.build(from: fallback, documentID: docID)
+                }
+            }
+            
             await MainActor.run {
                 ttsController.loadDocument(semDoc)
                 extractedSentences = semDoc.sentences.map { SentenceItem(from: $0) }

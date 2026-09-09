@@ -13,21 +13,31 @@ public struct DocumentCard: View {
     public let progressPercent: String
     public let pageCount: Int?
     public let lastOpenedDate: Date?
+    public let format: DocumentFormat
     public let onSelect: () -> Void
     
-    public init(title: String, progressFraction: Double = 0.0, progressPercent: String = "0%", pageCount: Int? = nil, lastOpenedDate: Date? = nil, onSelect: @escaping () -> Void) {
+    public init(
+        title: String,
+        progressFraction: Double = 0.0,
+        progressPercent: String = "0%",
+        pageCount: Int? = nil,
+        lastOpenedDate: Date? = nil,
+        format: DocumentFormat = .pdf,
+        onSelect: @escaping () -> Void
+    ) {
         self.title = title
         self.progressFraction = progressFraction
         self.progressPercent = progressPercent
         self.pageCount = pageCount
         self.lastOpenedDate = lastOpenedDate
+        self.format = format
         self.onSelect = onSelect
     }
     
     public var body: some View {
         Button(action: onSelect) {
             VStack(alignment: .leading, spacing: 12) {
-                // PDF Cover Graphic
+                // Cover Graphic
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(
@@ -40,9 +50,9 @@ public struct DocumentCard: View {
                         .aspectRatio(0.72, contentMode: .fit)
                     
                     VStack(spacing: 8) {
-                        Image(systemName: "doc.text.fill")
+                        Image(systemName: format.systemImage)
                             .font(.system(size: 42))
-                            .foregroundColor(Color.amberAccent)
+                            .foregroundColor(format == .pdf ? Color.amberAccent : Color.tealAccent)
                         
                         Text(title)
                             .font(.system(size: 13, weight: .bold))
@@ -50,6 +60,22 @@ public struct DocumentCard: View {
                             .multilineTextAlignment(.center)
                             .lineLimit(2)
                             .padding(.horizontal, 10)
+                    }
+                    
+                    // Format badge top-trailing
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Text(format.badgeText)
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .foregroundColor(.white.opacity(0.9))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Color.black.opacity(0.35))
+                                .cornerRadius(5)
+                                .padding(8)
+                        }
+                        Spacer()
                     }
                 }
                 .overlay(

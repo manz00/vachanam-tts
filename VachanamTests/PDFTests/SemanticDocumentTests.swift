@@ -62,4 +62,35 @@ final class SemanticDocumentTests: XCTestCase {
             XCTAssertGreaterThan(chunk.estimatedDuration, 0)
         }
     }
+    
+    func testFindWordSpatialHitTesting() {
+        let pdf = createTestPDF()
+        let semDoc = SentenceSegmenter.shared.parseDocument(pdfDocument: pdf, title: "Test Doc")
+        
+        guard let firstWord = semDoc.words(forPageIndex: 0).first else {
+            XCTFail("Should have words on page 0")
+            return
+        }
+        
+        // Exact center hit
+        let centerPoint = CGPoint(x: firstWord.bounds.midX, y: firstWord.bounds.midY)
+        let exactMatch = semDoc.findWord(at: centerPoint, onPageIndex: 0)
+        XCTAssertEqual(exactMatch?.globalWordID, firstWord.globalWordID)
+        
+        // Padded hit test (5 points outside bounds)
+        let nearPoint = CGPoint(x: firstWord.bounds.maxX + 4.0, y: firstWord.bounds.midY)
+        let nearMatch = semDoc.findWord(at: nearPoint, onPageIndex: 0)
+        XCTAssertNotNil(nearMatch)
+        
+        // Fallback radius hit test (20 points outside bounds)
+        let fallbackPoint = CGPoint(x: firstWord.bounds.maxX + 18.0, y: firstWord.bounds.midY)
+        let fallbackMatch = semDoc.findWord(at: fallbackPoint, onPageIndex: 0, hitPadding: 6.0, maxSearchRadius: 30.0)
+        XCTAssertNotNil(fallbackMatch)
+        
+        // Far point should return nil
+        let farPoint = CGPoint(x: 1000, y: 1000)
+        let farMatch = semDoc.findWord(at: farPoint, onPageIndex: 0)
+        XCTAssertNil(farMatch)
+    }
 }
+

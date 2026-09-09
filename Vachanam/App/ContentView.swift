@@ -19,12 +19,35 @@ public struct ContentView: View {
                 ReaderContainerView(document: document)
                     .transition(.opacity)
             } else {
+                #if targetEnvironment(macCatalyst)
+                TabView(selection: $appState.selectedTab) {
+                    DocumentLibraryView { doc in
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            appState.openDocument(doc)
+                        }
+                    }
+                    .tabItem {
+                        Label("Library", systemImage: "books.vertical")
+                    }
+                    .tag("library")
+                    
+                    NavigationStack {
+                        AudiobookGeneratorView()
+                    }
+                    .tabItem {
+                        Label("Audiobook Studio", systemImage: "sparkles.tv")
+                    }
+                    .tag("generator")
+                }
+                .accentColor(Color.amberAccent)
+                #else
                 DocumentLibraryView { doc in
                     withAnimation(.easeInOut(duration: 0.25)) {
                         appState.openDocument(doc)
                     }
                 }
                 .transition(.opacity)
+                #endif
             }
         }
         .animation(.easeInOut(duration: 0.25), value: appState.currentDocument == nil)
