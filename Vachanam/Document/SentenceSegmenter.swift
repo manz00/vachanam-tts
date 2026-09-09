@@ -8,13 +8,26 @@
 
 import Foundation
 import CoreGraphics
-import PDFKit
+@preconcurrency import PDFKit
 import NaturalLanguage
 
-public class SentenceSegmenter {
+public final class SentenceSegmenter: @unchecked Sendable {
     public static let shared = SentenceSegmenter()
     
     public init() {}
+    
+    /// Asynchronously parses a PDF document by offloading extraction to a dedicated GCD queue.
+    /// This prevents PDFKit's internal accessibility calls from executing inside a Swift Concurrency
+    /// cooperative task context, eliminating AXCoreUtilities' `unsafeForcedSync` warnings and thread starvation.
+    public func parseDocumentAsync(pdfDocument: PDFDocument, title: String, documentID: UUID = UUID()) async -> SemanticDocument {
+        nonisolated(unsafe) let pdf = pdfDocument
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let doc = self.parseDocument(pdfDocument: pdf, title: title, documentID: documentID)
+                continuation.resume(returning: doc)
+            }
+        }
+    }
     
     /// Parses a PDF document into a fully indexed SemanticDocument.
     public func parseDocument(pdfDocument: PDFDocument, title: String, documentID: UUID = UUID()) -> SemanticDocument {

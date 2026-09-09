@@ -10,7 +10,6 @@
 
 import Foundation
 import CoreGraphics
-import PDFKit
 
 public enum BlockType: String, Codable, Sendable {
     case heading

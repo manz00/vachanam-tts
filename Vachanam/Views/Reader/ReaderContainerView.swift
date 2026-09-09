@@ -254,7 +254,7 @@ public struct ReaderContainerView: View {
         Task.detached(priority: .userInitiated) {
             let semDoc: SemanticDocument
             if docFormat == .pdf {
-                semDoc = SentenceSegmenter.shared.parseDocument(
+                semDoc = await SentenceSegmenter.shared.parseDocumentAsync(
                     pdfDocument: pdfDoc,
                     title: docTitle,
                     documentID: docID

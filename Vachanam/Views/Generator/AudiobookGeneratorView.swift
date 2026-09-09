@@ -400,7 +400,7 @@ public struct AudiobookGeneratorView: View {
         Task.detached(priority: .userInitiated) {
             let semDoc: SemanticDocument?
             if format == .pdf, let pdf = PDFKit.PDFDocument(url: url) {
-                semDoc = SentenceSegmenter.shared.parseDocument(pdfDocument: pdf, title: docTitle, documentID: docID)
+                semDoc = await SentenceSegmenter.shared.parseDocumentAsync(pdfDocument: pdf, title: docTitle, documentID: docID)
             } else {
                 do {
                     let parsed = try await DocumentParserResolver.shared.parse(source: .fileURL(url), format: format)

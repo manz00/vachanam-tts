@@ -588,8 +588,12 @@ When executing in the iPad simulator or natively on macOS (Mac Catalyst):
     - Emitted by Apple's `BaseBoard` framework when verifying Mach port task rights across windowing processes within the sandboxed Mac Catalyst environment.
 13. **`AXCoreUtilities` / `unsafeForcedSync called from Swift Concurrent context`**:
     - `Subsystem: com.apple.Accessibility | Category: AXCommon | Library: AXCoreUtilities`:
-      - **Cause**: In macOS 14/15 and iOS 17/18, Apple added runtime assertion logging to `AXCoreUtilities` to detect internal legacy synchronous dispatch calls (`unsafeForcedSync`) executed when accessibility daemon services or VoiceOver query UI elements while a Swift Concurrency task is active.
-      - **Impact**: **Completely benign internal diagnostic**. The OS log is categorized as `Fault` purely for Apple's internal system telemetry. It does not crash the application, block threads, or degrade performance. User applications do not call `unsafeForcedSync` directly (it is a private Apple internal C++/ObjC utility). No action is required.
+      - **Cause**: In macOS 14/15 and iOS 17/18, Apple added runtime diagnostic assertion logging to `AXCoreUtilities` to detect internal legacy synchronous dispatch calls (`unsafeForcedSync`) executed when legacy system frameworks (such as PDFKit line extraction or `AVSpeechSynthesizer` XPC communication with `AXSpeechManager`) are invoked from within a Swift Concurrency `Task` execution context (`swift_task_getCurrent() != NULL`).
+      - **Impact**: **Completely benign internal diagnostic**. The OS log is categorized as `Fault` purely for Apple's internal system telemetry. It does not crash the application or affect execution.
+      - **Architectural Mitigation in Vachanam**:
+        - **Asynchronous PDF Layout Offloading**: `SentenceSegmenter.parseDocumentAsync` offloads PDFKit text extraction and line segmentation to a dedicated background GCD queue via `withCheckedContinuation`, ensuring `swift_task_getCurrent() == nil` and preventing cooperative thread pool starvation.
+        - **Main Runloop Speech Dispatching**: `AudioPlayer` dispatches `AVSpeechSynthesizer` control calls (`speak`, `pauseSpeaking`, `continueSpeaking`, `stopSpeaking`) onto `DispatchQueue.main.async`, preventing accessibility IPC synchronization from running inside Swift Concurrency tasks.
+        - **Pure-Swift Spatial Hit Testing**: Removed PDFKit imports and private AppKit selection lookups from `SemanticDocument.swift`, resolving taps using pure coordinate bounding-box math.
 
 ---
 

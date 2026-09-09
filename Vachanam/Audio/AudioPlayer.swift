@@ -60,7 +60,9 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
         
         isPlaying = true
         AmbientSoundscapePlayer.shared.handleTTSPlayStarted()
-        speechSynthesizer?.speak(utterance)
+        DispatchQueue.main.async { [weak self] in
+            self?.speechSynthesizer?.speak(utterance)
+        }
     }
     
     // MARK: - Neural Audio / WAV Buffer Playback
@@ -110,7 +112,9 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
     
     public func pause() {
         if let synth = speechSynthesizer, synth.isSpeaking {
-            synth.pauseSpeaking(at: .immediate)
+            DispatchQueue.main.async {
+                synth.pauseSpeaking(at: .immediate)
+            }
         }
         avPlayer?.pause()
         isPlaying = false
@@ -120,7 +124,9 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
     
     public func resume() {
         if let synth = speechSynthesizer, synth.isPaused {
-            synth.continueSpeaking()
+            DispatchQueue.main.async {
+                synth.continueSpeaking()
+            }
             isPlaying = true
             AmbientSoundscapePlayer.shared.handleTTSResumed()
             return
@@ -138,7 +144,9 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
         onCompleteHandler = nil
         onWordRangeHandler = nil
         if let synth = speechSynthesizer, synth.isSpeaking {
-            synth.stopSpeaking(at: .immediate)
+            DispatchQueue.main.async {
+                synth.stopSpeaking(at: .immediate)
+            }
         }
         avPlayer?.stop()
         avPlayer = nil
