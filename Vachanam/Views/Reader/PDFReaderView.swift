@@ -206,6 +206,7 @@ public struct PDFReaderView: UIViewRepresentable {
         if let page = document.page(at: currentPageIndex) {
             pdfView.go(to: page)
         }
+        context.coordinator.lastHandledPageIndex = currentPageIndex
         
         return pdfView
     }
@@ -223,9 +224,22 @@ public struct PDFReaderView: UIViewRepresentable {
             context.coordinator.attachScrollObserver()
         }
         
-        if let current = uiView.currentPage, document.pdfDocument.index(for: current) != currentPageIndex {
-            if let target = document.page(at: currentPageIndex) {
-                uiView.go(to: target)
+        let coord = PlaybackCoordinator.shared
+        if context.coordinator.lastHandledPageIndex != currentPageIndex {
+            let isUserInteracting = context.coordinator.isUserScrolling
+            let isScrolledAwayDuringPlayback = coord.isPlaying && coord.isUserScrolledAway
+            
+            if !isUserInteracting && !isScrolledAwayDuringPlayback {
+                context.coordinator.lastHandledPageIndex = currentPageIndex
+                if let target = document.page(at: currentPageIndex) {
+                    context.coordinator.isProgrammaticScroll = true
+                    uiView.go(to: target)
+                    DispatchQueue.main.async {
+                        context.coordinator.isProgrammaticScroll = false
+                    }
+                }
+            } else {
+                context.coordinator.lastHandledPageIndex = currentPageIndex
             }
         }
         
@@ -246,6 +260,27 @@ public struct PDFReaderView: UIViewRepresentable {
         private var cancellables = Set<AnyCancellable>()
         private var scrollObserver: NSKeyValueObservation?
         
+        var lastHandledPageIndex: Int = -1
+        var isProgrammaticScroll: Bool = false
+        
+        var internalScrollView: UIScrollView? {
+            guard let pdfView = pdfView else { return nil }
+            return findScrollView(in: pdfView)
+        }
+        
+        var isUserScrolling: Bool {
+            guard let sv = internalScrollView else { return false }
+            return sv.isDragging || sv.isTracking || sv.isDecelerating
+        }
+        
+        private func findScrollView(in view: UIView) -> UIScrollView? {
+            if let sv = view as? UIScrollView { return sv }
+            for sub in view.subviews {
+                if let found = findScrollView(in: sub) { return found }
+            }
+            return nil
+        }
+        
         init(_ parent: PDFReaderView) {
             self.parent = parent
         }
@@ -259,16 +294,20 @@ public struct PDFReaderView: UIViewRepresentable {
             scrollObserver = nil
             
             guard let pdfView = pdfView else { return }
-            // Find internal UIScrollView inside PDFView
-            if let scrollView = pdfView.subviews.compactMap({ $0 as? UIScrollView }).first {
+            if let scrollView = findScrollView(in: pdfView) {
                 scrollObserver = scrollView.observe(\.contentOffset, options: [.new]) { [weak self] sv, _ in
-                    self?.updateHighlights()
-                    self?.evaluateScrollAwayState(scrollView: sv)
+                    guard let self = self else { return }
+                    self.updateHighlights()
+                    if !self.isProgrammaticScroll {
+                        self.evaluateScrollAwayState(scrollView: sv)
+                    }
                 }
             }
         }
         
         func evaluateScrollAwayState(scrollView: UIScrollView) {
+            if isProgrammaticScroll { return }
+            
             let coord = PlaybackCoordinator.shared
             guard coord.isPlaying, let currentSentence = coord.currentSentence, let pdfView = pdfView else {
                 if coord.isUserScrolledAway {
@@ -288,14 +327,15 @@ public struct PDFReaderView: UIViewRepresentable {
             
             if isSentenceVisible {
                 if coord.isUserScrolledAway {
-                    DispatchQueue.main.async {
-                        coord.isUserScrolledAway = false
+                    let isUserInteracting = scrollView.isDragging || scrollView.isTracking || scrollView.isDecelerating
+                    if !isUserInteracting {
+                        DispatchQueue.main.async {
+                            coord.isUserScrolledAway = false
+                        }
                     }
                 }
             } else {
-                if scrollView.isDragging || scrollView.isTracking || scrollView.isDecelerating || coord.isUserScrolledAway {
-                    updateScrolledAwayMetadata(for: currentSentence, convertedRect: convertedRect, visibleViewport: visibleViewport)
-                }
+                updateScrolledAwayMetadata(for: currentSentence, convertedRect: convertedRect, visibleViewport: visibleViewport)
             }
         }
         
@@ -347,25 +387,29 @@ public struct PDFReaderView: UIViewRepresentable {
                     guard let self = self else { return }
                     if let s = sentence, let pdfView = self.pdfView {
                         let followMode = AccessibilityManager.shared.autoScrollFollowMode
+                        let coord = PlaybackCoordinator.shared
                         
-                        if PlaybackCoordinator.shared.isPlaying && followMode != .off {
-                            let coord = PlaybackCoordinator.shared
-                            if followMode == .alwaysFollow || !coord.isUserScrolledAway {
+                        if coord.isPlaying && followMode != .off {
+                            let isUserInteracting = self.isUserScrolling
+                            if !coord.isUserScrolledAway && !isUserInteracting {
                                 let visibleIndices = Set(pdfView.visiblePages.map { self.parent.document.pdfDocument.index(for: $0) })
                                 if let targetPage = self.parent.document.page(at: s.pageIndex) {
                                     let convertedRect = pdfView.convert(s.bounds, from: targetPage)
                                     let visibleViewport = pdfView.bounds.insetBy(dx: 0, dy: 50)
                                     
                                     if !visibleIndices.contains(s.pageIndex) || !visibleViewport.intersects(convertedRect) {
+                                        self.isProgrammaticScroll = true
                                         pdfView.go(to: s.bounds, on: targetPage)
+                                        self.lastHandledPageIndex = s.pageIndex
                                         DispatchQueue.main.async {
+                                            self.isProgrammaticScroll = false
                                             self.parent.currentPageIndex = s.pageIndex
                                             PlaybackCoordinator.shared.setVisiblePageIndex(s.pageIndex)
                                         }
                                     }
                                 }
                             } else {
-                                // User has scrolled away: do not force call back!
+                                // Auto-follow paused: update metadata for the Resume button
                                 self.updateScrolledAwayMetadata(for: s)
                             }
                         }
@@ -383,12 +427,17 @@ public struct PDFReaderView: UIViewRepresentable {
                           let targetPage = self.parent.document.page(at: s.pageIndex) else {
                         return
                     }
+                    self.isProgrammaticScroll = true
                     pdfView.go(to: s.bounds, on: targetPage)
+                    self.lastHandledPageIndex = s.pageIndex
                     DispatchQueue.main.async {
                         self.parent.currentPageIndex = s.pageIndex
                         PlaybackCoordinator.shared.setVisiblePageIndex(s.pageIndex)
                         PlaybackCoordinator.shared.isUserScrolledAway = false
                         self.updateHighlights()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            self.isProgrammaticScroll = false
+                        }
                     }
                 }
                 .store(in: &cancellables)
@@ -450,7 +499,9 @@ public struct PDFReaderView: UIViewRepresentable {
         @objc func pageChanged(_ notification: Notification) {
             guard let pdfView = pdfView, let page = pdfView.currentPage else { return }
             let index = parent.document.pdfDocument.index(for: page)
-            if index != parent.currentPageIndex && index >= 0 {
+            guard index >= 0 else { return }
+            lastHandledPageIndex = index
+            if parent.currentPageIndex != index {
                 DispatchQueue.main.async {
                     self.parent.currentPageIndex = index
                     PlaybackCoordinator.shared.setVisiblePageIndex(index)

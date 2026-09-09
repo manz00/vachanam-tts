@@ -94,4 +94,31 @@ final class AutoScrollPolicyTests: XCTestCase {
         // Ensure no crash or uncaught exception
         XCTAssertTrue(hitResult == nil || hitResult === pdfView)
     }
+    
+    func testCoordinatorScrollAwayPauseAndResumeLifecycle() {
+        let coord = PlaybackCoordinator.shared
+        coord.isPlaying = true
+        coord.isUserScrolledAway = true
+        coord.scrolledAwayPageIndex = 5
+        coord.scrolledAwayDirection = .above
+        coord.scrolledAwaySnippet = "Machine learning foundations"
+        
+        XCTAssertTrue(coord.isUserScrolledAway, "Auto-scroll must be paused while isUserScrolledAway is true")
+        
+        var resumeFired = false
+        let token = NotificationCenter.default.addObserver(
+            forName: .jumpToSpokenSentence,
+            object: nil,
+            queue: .main
+        ) { _ in
+            resumeFired = true
+        }
+        
+        coord.jumpToSpokenSentence()
+        
+        XCTAssertTrue(resumeFired, "Resume action must post .jumpToSpokenSentence")
+        XCTAssertFalse(coord.isUserScrolledAway, "Resume action must unpause auto-scroll by resetting isUserScrolledAway")
+        
+        NotificationCenter.default.removeObserver(token)
+    }
 }

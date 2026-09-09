@@ -383,11 +383,11 @@ public struct ReaderContainerView: View {
                 
                 Spacer(minLength: 8)
                 
-                HStack(spacing: 4) {
-                    Text("Jump")
+                HStack(spacing: 5) {
+                    Image(systemName: "play.circle.fill")
+                        .font(.system(size: 13, weight: .bold))
+                    Text("Resume")
                         .font(.system(size: 12, weight: .bold))
-                    Image(systemName: "arrow.uturn.forward")
-                        .font(.system(size: 10, weight: .bold))
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
