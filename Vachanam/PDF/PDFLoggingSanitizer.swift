@@ -2,8 +2,9 @@
 //  PDFLoggingSanitizer.swift
 //  Vachanam
 //
-//  High-performance stderr filter and suppressor for Apple CoreGraphics, CoreText,
-//  and PDFKit font-mapping and subsampling diagnostics (.notdef: no mapping, CGPDFImage, CTLD).
+//  High-performance stdio filter and suppressor for Apple CoreGraphics, CoreText,
+//  and PDFKit font-mapping, page analysis, and subsampling diagnostics
+//  (.notdef: no mapping, CGPDFImage, CTLD, "New text range needs to be within the original node's text range").
 //
 
 import Foundation
@@ -14,11 +15,9 @@ public final class PDFLoggingSanitizer: @unchecked Sendable {
     
     private let lock = NSLock()
     private var isInstalled = false
-    private var originalStderrFd: Int32 = -1
-    private var readPipeFd: Int32 = -1
-    private var readSource: DispatchSourceRead?
+    private var stderrInterceptor: StreamInterceptor?
+    private var stdoutInterceptor: StreamInterceptor?
     private let queue = DispatchQueue(label: "com.vachanam.pdfloggingsanitizer", qos: .utility)
-    private var lineBuffer = Data()
     
     private init() {}
     
@@ -26,7 +25,7 @@ public final class PDFLoggingSanitizer: @unchecked Sendable {
         uninstall()
     }
     
-    /// Determines whether a given console line is benign CoreGraphics/CoreText PDF engine noise.
+    /// Determines whether a given console line is benign CoreGraphics/CoreText/PDFKit engine noise.
     public static func shouldSuppress(line: String) -> Bool {
         let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
@@ -46,66 +45,41 @@ public final class PDFLoggingSanitizer: @unchecked Sendable {
             return true
         }
         
+        // 4. PDFKit PageLayout / PDFPageAnalyzer text range warnings
+        if trimmed.contains("New text range needs to be within the original node's text range") {
+            return true
+        }
+        
         return false
     }
     
-    /// Installs a continuous background filter on `STDERR_FILENO`.
-    /// Benign CoreGraphics/CoreText PDF logs are silently dropped, while all genuine
-    /// errors, assertions, crashes, and logs continue flowing to the original stderr.
+    /// Installs a continuous background filter on `STDERR_FILENO` and `STDOUT_FILENO`.
+    /// Benign CoreGraphics/CoreText/PDFKit diagnostics are silently dropped, while all genuine
+    /// logs, profiler timings, assertions, and crash reports continue flowing to the original output.
     public func install() {
         lock.lock()
         defer { lock.unlock() }
         
+        // Remove any inherited CG_PDF_VERBOSE from environment to prevent PDFPageAnalyzer verbose warnings
+        unsetenv("CG_PDF_VERBOSE")
+        
         guard !isInstalled else { return }
         
         fflush(stderr)
+        fflush(stdout)
         
-        let origFd = dup(STDERR_FILENO)
-        guard origFd >= 0 else { return }
-        _ = fcntl(origFd, F_SETFD, FD_CLOEXEC)
-        self.originalStderrFd = origFd
+        let errInterceptor = StreamInterceptor(targetFd: STDERR_FILENO, queue: queue)
+        _ = errInterceptor.start()
+        self.stderrInterceptor = errInterceptor
         
-        var pipeFDs: [Int32] = [0, 0]
-        guard pipe(&pipeFDs) == 0 else {
-            close(origFd)
-            self.originalStderrFd = -1
-            return
-        }
+        let outInterceptor = StreamInterceptor(targetFd: STDOUT_FILENO, queue: queue)
+        _ = outInterceptor.start()
+        self.stdoutInterceptor = outInterceptor
         
-        let readFd = pipeFDs[0]
-        let writeFd = pipeFDs[1]
-        self.readPipeFd = readFd
-        
-        let flags = fcntl(readFd, F_GETFL)
-        _ = fcntl(readFd, F_SETFL, flags | O_NONBLOCK)
-        _ = fcntl(readFd, F_SETFD, FD_CLOEXEC)
-        _ = fcntl(writeFd, F_SETFD, FD_CLOEXEC)
-        
-        // Redirect STDERR_FILENO (fd 2) to the pipe write end
-        dup2(writeFd, STDERR_FILENO)
-        close(writeFd)
-        
-        let source = DispatchSource.makeReadSource(fileDescriptor: readFd, queue: queue)
-        source.setEventHandler { [weak self] in
-            self?.processIncomingBytes()
-        }
-        
-        source.setCancelHandler { [weak self] in
-            guard let self = self else { return }
-            self.lock.lock()
-            if self.readPipeFd >= 0 {
-                close(self.readPipeFd)
-                self.readPipeFd = -1
-            }
-            self.lock.unlock()
-        }
-        
-        self.readSource = source
-        source.resume()
         self.isInstalled = true
     }
     
-    /// Uninstalls the background filter and restores original stderr.
+    /// Uninstalls the background filter and restores original stdio descriptors.
     public func uninstall() {
         lock.lock()
         defer { lock.unlock() }
@@ -113,57 +87,15 @@ public final class PDFLoggingSanitizer: @unchecked Sendable {
         guard isInstalled else { return }
         
         fflush(stderr)
+        fflush(stdout)
         
-        if let source = readSource {
-            source.cancel()
-            self.readSource = nil
-        }
+        stderrInterceptor?.stop()
+        stderrInterceptor = nil
         
-        if originalStderrFd >= 0 {
-            dup2(originalStderrFd, STDERR_FILENO)
-            close(originalStderrFd)
-            self.originalStderrFd = -1
-        }
+        stdoutInterceptor?.stop()
+        stdoutInterceptor = nil
         
         self.isInstalled = false
-        self.lineBuffer.removeAll()
-    }
-    
-    private func processIncomingBytes() {
-        var buffer = [UInt8](repeating: 0, count: 4096)
-        
-        while true {
-            let bytesRead = Darwin.read(readPipeFd, &buffer, buffer.count)
-            if bytesRead <= 0 {
-                break
-            }
-            lineBuffer.append(buffer, count: bytesRead)
-        }
-        
-        // Process complete newline-terminated lines
-        while let newlineIndex = lineBuffer.firstIndex(of: UInt8(ascii: "\n")) {
-            let lineData = lineBuffer.prefix(through: newlineIndex)
-            lineBuffer.removeSubrange(..<lineBuffer.index(after: newlineIndex))
-            
-            if let lineStr = String(data: lineData, encoding: .utf8),
-               Self.shouldSuppress(line: lineStr) {
-                // Drop benign PDF engine log
-                continue
-            }
-            
-            // Forward legitimate stderr output to original stderr
-            if originalStderrFd >= 0 {
-                lineData.withUnsafeBytes { rawBuffer in
-                    guard let ptr = rawBuffer.baseAddress else { return }
-                    var written = 0
-                    while written < rawBuffer.count {
-                        let res = Darwin.write(originalStderrFd, ptr + written, rawBuffer.count - written)
-                        if res <= 0 { break }
-                        written += res
-                    }
-                }
-            }
-        }
     }
     
     /// Executes a closure with `STDERR_FILENO` temporarily redirected to `/dev/null`.
@@ -192,5 +124,117 @@ public final class PDFLoggingSanitizer: @unchecked Sendable {
         }
         
         return try body()
+    }
+}
+
+// MARK: - Private POSIX Stream Interceptor
+
+private final class StreamInterceptor: @unchecked Sendable {
+    let targetFd: Int32
+    private(set) var originalFd: Int32 = -1
+    private(set) var readPipeFd: Int32 = -1
+    private var readSource: DispatchSourceRead?
+    private var lineBuffer = Data()
+    private let queue: DispatchQueue
+    private let lock = NSLock()
+    
+    init(targetFd: Int32, queue: DispatchQueue) {
+        self.targetFd = targetFd
+        self.queue = queue
+    }
+    
+    func start() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        
+        let orig = dup(targetFd)
+        guard orig >= 0 else { return false }
+        _ = fcntl(orig, F_SETFD, FD_CLOEXEC)
+        self.originalFd = orig
+        
+        var pipeFDs: [Int32] = [0, 0]
+        guard pipe(&pipeFDs) == 0 else {
+            close(orig)
+            self.originalFd = -1
+            return false
+        }
+        
+        let readFd = pipeFDs[0]
+        let writeFd = pipeFDs[1]
+        self.readPipeFd = readFd
+        
+        let flags = fcntl(readFd, F_GETFL)
+        _ = fcntl(readFd, F_SETFL, flags | O_NONBLOCK)
+        _ = fcntl(readFd, F_SETFD, FD_CLOEXEC)
+        _ = fcntl(writeFd, F_SETFD, FD_CLOEXEC)
+        
+        dup2(writeFd, targetFd)
+        close(writeFd)
+        
+        let source = DispatchSource.makeReadSource(fileDescriptor: readFd, queue: queue)
+        source.setEventHandler { [weak self] in
+            self?.processBytes()
+        }
+        source.setCancelHandler { [weak self] in
+            guard let self = self else { return }
+            self.lock.lock()
+            if self.readPipeFd >= 0 {
+                close(self.readPipeFd)
+                self.readPipeFd = -1
+            }
+            self.lock.unlock()
+        }
+        self.readSource = source
+        source.resume()
+        return true
+    }
+    
+    func stop() {
+        lock.lock()
+        defer { lock.unlock() }
+        
+        if let source = readSource {
+            source.cancel()
+            self.readSource = nil
+        }
+        if originalFd >= 0 {
+            dup2(originalFd, targetFd)
+            close(originalFd)
+            self.originalFd = -1
+        }
+        lineBuffer.removeAll()
+    }
+    
+    private func processBytes() {
+        var buffer = [UInt8](repeating: 0, count: 4096)
+        
+        while true {
+            let bytesRead = Darwin.read(readPipeFd, &buffer, buffer.count)
+            if bytesRead <= 0 { break }
+            lineBuffer.append(buffer, count: bytesRead)
+        }
+        
+        while let newlineIndex = lineBuffer.firstIndex(of: UInt8(ascii: "\n")) {
+            let lineData = lineBuffer.prefix(through: newlineIndex)
+            lineBuffer.removeSubrange(..<lineBuffer.index(after: newlineIndex))
+            
+            if let lineStr = String(data: lineData, encoding: .utf8),
+               PDFLoggingSanitizer.shouldSuppress(line: lineStr) {
+                // Drop benign PDF engine log
+                continue
+            }
+            
+            if originalFd >= 0 {
+                lineData.withUnsafeBytes { rawBuffer in
+                    guard let ptr = rawBuffer.baseAddress else { return }
+                    var written = 0
+                    while written < rawBuffer.count {
+                        let res = Darwin.write(originalFd, ptr + written, rawBuffer.count - written)
+                        if res <= 0 { break }
+                        written += res
+                    }
+                }
+            }
+        }
     }
 }

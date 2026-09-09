@@ -31,6 +31,9 @@ final class PDFLoggingSanitizerTests: XCTestCase {
         XCTAssertTrue(PDFLoggingSanitizer.shouldSuppress(line: "CTLD took 0.000252962 seconds"))
         XCTAssertTrue(PDFLoggingSanitizer.shouldSuppress(line: "CTLD took 2.5034e-05 seconds"))
         
+        // PDFKit PageLayout / PDFPageAnalyzer text range warnings
+        XCTAssertTrue(PDFLoggingSanitizer.shouldSuppress(line: "New text range needs to be within the original node's text range."))
+        
         // Legitimate logs MUST NOT be suppressed
         XCTAssertFalse(PDFLoggingSanitizer.shouldSuppress(line: "Fatal error: Index out of range"))
         XCTAssertFalse(PDFLoggingSanitizer.shouldSuppress(line: "Assertion failed: (x > 0)"))

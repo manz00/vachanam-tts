@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "95A3FBFBE5E2499B9EC971FD"
+               BlueprintIdentifier = "7CEDCCE7C36044D9A701FF56"
                BuildableName = "Vachanam.app"
                BlueprintName = "Vachanam"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -28,7 +28,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "1192332E6B3A4CD5A32220A0"
+               BlueprintIdentifier = "850B399FAE8F4F0A878B7B45"
                BuildableName = "VachanamTests.xctest"
                BlueprintName = "VachanamTests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -42,7 +42,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "0A23114103C84C4AB3B7DCE7"
+               BlueprintIdentifier = "2FD97A6F4914416780C67401"
                BuildableName = "VachanamUITests.xctest"
                BlueprintName = "VachanamUITests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -60,7 +60,7 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "1192332E6B3A4CD5A32220A0"
+               BlueprintIdentifier = "850B399FAE8F4F0A878B7B45"
                BuildableName = "VachanamTests.xctest"
                BlueprintName = "VachanamTests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -76,11 +76,6 @@
          <EnvironmentVariable
             key = "OS_ACTIVITY_MODE"
             value = "disable"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-         <EnvironmentVariable
-            key = "CG_PDF_VERBOSE"
-            value = "0"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
@@ -99,7 +94,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "95A3FBFBE5E2499B9EC971FD"
+            BlueprintIdentifier = "7CEDCCE7C36044D9A701FF56"
             BuildableName = "Vachanam.app"
             BlueprintName = "Vachanam"
             ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -114,11 +109,6 @@
          <EnvironmentVariable
             key = "OS_ACTIVITY_MODE"
             value = "disable"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-         <EnvironmentVariable
-            key = "CG_PDF_VERBOSE"
-            value = "0"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
