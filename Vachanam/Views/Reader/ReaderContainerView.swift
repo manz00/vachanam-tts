@@ -351,63 +351,62 @@ public struct ReaderContainerView: View {
                 playbackCoordinator.jumpToSpokenSentence()
             }
         }) {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Image(systemName: playbackCoordinator.scrolledAwayDirection == .above ? "arrow.up.circle.fill" : "arrow.down.circle.fill")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundColor(Color(red: 0.96, green: 0.62, blue: 0.04))
                 
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 5) {
                         Text(playbackCoordinator.scrolledAwayDirection == .above ? "Spoken text is above" : "Spoken text is below")
-                            .font(.system(size: 12, weight: .bold))
+                            .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.white)
                         
                         if let page = playbackCoordinator.scrolledAwayPageIndex {
-                            Text("Page \(page + 1)")
-                                .font(.system(size: 11, weight: .medium))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 1.5)
+                            Text("P. \(page + 1)")
+                                .font(.system(size: 10, weight: .bold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
                                 .background(Color.white.opacity(0.12))
                                 .foregroundColor(.white.opacity(0.9))
-                                .cornerRadius(6)
+                                .cornerRadius(4)
                         }
                     }
                     
                     if !playbackCoordinator.scrolledAwaySnippet.isEmpty {
                         Text(playbackCoordinator.scrolledAwaySnippet)
-                            .font(.system(size: 11))
-                            .foregroundColor(Color.white.opacity(0.7))
+                            .font(.system(size: 10))
+                            .foregroundColor(Color.white.opacity(0.65))
                             .lineLimit(1)
+                            .truncationMode(.tail)
                     }
                 }
+                .frame(maxWidth: 240, alignment: .leading)
                 
-                Spacer(minLength: 8)
-                
-                HStack(spacing: 5) {
+                HStack(spacing: 4) {
                     Image(systemName: "play.circle.fill")
-                        .font(.system(size: 13, weight: .bold))
-                    Text("Resume")
                         .font(.system(size: 12, weight: .bold))
+                    Text("Auto-Scroll")
+                        .font(.system(size: 11, weight: .bold))
                 }
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 9)
                 .padding(.vertical, 5)
                 .background(Color(red: 0.96, green: 0.62, blue: 0.04).opacity(0.25))
                 .foregroundColor(Color(red: 0.96, green: 0.62, blue: 0.04))
-                .cornerRadius(10)
+                .cornerRadius(8)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(
-                RoundedRectangle(cornerRadius: 14)
+                Capsule()
                     .fill(Color(red: 0.09, green: 0.13, blue: 0.20).opacity(0.96))
-                    .shadow(color: Color.black.opacity(0.35), radius: 10, x: 0, y: 4)
+                    .shadow(color: Color.black.opacity(0.35), radius: 8, x: 0, y: 3)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
+                        Capsule()
                             .stroke(Color(red: 0.96, green: 0.62, blue: 0.04).opacity(0.4), lineWidth: 1)
                     )
             )
         }
         .buttonStyle(PlainButtonStyle())
-        .padding(.horizontal, 20)
     }
 }
