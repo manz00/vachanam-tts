@@ -50,6 +50,87 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
   - **Numeric Range Normalization**: Converts hyphenated number intervals (`10-20` $\to$ `10 to 20`, `1-2` $\to$ `1 to 2`, `pages 5-8` $\to$ `pages 5 to 8`).
   - **Parenthetical Dash Smoothing**: Converts em-dashes (`—`), en-dashes (`–`), and spaced hyphens into natural comma pauses (`", "`) for smooth conversational breathing rather than dead-air silence.
   - Automatically strips visual bullet ornaments (`•`, `◦`, `▪`, `▫`, `●`, `■`, `◆`, `❖`, `★`, `☆`, `►`, `▻`, `➢`, `✓`, `✔`) and leading list hyphens/asterisks (`- `, `* `) so that visual layout glyphs are never spoken awkwardly or indexed as phantom audio words.
+  - **Human-Narrated Speech Normalization (`TextNormalizer`)**:
+    - **Latin & Common Abbreviations**: Expands `e.g.` $\to$ `for example,`, `i.e.` $\to$ `that is,`, `et al.` $\to$ `and colleagues`, `etc.` $\to$ `etcetera`, `vs.` $\to$ `versus`, `approx.` $\to$ `approximately`, `ca.` / `c.` $\to$ `circa`, `p.` / `pp.` before page numbers $\to$ `page` / `pages`, `Fig.` / `Figs.` before numbers $\to$ `Figure` / `Figures`, `Vol.` / `No.` before numbers $\to$ `Volume` / `Number`.
+    - **Clean URLs & DOIs**: Web URLs (`https://example.com/path`) are spoken cleanly as `link to example.com`, and DOIs (`doi:10.1000/182`) as `publication link`, avoiding confusing letter-by-letter spelling of protocol tokens and URL parameters.
+- **🧠 Page Furniture & Reading Intelligence Engine (`PageFurnitureDetector`)**:
+  - **Spatial Zone Filtering**: Distinguishes running headers (top 12%), running footers (bottom 18%), and footnotes (bottom 22%) relative to page coordinate dimensions.
+  - **Standalone Page Number Recognition**: Regex recognition for isolated digits (`42`), Roman numerals (`iv`, `XII`), "Page X of Y", and hyphenated/bracketed markers (`- 42 -`).
+  - **Academic & Publisher Disclaimer Detection**: Intelligently identifies and isolates multi-line copyright, preprint, and distribution notices in the footer band (e.g., Cambridge University Press, arXiv preprints, Oxford, IEEE disclaimers, and draft version footers like `Draft (2024-01-15) of "Mathematics for Machine Learning". Feedback: https://mml-book.com.`) as `.pageFooter`.
+  - **Two-Pass Cross-Page Repetition Analysis**: Pre-analyzes candidate text in header and footer bands across the entire document; recurring strings (book/chapter titles, author names, Roman numeral frontmatter like `ii Contents`) across multiple pages are classified as `.pageHeader` and `.pageFooter`.
+  - **Caption & Footnote Detection**: Recognizes figures, tables, charts, and photos (`Figure 1:`, `Table 4:`) and footnote superscripts/markers (`*`, `†`, numbered), isolating them into distinct `BlockType` objects.
+  - **Sidenote & Marginalia Column Separation (`ParagraphDetector`)**: Analyzes horizontal line distribution to detect narrow margin columns (e.g. video links, tips, and lecture notes in textbooks like *Mathematics for Machine Learning*). Margins are separated into `.sidenote` blocks rather than interleaved mid-sentence into main body text.
+  - **Table of Symbols & Notation Detection**: Automatically identifies frontmatter/appendix notation tables and summary pages, tagging entries as `.symbolTable`.
+  - **User-Configurable Audio Skipping**: Configurable in **Reading Settings** with individual toggles for skipping running headers & footers, page numbers, footnotes, captions, sidenotes & margin notes, and notation & symbol tables so audio narration flows smoothly and naturally.
+- **📜 Multi-Layout PDF Display Modes (`PDFDisplayLayoutMode`)**:
+  - **Single Page**: Classic horizontal swipe/turn navigation with `UIPageViewController`.
+  - **Continuous Scroll**: Vertical smooth scrolling for long reading sessions and academic papers.
+  - **Two-Page Spread**: Side-by-side book spread ideal for landscape iPad and Mac reading.
+  - **Continuous Spread**: Side-by-side pages with continuous vertical scrolling.
+  - **Quick Switcher Menu**: One-tap layout menu in the Reader header bar with instant switching.
+  - **Rock-Solid Continuous Scroll Highlighting**: Synchronized via KVO content offset tracking on PDFView's internal scroll hierarchy, ensuring highlights move smoothly in real-time without disappearing or lagging. Overlay CALayers are kept frontmost above all PDF views.
+  - **Multi-Page Sentence Span Highlighting**: Accurately projects sentence bounds across all visible pages in two-page and continuous scrolling modes.
+  - **Human-Centered Auto-Scroll & Free Reading Flow (`AutoScrollFollowMode`)**:
+    - **No Forced Snap-Back**: When listening to speech, users are free to scroll up or down (e.g. to inspect formulas, check diagrams, or re-read earlier text) without the app forcefully yanking the viewport back to the active sentence.
+    - **Interactive "Jump to Spoken Text" Prompt**: When scrolled away from the active sentence, an interactive floating pill appears (`[ ⬆ / ⬇ Spoken text is above/below (Page X) • Jump ]`) with a real-time sentence preview snippet and arrow direction indicator. Tapping it smoothly animates back to the current spoken sentence. If the user scrolls back on their own, the prompt automatically dismisses.
+    - **User-Configurable**: Three selectable modes in **Reading Settings**: `Prompt When Scrolled (Free Scroll)`, `Always Follow`, and `Off`.
+  - **PDFKit Hit-Test Sanitization (`PDFDocumentViewHitTestSanitizer` & `VachanamPDFView`)**:
+    - Intercepts internal PDFKit hit-testing on Mac Catalyst and iPadOS pointer interactions to eliminate UIKit `Invalid returned hit test result for view in hierarchy: <PDFAnnotationPointerTrackingView>` console error assertions while preserving normal annotation interaction.
+- **📐 Mathematical & Academic Speech Intelligence (`TextNormalizer`)**:
+  - **Vector Arrow Notations**: Recognizes all forms of vector arrows generated by LaTeX and PDF typographers: combining vector arrow above (`x⃗` $\to$ `vector x`), inline vectors (`→x`, `→y` $\to$ `vector x`, `vector y`), multi-arrow stacking artifacts (`→→x` $\to$ `vector x`), and math-minus arrow representations (`−→ x` $\to$ `vector x`).
+  - **Superscripts, Exponents & Carets**:
+    - Squares & cubes: `x^2`, `x²`, `(x+y)^2` $\to$ `x squared`, `(x+y) squared`; `x^3`, `x³`, `(x+y)^3` $\to$ `x cubed`.
+    - Transpose & Inverses: `A⊤`, `Aᵀ`, `A^T`, `A^⊤`, `(AB)⊤` $\to$ `transpose`; `A^-1`, `A⁻¹`, `A^{-1}` $\to$ `inverse`; `A^-T` $\to$ `inverse transpose`.
+    - Exponents: `x^{n+1}` $\to$ `x to the power of n+1`, `x^n`, `x^k`, `z^n`, `10^5` $\to$ `x to the n`, `x to the k`, `z to the n`, `10 to the 5`.
+    - Carets & Hats: Isolated carets before variables (`^x` $\to$ `x hat`), isolated carets after single variables (`y^` $\to$ `y hat`), and combining hat accents (`x̂` $\to$ `x hat`).
+  - **Accents, Subscripts & Matrix Dimensions**:
+    - Bars & Tildes: `x̄` $\to$ `x bar`, `x̃` $\to$ `x tilde`.
+    - Primes & Stars: `x'` $\to$ `x prime`, `x''` $\to$ `x double prime`, `x*` $\to$ `x star`.
+    - Subscripts: `x_1` $\to$ `x sub 1`, `x_i` $\to$ `x sub i`, `W_ij` $\to$ `W sub ij`, and Unicode subscripts `x₀`–`x₉`, `xᵢ`, `xⱼ`, `xₖ`.
+    - Norms & Inner Products: `‖x‖` $\to$ `the norm of x`, `⟨x, y⟩` $\to$ `the inner product of x and y`.
+    - Matrix Dimensions: `Rn×n` $\to$ `R n by n`, `Rm×n` $\to$ `R m by n`, `(n,n)-matrices` $\to$ `n by n matrices`.
+  - **Attached Math Variable Separation**: Corrects PDF font-change extraction artifacts where single math variables fuse to adjacent English words (`ycan` $\to$ `y can`, `xand` $\to$ `x and`, `Aas` $\to$ `A as`, `bor` $\to$ `b or`).
+  - **Hyphen vs. Minus Disambiguation**: Intelligently distinguishes mathematical subtraction (`x - y`, `x − y`, `5-3` $\to$ `minus`) from hyphenated identifiers, model codes, and statistical terms (`Kokoro-82M`, `BERT-base`, `t-test`, `k-fold`), preserving hyphenated names without distortion.
+  - **Greek Letters**: Speaks all 48 uppercase and lowercase Greek letters (`α` $\to$ `alpha`, `β` $\to$ `beta`, `λ` $\to$ `lambda`, `θ` $\to$ `theta`, `σ` $\to$ `sigma`, `π` $\to$ `pi`, `ω` $\to$ `omega`).
+  - **Blackboard Bold & Vector Spaces**: Normalizes coordinate spaces and sets (`ℝⁿ` $\to$ `R n`, `ℝ³` $\to$ `R three`, `ℝ` $\to$ `the real numbers`, `ℕ` $\to$ `the natural numbers`, `ℤ` $\to$ `the integers`, `ℂ` $\to$ `the complex numbers`).
+  - **Extended Math Operators**: Fluent conversions for set and logic operators (`∈` $\to$ `in`, `∉` $\to$ `not in`, `⊆` / `⊂` $\to$ `subset of`, `∩` $\to$ `intersection`, `∪` $\to$ `union`, `∅` $\to$ `empty set`, `∀` $\to$ `for all`, `∃` $\to$ `there exists`, `→` $\to$ `to`, `↦` $\to$ `maps to`, `⟹` / `⇒` $\to$ `implies`, `⟺` / `⇔` $\to$ `if and only if`, `∑` $\to$ `sum of`, `∏` $\to$ `product of`, `∂` $\to$ `partial`, `∇` $\to$ `gradient`, `√` $\to$ `square root of`, `∫` $\to$ `integral of`).
+  - **Number-Variable Adjacency**: Separates mathematical expressions like `0.5x` $\to$ `0.5 x` and `2.0y` $\to$ `2.0 y` so neural TTS pronounces both the number and variable distinctly without swallowing or skipping tokens.
+  - **Decimal Sentence Boundary Protection**: Automatically protects decimal numbers (`2.0`, `0.5`, `1.5`) from being split as false sentence terminations by the NaturalLanguage sentence tokenizer.
+  - **Equation Label Detection**: Converts end-of-equation references like `Ax = b (2.1)` into natural `equation 2.1`.
+- **🔬 Standardized Speech Rule Engine (SRE), MathSpeak & Scientific Notation (`MathSpeechEngine`)**:
+  - **Standardized Speech Rule Engine (SRE) Mappings**: Implements international accessibility standards for mathematics and scientific literature with comprehensive bundled mathmaps in `Vachanam/Resources/MathMaps/`:
+    - `scientific_notation.json`: Regular expression engines and ordinal/cardinal speech patterns for standard $e$-notation and explicit power-of-ten scientific notation.
+    - `symbols.json`: Complete Speech Rule Engine vocalization dictionary for relation glyphs, calculus operators (`∫`, `∬`, `∭`, `∮`, `∂`, `∇`), logic quantifiers (`∀`, `∃`, `∄`, `∧`, `∨`, `¬`, `⟹`, `⟺`), set theory (`∈`, `∉`, `⊆`, `⊂`, `⊇`, `⊃`, `∪`, `∩`, `∅`), and algebraic symbols.
+    - `functions.json`: Trigonometric, hyperbolic, logarithmic, linear algebra, limits (`lim_{x \to 0}` $\to$ `limit as x approaches 0 of`), and optimization functions (`sin`, `cos`, `tan`, `sinh`, `ln`, `det`, `rank`, `argmax`, `argmin`).
+    - `greek.json`: Standardized Greek alphabet mappings with uppercase/lowercase distinctions.
+    - `si_units.json`: Complete International System of Units (SI) metric prefixes and compound units.
+    - `latex_macros.json`: Native academic LaTeX macro speech translations (`\frac`, `\sqrt`, `\sum`, `\int`, `\prod`, `\mathbf`, `\mathbb`, `\mathcal`, `\text`).
+  - **Scientific Exponential Notation**: Automatically parses and converts mantissas and exponents into natural spoken phrases (e.g. `6.022e23` $\to$ `six point zero two two times ten to the power of twenty-three`, `1.5E-4` $\to$ `1.5 times ten to the minus four`, `-3e-9` $\to$ `negative 3 times ten to the minus nine`, `3.0 x 10^8` $\to$ `3.0 times ten to the eighth`).
+  - **Number-Adjacent SI Units & Metric Prefixes**: Intelligently expands metric units and prefixes when preceded by numbers while evaluating singular vs. plural grammar (e.g. `5 nm` $\to$ `5 nanometers`, `1 nm` $\to$ `1 nanometer`, `2.4 GHz` $\to$ `2.4 gigahertz`, `100 ms` $\to$ `100 milliseconds`, `12 V` $\to$ `12 volts`, `500 mA` $\to$ `500 milliamperes`, `120 km/h` $\to$ `120 kilometers per hour`, `9.8 m/s²` $\to$ `9.8 meters per second squared`). Regular English words without preceding numbers (`a ms`, `to V`, `in a m`) are strictly preserved without false-positive expansion.
+  - **Linear Algebra Equations, Subscripts & Ellipses (`MathSpeechEngine`)**:
+    - **Linear Combination Vocalization**: Accurately normalizes linear algebra equations without LaTeX markup (e.g., `a11x1 +···+ a1nxn= b1` $\to$ `a 1 1, x 1, plus and so on, plus a 1 n, x n, equals b 1` in Conversational style, or `a sub 1 1, x sub 1, plus ellipsis, plus a sub 1 n, x sub n, equals b sub 1` in MathSpeak Rigorous style).
+    - **Midline Operator Ellipses**: Translates midline operator ellipses (`+···+`, `+⋯+`, `+...+`) into natural speech (`plus and so on, plus` / `plus ellipsis, plus`).
+    - **Index Sequences**: Converts sequences (`x1,...,xn` $\to$ `x 1 through x n`, `R1,..., R m` $\to$ `R 1 through R m`).
+    - **Double-Index Matrix Elements**: Digit-by-digit vocalization for matrix entries (`a11` $\to$ `a 1 1`, `a12` $\to$ `a 1 2`, `a21` $\to$ `a 2 1`, never reading them as cardinal numbers like "a eleven").
+    - **Fused Variable Separation**: Distinguishes mathematical coefficients and variables (`a11x1` $\to$ `a 1 1, x 1`, `a1nxn` $\to$ `a 1 n, x n`, `am1x1` $\to$ `a m 1, x 1`, `amn xn` $\to$ `a m n, x n`, `xj` $\to$ `x j`, `bm` $\to$ `b m`) while safeguarding common English words (`text`, `next`, `exit`, `in`, `am`, `an`) and industry acronyms (`AI`, `BI`).
+  - **Academic LaTeX Macro Translator**: Translates mathematical markup without requiring a heavy WebView or external JavaScript runtime:
+    - Fractions: `\frac{a}{b}` $\to$ `a over b` (Conversational) / `start fraction, a, divided by, b, end fraction` (MathSpeak Rigorous).
+    - Roots: `\sqrt{x}` $\to$ `square root of x`, `\sqrt[3]{8}` $\to$ `the 3rd root of 8`.
+    - Sums & Integrals: `\sum_{i=1}^{n}` $\to$ `sum from i=1 to n of`, `\int_{a}^{b}` $\to$ `integral from a to b of`.
+    - Typographic delimiters: `\left(`, `\right)`, `\left[`, `\right]`, `\left\{`, `\right\}` normalized cleanly.
+  - **User-Configurable Speech Styles (`MathSpeechStyle`)**:
+    - **Conversational** (Default): Optimized for natural audio flow and audiobook listening (e.g., `1 over 2`, `5 nanometers`, `x squared`).
+    - **MathSpeak Rigorous**: Adheres strictly to international academic screen-reader standards for visually impaired mathematicians (e.g., `start fraction, 1, divided by, 2, end fraction`, `capital Delta`, `element of`, `universal quantifier, for all`).
+    - Configurable in **Reading Settings** with instant persistence.
+  - **Full Pronunciation Override Integration**: Respects user-defined rules in `PronunciationManager` / `FixPronunciationSheet`, allowing personalized phonetic overrides to take precedence over default math vocalizations.
+- **📑 Paragraph Integrity & Run-In Heading Segmentation (`ParagraphDetector`)**:
+  - **Tight LaTeX Indentation Detection**: Academic textbooks formatted with Computer Modern LaTeX often employ `\parindent \approx 10\text{pt}` and `\parskip = 0`. Uses content column left-margin anchoring (`currentLine.minX >= baseMargin + 5.0pt`) combined with short terminal previous lines (`previousLine.maxX < columnMaxX - 25.0pt`) and terminal punctuation (`.`, `?`, `!`, `:`) to reliably segment consecutive paragraphs without collapsing entire pages.
+  - **Short Terminal Line Retention**: Verifies that short lines at the bottom of paragraphs (e.g. `from data.`) are never misclassified as margin notes or sidenotes by inspecting gutter crossing lines and vertical baseline continuity.
+  - **Run-In Bold Headings**: Correctly identifies same-baseline bold heading fragments (e.g., `Astute Listener`, `Experienced Artist`, `Fledgling Composer`) that precede paragraph bodies on the same horizontal line, joining them with a period delimiter (`. `) to ensure natural TTS phrasing and pause acoustics.
+  - **Indentation Continuation Safeguards**: Prevents math continuation lines ending in operators (`→`, `+`, `=`) or conjunctions (`and`, `where`, `such that`) from being prematurely isolated as section headings.
+- **🖼️ Image OCR & Graph Accessibility Foundation (`ImageContentExtractor` & `AudioGraphDescriptor`)**:
+  - Built-in Vision framework OCR infrastructure for extracting embedded labels from figures and raster diagrams.
+  - Audio chart description engine producing accessible data ranges and summaries for graphs and plots.
 - **Layered Pronunciation Dictionary System (`PronunciationManager`)**:
   - Three-tier hierarchy: **Global** (common acronyms & phonetics), **Book-specific** (character names, domain terminology), and **User overrides** (custom fixes).
   - Employs case-insensitive word-boundary regex substitution (`\b(word)\b`) and revision hashing for automatic audio cache invalidation.
@@ -58,10 +139,14 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
   - Allows users to enter phonetic respellings with instant speech preview and automatic cache purging.
 - **Monotonic Highlighting Clock & Compound Word Alignment**:
   - **Strict 1:1 `targetWords` Contract**: Passes segmented document `SemanticWord` tokens (split via `NLTokenizer`) directly to the TTS adapter (`KokoroAdapter.synthesize(..., targetWords:)`). Compound words like `Word-by-word`, `on-device`, and `distraction-free` receive distinct, individual word timestamps that match their precise PDF bounding boxes, completely eliminating index shifts.
+  - **Paragraph-Bounded Coordinate Isolation**: Word bounding boxes are strictly confined within their respective paragraph's character boundaries and visual frame. Common words ("the", "is", "matrix", "vector", "are", "data", "regression") never bleed highlights into other paragraphs on the page.
+  - **CALayer Reuse & QuartzCore Optimization**: Highlights in `PDFHighlightOverlayView` reuse allocated CALayers and toggle visibility (`isHidden = true`) instead of repeatedly adding and removing sublayers on every word change, eliminating CoreAnimation handler-drop overhead and rendering lag.
+  - **Mac Catalyst Window Compatibility**: Configured `UIDesignRequiresCompatibility` in `Info.plist` and `OS_ACTIVITY_MODE = disable` in Xcode schemes to prevent cross-process window server fence drops (`cannot add handler to X from Y - dropping`) and suppress benign Apple internal daemon noise (`linkd`, `DetachedSignatures`, `AudioAnalytics`).
+  - **High-Velocity Scroll Performance**: Optimized highlight overlay coordinate updates (`updateHighlights`) to prune calculations to currently visible pages (`visibleIndices`), avoiding CPU bottlenecks during rapid fling-scrolling. CoreGraphics asynchronous PDF tile cancellations during high-speed scrolling are handled gracefully without visual artifacts or memory bloat.
   - **Inter-Word Gap Holding**: In-flight binary search smoothly holds the preceding word's highlight during acoustic gaps rather than jumping back to the beginning of the chunk.
   - **Calibrated Drift Telemetry**: Accurately measures audio drift outside actual word time intervals `[startTime, endTime]`, logging warnings only when true timing desynchronization (>150ms) occurs.
 - **Stable Global Word Indexing (`globalWordID`)**: Every word receives a persistent, monotonic global identity across the entire document. Navigating between pages or selecting words on different pages never gets stuck or invalidates position.
-- **Tap-to-Speak**: Tap any word directly on the PDF page or in Reader View to immediately begin narration from that word. Obsolete in-flight synthesis tasks are cancelled instantly with zero delay.
+- **Instant Tap-to-Speak & Fast Seeking**: Tap any word directly on the PDF page or in Reader View to immediately begin narration from that exact word. Halts previous audio instantly, resolves page coordinates via native PDFKit hit testing, and executes 0ms seeking if tapping within the currently active chunk.
 - **Rolling TTS Pre-Generation & Content-Hashed Cache**: While Chunk $N$ plays, Chunk $N+1$ is pre-generated in the background without CPU/Core ML contention and stored in a non-blocking two-tier in-memory/disk cache (`TTSAudioCache`). Instant, gapless playback on chunk transitions and repeated visits without Swift Concurrency thread blocking.
 - **Stage-by-Stage Profiling & Telemetry**: `TTSMetricsLogger` exposes timing metrics for text processing, Misaki phonemization, Core ML model inference, and audio post-processing alongside the Real-Time Factor (RTF).
 - **Model Lifecycle & Pre-Warming**: Kokoro Core ML models remain alive in memory and are pre-warmed upon initialization to avoid cold-start compilation stutter when the user presses Play.
@@ -114,7 +199,8 @@ vachanam-tts/
 │   │   │   └── ReadingHistoryView.swift    # Reading history list
 │   │   ├── Reader/
 │   │   │   ├── ReaderContainerView.swift   # Core container hosting PDF/Reader modes & overlays
-│   │   │   ├── PDFReaderView.swift         # PDFKit UIViewRepresentable wrapper
+│   │   │   ├── PDFReaderView.swift         # PDFKit UIViewRepresentable wrapper with multi-layout support
+│   │   │   ├── PDFDisplayLayoutMode.swift  # Display mode enum (Single Page, Continuous Scroll, Two-Up)
 │   │   │   ├── ReaderTextView.swift        # Typography view with live inline highlights
 │   │   │   ├── ReadingModeToggle.swift     # Capsule switch (PDF vs Reader View)
 │   │   │   ├── PageThumbnailGrid.swift     # Visual thumbnail grid for quick scrubbing
@@ -182,6 +268,7 @@ vachanam-tts/
 │   │   ├── SemanticDocumentBuilder.swift   # Universal parsed document to SemanticDocument bridge
 │   │   ├── WordReconstructor.swift         # Line-break hyphen joining & compound word preservation
 │   │   ├── TextNormalizer.swift            # Whitespace, ligature, and symbol-to-speech cleaner
+│   │   ├── PageFurnitureDetector.swift     # Running header/footer, page number, caption & footnote detector
 │   │   ├── ParagraphDetector.swift         # Visual line clustering & semantic block detector
 │   │   ├── SentenceSegmenter.swift         # NLTokenizer sentence & word bounding box parser
 │   │   ├── TTSChunker.swift                # 10-25 word semantic chunk generator with boundary pauses

@@ -19,6 +19,12 @@ public enum BlockType: String, Codable, Sendable {
     case quote
     case caption
     case footnote
+    case pageHeader
+    case pageFooter
+    case pageNumber
+    case tableOfContents
+    case sidenote
+    case symbolTable
 }
 
 public struct SemanticBlock: Identifiable, Hashable, Sendable {
@@ -352,9 +358,9 @@ public class SemanticDocument: ObservableObject, @unchecked Sendable {
     public func findWord(at point: CGPoint, onPageIndex pageIndex: Int, hitPadding: CGFloat = 12.0, maxSearchRadius: CGFloat = 36.0) -> SemanticWord? {
         guard let pageWords = wordsByPage[pageIndex], !pageWords.isEmpty else { return nil }
         
-        // Exact bounds match first
+        // Exact bounds match first (checking both bounding box and line slices)
         for word in pageWords {
-            if word.bounds.contains(point) {
+            if word.bounds.contains(point) || word.lineBounds.contains(where: { $0.contains(point) }) {
                 return word
             }
         }
@@ -365,7 +371,8 @@ public class SemanticDocument: ObservableObject, @unchecked Sendable {
         
         for word in pageWords {
             let paddedBounds = word.bounds.insetBy(dx: -hitPadding, dy: -hitPadding)
-            if paddedBounds.contains(point) {
+            let isPaddedMatch = paddedBounds.contains(point) || word.lineBounds.contains(where: { $0.insetBy(dx: -hitPadding, dy: -hitPadding).contains(point) })
+            if isPaddedMatch {
                 let center = CGPoint(x: word.bounds.midX, y: word.bounds.midY)
                 let dist = hypot(point.x - center.x, point.y - center.y)
                 if dist < minDistance {

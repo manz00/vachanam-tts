@@ -1,0 +1,47 @@
+{
+  "system": "Mathematical Functions and Operators",
+  "version": "1.0",
+  "functions": [
+    { "name": "sin", "conversational": "sine of", "mathspeak": "sine" },
+    { "name": "cos", "conversational": "cosine of", "mathspeak": "cosine" },
+    { "name": "tan", "conversational": "tangent of", "mathspeak": "tangent" },
+    { "name": "sec", "conversational": "secant of", "mathspeak": "secant" },
+    { "name": "csc", "conversational": "cosecant of", "mathspeak": "cosecant" },
+    { "name": "cot", "conversational": "cotangent of", "mathspeak": "cotangent" },
+
+    { "name": "sinh", "conversational": "hyperbolic sine of", "mathspeak": "hyperbolic sine" },
+    { "name": "cosh", "conversational": "hyperbolic cosine of", "mathspeak": "hyperbolic cosine" },
+    { "name": "tanh", "conversational": "hyperbolic tangent of", "mathspeak": "hyperbolic tangent" },
+    { "name": "sech", "conversational": "hyperbolic secant of", "mathspeak": "hyperbolic secant" },
+    { "name": "csch", "conversational": "hyperbolic cosecant of", "mathspeak": "hyperbolic cosecant" },
+    { "name": "coth", "conversational": "hyperbolic cotangent of", "mathspeak": "hyperbolic cotangent" },
+
+    { "name": "arcsin", "conversational": "arc sine of", "mathspeak": "inverse sine" },
+    { "name": "arccos", "conversational": "arc cosine of", "mathspeak": "inverse cosine" },
+    { "name": "arctan", "conversational": "arc tangent of", "mathspeak": "inverse tangent" },
+
+    { "name": "exp", "conversational": "exponential of", "mathspeak": "exponential of" },
+    { "name": "log", "conversational": "log of", "mathspeak": "logarithm of" },
+    { "name": "ln", "conversational": "natural log of", "mathspeak": "natural logarithm of" },
+    { "name": "lg", "conversational": "log base 10 of", "mathspeak": "base 10 logarithm of" },
+
+    { "name": "det", "conversational": "determinant of", "mathspeak": "determinant of" },
+    { "name": "dim", "conversational": "dimension of", "mathspeak": "dimension of" },
+    { "name": "ker", "conversational": "kernel of", "mathspeak": "kernel of" },
+    { "name": "rank", "conversational": "rank of", "mathspeak": "rank of" },
+    { "name": "span", "conversational": "span of", "mathspeak": "span of" },
+    { "name": "tr", "conversational": "trace of", "mathspeak": "trace of" },
+    { "name": "diag", "conversational": "diagonal of", "mathspeak": "diagonal matrix of" },
+
+    { "name": "gcd", "conversational": "greatest common divisor of", "mathspeak": "greatest common divisor of" },
+    { "name": "lcm", "conversational": "least common multiple of", "mathspeak": "least common multiple of" },
+
+    { "name": "lim", "conversational": "limit as", "mathspeak": "limit" },
+    { "name": "argmax", "conversational": "argument maximum", "mathspeak": "argument of the maximum" },
+    { "name": "argmin", "conversational": "argument minimum", "mathspeak": "argument of the minimum" },
+    { "name": "max", "conversational": "maximum of", "mathspeak": "maximum of" },
+    { "name": "min", "conversational": "minimum of", "mathspeak": "minimum of" },
+    { "name": "sup", "conversational": "supremum of", "mathspeak": "supremum of" },
+    { "name": "inf", "conversational": "infimum of", "mathspeak": "infimum of" }
+  ]
+}

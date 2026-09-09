@@ -8,6 +8,19 @@ import XCTest
 
 final class TextNormalizerExtendedTests: XCTestCase {
     
+    private var previousMathStyle: MathSpeechStyle = .conversational
+    
+    override func setUp() {
+        super.setUp()
+        previousMathStyle = AccessibilityManager.shared.mathSpeechStyle
+        AccessibilityManager.shared.mathSpeechStyle = .conversational
+    }
+    
+    override func tearDown() {
+        AccessibilityManager.shared.mathSpeechStyle = previousMathStyle
+        super.tearDown()
+    }
+    
     func testCurrencySpokenNormalization() {
         let normalizer = TextNormalizer.shared
         XCTAssertEqual(normalizer.normalizeForSpeech("It costs $50 to enter."), "It costs 50 dollars to enter.")
@@ -19,7 +32,7 @@ final class TextNormalizerExtendedTests: XCTestCase {
     func testPercentageAndPlusMinus() {
         let normalizer = TextNormalizer.shared
         XCTAssertEqual(normalizer.normalizeForSpeech("Growth of 25% was observed."), "Growth of 25 percent was observed.")
-        XCTAssertEqual(normalizer.normalizeForSpeech("Margin is ±5 mm."), "Margin is plus or minus 5 mm.")
+        XCTAssertEqual(normalizer.normalizeForSpeech("Margin is ±5 mm."), "Margin is plus or minus 5 millimeters.")
     }
     
     func testTemperatureAndMathSymbols() {

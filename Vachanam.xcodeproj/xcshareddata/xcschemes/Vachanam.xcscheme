@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "27D0F195A2644D79B1792A12"
+               BlueprintIdentifier = "C713A5F25AAC4F8BA808FF7A"
                BuildableName = "Vachanam.app"
                BlueprintName = "Vachanam"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -28,7 +28,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "7FA4C7FA065B49259B367E12"
+               BlueprintIdentifier = "4ECCFB65332145D59A0E42AB"
                BuildableName = "VachanamTests.xctest"
                BlueprintName = "VachanamTests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -42,7 +42,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "7F2C0AE0E3D24CEE9054187A"
+               BlueprintIdentifier = "A4247873A34446088F6F99B6"
                BuildableName = "VachanamUITests.xctest"
                BlueprintName = "VachanamUITests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -60,7 +60,7 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "7FA4C7FA065B49259B367E12"
+               BlueprintIdentifier = "4ECCFB65332145D59A0E42AB"
                BuildableName = "VachanamTests.xctest"
                BlueprintName = "VachanamTests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -71,6 +71,11 @@
          <EnvironmentVariable
             key = "MLX_METAL_GPU_ARCH"
             value = "appleg14g"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "OS_ACTIVITY_MODE"
+            value = "disable"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
@@ -89,7 +94,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "27D0F195A2644D79B1792A12"
+            BlueprintIdentifier = "C713A5F25AAC4F8BA808FF7A"
             BuildableName = "Vachanam.app"
             BlueprintName = "Vachanam"
             ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -99,6 +104,11 @@
          <EnvironmentVariable
             key = "MLX_METAL_GPU_ARCH"
             value = "appleg14g"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "OS_ACTIVITY_MODE"
+            value = "disable"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>

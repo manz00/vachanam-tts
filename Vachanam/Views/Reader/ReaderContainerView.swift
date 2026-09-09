@@ -15,6 +15,7 @@ public struct ReaderContainerView: View {
     @ObservedObject var bookmarkManager = BookmarkManager.shared
     @ObservedObject var progressTracker = ReadingProgressTracker.shared
     @ObservedObject var accessibilityManager = AccessibilityManager.shared
+    @ObservedObject var playbackCoordinator = PlaybackCoordinator.shared
     
     @State private var currentPageIndex: Int = 0
     @State private var readingMode: ReadingMode = .pdfLayout
@@ -46,7 +47,11 @@ public struct ReaderContainerView: View {
                 ZStack {
                     if readingMode == .pdfLayout {
                         ZStack {
-                            PDFReaderView(document: document, currentPageIndex: $currentPageIndex)
+                            PDFReaderView(
+                                document: document,
+                                currentPageIndex: $currentPageIndex,
+                                layoutMode: accessibilityManager.pdfDisplayLayout
+                            )
                             
 
                             
@@ -92,8 +97,8 @@ public struct ReaderContainerView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             
-            // Floating Overlays: Annotation Toolbar & TTS Controls
-            VStack(spacing: 12) {
+            // Floating Overlays: Annotation Toolbar, Prompt Pill & TTS Controls
+            VStack(spacing: 10) {
                 if activeAnnotationTool != .none {
                     AnnotationToolbar(
                         activeTool: $activeAnnotationTool,
@@ -101,6 +106,14 @@ public struct ReaderContainerView: View {
                         strokeWidth: $strokeWidth
                     )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                
+                if playbackCoordinator.isPlaying && playbackCoordinator.isUserScrolledAway {
+                    jumpToSpokenSentencePill
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                            removal: .move(edge: .bottom).combined(with: .opacity)
+                        ))
                 }
                 
                 TTSControlBar(documentTitle: document.title)
@@ -210,6 +223,26 @@ public struct ReaderContainerView: View {
                         .foregroundColor(.white)
                 }
                 
+                if document.format == .pdf && readingMode == .pdfLayout {
+                    Menu {
+                        ForEach(PDFDisplayLayoutMode.allCases) { mode in
+                            Button {
+                                accessibilityManager.pdfDisplayLayout = mode
+                            } label: {
+                                HStack {
+                                    Text(mode.rawValue)
+                                    if accessibilityManager.pdfDisplayLayout == mode {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        Image(systemName: accessibilityManager.pdfDisplayLayout.iconName)
+                            .foregroundColor(.white)
+                    }
+                }
+                
                 Button {
                     withAnimation {
                         activeAnnotationTool = (activeAnnotationTool == .none) ? .pen : .none
@@ -310,5 +343,71 @@ public struct ReaderContainerView: View {
                 totalPages: self.document.pageCount
             )
         }
+    }
+    
+    private var jumpToSpokenSentencePill: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                playbackCoordinator.jumpToSpokenSentence()
+            }
+        }) {
+            HStack(spacing: 10) {
+                Image(systemName: playbackCoordinator.scrolledAwayDirection == .above ? "arrow.up.circle.fill" : "arrow.down.circle.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(Color(red: 0.96, green: 0.62, blue: 0.04))
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(playbackCoordinator.scrolledAwayDirection == .above ? "Spoken text is above" : "Spoken text is below")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        if let page = playbackCoordinator.scrolledAwayPageIndex {
+                            Text("Page \(page + 1)")
+                                .font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 1.5)
+                                .background(Color.white.opacity(0.12))
+                                .foregroundColor(.white.opacity(0.9))
+                                .cornerRadius(6)
+                        }
+                    }
+                    
+                    if !playbackCoordinator.scrolledAwaySnippet.isEmpty {
+                        Text(playbackCoordinator.scrolledAwaySnippet)
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.white.opacity(0.7))
+                            .lineLimit(1)
+                    }
+                }
+                
+                Spacer(minLength: 8)
+                
+                HStack(spacing: 4) {
+                    Text("Jump")
+                        .font(.system(size: 12, weight: .bold))
+                    Image(systemName: "arrow.uturn.forward")
+                        .font(.system(size: 10, weight: .bold))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color(red: 0.96, green: 0.62, blue: 0.04).opacity(0.25))
+                .foregroundColor(Color(red: 0.96, green: 0.62, blue: 0.04))
+                .cornerRadius(10)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(red: 0.09, green: 0.13, blue: 0.20).opacity(0.96))
+                    .shadow(color: Color.black.opacity(0.35), radius: 10, x: 0, y: 4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color(red: 0.96, green: 0.62, blue: 0.04).opacity(0.4), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .padding(.horizontal, 20)
     }
 }

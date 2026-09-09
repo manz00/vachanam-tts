@@ -124,4 +124,26 @@ final class PlaybackCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.currentWordID, word2.globalWordID)
         coordinator.stop()
     }
+    
+    func testTapToSpeakImmediateCursorUpdateAndAudioHalting() {
+        let doc = createTestSemanticDocument()
+        let coordinator = PlaybackCoordinator.shared
+        coordinator.loadDocument(doc)
+        
+        guard doc.words.count > 3 else {
+            XCTFail("Need at least 4 words in test document")
+            return
+        }
+        
+        let targetWord = doc.words[3]
+        coordinator.play(fromWordID: targetWord.globalWordID)
+        
+        // Assert cursor and current word immediately match the tapped word
+        XCTAssertEqual(coordinator.currentWordID, targetWord.globalWordID)
+        XCTAssertEqual(coordinator.currentSentenceID, targetWord.sentenceID)
+        XCTAssertEqual(coordinator.cursor?.globalWordID, targetWord.globalWordID)
+        
+        coordinator.stop()
+    }
 }
+

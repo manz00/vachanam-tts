@@ -14,11 +14,13 @@ public struct VisualLine: Identifiable {
     public let text: String
     public let bounds: CGRect
     public let pageIndex: Int
+    public let pageRange: NSRange?
     
-    public init(text: String, bounds: CGRect, pageIndex: Int) {
+    public init(text: String, bounds: CGRect, pageIndex: Int, pageRange: NSRange? = nil) {
         self.text = text
         self.bounds = bounds
         self.pageIndex = pageIndex
+        self.pageRange = pageRange
     }
 }
 
@@ -46,6 +48,14 @@ public struct RawParagraph {
     public var bounds: CGRect {
         guard let first = lines.first?.bounds else { return .zero }
         return lines.dropFirst().reduce(first) { $0.union($1.bounds) }
+    }
+    
+    public var characterRange: NSRange? {
+        let validRanges = lines.compactMap { $0.pageRange }.filter { $0.location != NSNotFound }
+        guard let first = validRanges.first else { return nil }
+        let minLoc = validRanges.map { $0.location }.min() ?? first.location
+        let maxEnd = validRanges.map { $0.location + $0.length }.max() ?? (first.location + first.length)
+        return NSRange(location: minLoc, length: max(0, maxEnd - minLoc))
     }
     
     public var combinedText: String {
@@ -88,7 +98,27 @@ public struct RawParagraph {
                         result = combinedLinePart + " " + remainingNextLine
                     }
                 } else {
-                    result += " " + lineText
+                    // Check if previous line is on the same horizontal baseline as current line (e.g. bold lead-in heading)
+                    let prevLine = lines[i - 1]
+                    let currLine = lines[i]
+                    let isSameBaseline = abs(prevLine.bounds.midY - currLine.bounds.midY) < 4.0 && currLine.bounds.minX >= (prevLine.bounds.maxX - 2.0)
+                    if isSameBaseline {
+                        let prevTrimmed = prevLine.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let words = prevTrimmed.split(whereSeparator: { $0.isWhitespace })
+                        let endsWithPunctuation = prevTrimmed.hasSuffix(".") || prevTrimmed.hasSuffix(":") || prevTrimmed.hasSuffix(";") || prevTrimmed.hasSuffix("!") || prevTrimmed.hasSuffix("?") || prevTrimmed.hasSuffix("—")
+                        let endsWithMathOrContinuation = prevTrimmed.hasSuffix("→") || prevTrimmed.hasSuffix("⟶") || prevTrimmed.hasSuffix("+") || prevTrimmed.hasSuffix("=") || prevTrimmed.hasSuffix("-") || prevTrimmed.hasSuffix(",") || prevTrimmed.hasSuffix("(")
+                        let isTitleCased = words.count > 0 && words.allSatisfy { w in
+                            guard let first = w.first else { return false }
+                            return first.isUppercase || first.isNumber
+                        }
+                        if words.count <= 6 && !endsWithPunctuation && !endsWithMathOrContinuation && isTitleCased {
+                            result += ". " + lineText
+                        } else {
+                            result += " " + lineText
+                        }
+                    } else {
+                        result += " " + lineText
+                    }
                 }
             }
         }
@@ -122,14 +152,15 @@ public class ParagraphDetector {
     public init() {}
     
     /// Groups ordered visual lines on a page into semantic paragraphs and blocks.
-    public func detectParagraphs(from lines: [VisualLine], pageIndex: Int) -> [RawParagraph] {
+    /// Groups ordered visual lines on a page into semantic paragraphs and blocks,
+    /// with intelligent separation of margin notes (sidenotes) from main body text.
+    public func detectParagraphs(
+        from lines: [VisualLine],
+        pageIndex: Int,
+        pageBounds: CGRect = .zero,
+        analysis: PageFurnitureDetector.DocumentAnalysis? = nil
+    ) -> [RawParagraph] {
         guard !lines.isEmpty else { return [] }
-        
-        var blocks: [RawParagraph] = []
-        var currentBlockLines: [VisualLine] = []
-        var currentBlockType: BlockType = .paragraph
-        var currentBlockLevel: Int = 1
-        var currentBlockMarker: String? = nil
         
         // Calculate median line height for baseline spacing comparisons
         let lineHeights = lines.map { $0.bounds.height }.filter { $0 > 0 }
@@ -145,6 +176,157 @@ public class ParagraphDetector {
         let minXs = lines.map { $0.bounds.minX }.filter { $0 > 0 }
         let baseMargin: CGFloat = minXs.isEmpty ? 50.0 : (minXs.sorted().first ?? 50.0)
         
+        let isNotationPage = analysis?.notationPages.contains(pageIndex) == true
+        let defaultBodyType: BlockType = isNotationPage ? .symbolTable : .paragraph
+        
+        // Detect if the page has a separate margin column (sidenotes / marginalia)
+        if let marginInfo = detectMarginColumn(lines: lines, pageBounds: pageBounds, analysis: analysis, medianHeight: medianHeight) {
+            let marginLines: [VisualLine]
+            if marginInfo.isLeft {
+                marginLines = lines.filter { line in
+                    line.bounds.maxX <= marginInfo.splitX &&
+                    PageFurnitureDetector.shared.classifyLine(line: line, pageBounds: pageBounds, analysis: analysis, medianLineHeight: medianHeight) == nil
+                }
+            } else {
+                marginLines = lines.filter { line in
+                    line.bounds.minX >= marginInfo.splitX &&
+                    PageFurnitureDetector.shared.classifyLine(line: line, pageBounds: pageBounds, analysis: analysis, medianLineHeight: medianHeight) == nil
+                }
+            }
+            
+            let marginLineIDs = Set(marginLines.map { $0.id })
+            let mainLines = lines.filter { !marginLineIDs.contains($0.id) }
+            
+            let mainBlocks = groupLines(
+                lines: mainLines,
+                pageIndex: pageIndex,
+                pageBounds: pageBounds,
+                analysis: analysis,
+                medianHeight: medianHeight,
+                baseMargin: mainLines.map { $0.bounds.minX }.min() ?? baseMargin,
+                defaultBlockType: defaultBodyType
+            )
+            
+            let marginBlocks = groupLines(
+                lines: marginLines,
+                pageIndex: pageIndex,
+                pageBounds: pageBounds,
+                analysis: analysis,
+                medianHeight: medianHeight,
+                baseMargin: marginLines.map { $0.bounds.minX }.min() ?? baseMargin,
+                defaultBlockType: .sidenote
+            )
+            
+            return mainBlocks + marginBlocks
+        }
+        
+        return groupLines(
+            lines: lines,
+            pageIndex: pageIndex,
+            pageBounds: pageBounds,
+            analysis: analysis,
+            medianHeight: medianHeight,
+            baseMargin: baseMargin,
+            defaultBlockType: defaultBodyType
+        )
+    }
+    
+    private func detectMarginColumn(
+        lines: [VisualLine],
+        pageBounds: CGRect,
+        analysis: PageFurnitureDetector.DocumentAnalysis?,
+        medianHeight: CGFloat
+    ) -> (isLeft: Bool, splitX: CGFloat)? {
+        guard pageBounds.width > 100 else { return nil }
+        let pageWidth = pageBounds.width
+        
+        // Filter out page furniture (headers, footers, page numbers)
+        let contentLines = lines.filter { line in
+            let f = PageFurnitureDetector.shared.classifyLine(
+                line: line,
+                pageBounds: pageBounds,
+                analysis: analysis,
+                medianLineHeight: medianHeight
+            )
+            return f == nil || f == .caption || f == .footnote
+        }
+        guard contentLines.count >= 4 else { return nil }
+        
+        // 1. Check for Left Margin column (e.g. MML page 18 notes/tips/video links)
+        // Margin lines: maxX <= splitX, splitX in [0.22 * pageWidth, 0.45 * pageWidth]
+        // Main body lines: minX >= (splitX - 10.0)
+        let leftSplitCandidates = stride(from: pageWidth * 0.22, through: pageWidth * 0.45, by: 10.0)
+        for splitX in leftSplitCandidates {
+            // Strict gutter check: No lines should cross over the split boundary
+            let crossingLines = contentLines.filter { $0.bounds.minX < (splitX - 15.0) && $0.bounds.maxX > (splitX + 15.0) }
+            guard crossingLines.isEmpty else { continue }
+            
+            let marginCandidates = contentLines.filter { $0.bounds.maxX <= splitX }
+            let bodyCandidates = contentLines.filter { $0.bounds.minX >= (splitX - 10.0) && $0.bounds.width >= (pageWidth * 0.35) }
+            
+            if marginCandidates.count >= 2 && bodyCandidates.count >= 2 {
+                let marginMinXs = marginCandidates.map { $0.bounds.minX }
+                let bodyMinXs = bodyCandidates.map { $0.bounds.minX }
+                let marginBaseX = marginMinXs.sorted().first ?? 0
+                let bodyBaseX = bodyMinXs.sorted().first ?? 0
+                
+                // Ensure distinct left baselines between margin and body columns
+                guard (bodyBaseX - marginBaseX) >= (pageWidth * 0.15) else { continue }
+                
+                let avgMarginWidth = marginCandidates.reduce(0.0) { $0 + $1.bounds.width } / CGFloat(marginCandidates.count)
+                if avgMarginWidth <= (pageWidth * 0.35) {
+                    return (isLeft: true, splitX: splitX)
+                }
+            }
+        }
+        
+        // 2. Check for Right Margin column
+        let rightSplitCandidates = stride(from: pageWidth * 0.55, through: pageWidth * 0.85, by: 10.0)
+        for splitX in rightSplitCandidates {
+            // Strict gutter check: No lines should cross over the split boundary
+            let crossingLines = contentLines.filter { $0.bounds.minX < (splitX - 15.0) && $0.bounds.maxX > (splitX + 15.0) }
+            guard crossingLines.isEmpty else { continue }
+            
+            let bodyCandidates = contentLines.filter { $0.bounds.maxX <= (splitX + 5.0) && $0.bounds.width >= (pageWidth * 0.35) }
+            let marginCandidates = contentLines.filter { $0.bounds.minX >= splitX }
+            
+            if marginCandidates.count >= 2 && bodyCandidates.count >= 2 {
+                let bodyMaxXs = bodyCandidates.map { $0.bounds.maxX }
+                let marginMinXs = marginCandidates.map { $0.bounds.minX }
+                let bodyMaxX = bodyMaxXs.max() ?? 0
+                let marginBaseX = marginMinXs.sorted().first ?? 0
+                
+                // Ensure distinct gutter between body right edge and margin left edge
+                guard (marginBaseX - bodyMaxX) >= 6.0 else { continue }
+                guard splitX >= (bodyMaxX - 2.0) else { continue }
+                
+                let avgMarginWidth = marginCandidates.reduce(0.0) { $0 + $1.bounds.width } / CGFloat(marginCandidates.count)
+                if avgMarginWidth <= (pageWidth * 0.35) {
+                    return (isLeft: false, splitX: splitX)
+                }
+            }
+        }
+        
+        return nil
+    }
+    
+    private func groupLines(
+        lines: [VisualLine],
+        pageIndex: Int,
+        pageBounds: CGRect,
+        analysis: PageFurnitureDetector.DocumentAnalysis?,
+        medianHeight: CGFloat,
+        baseMargin: CGFloat,
+        defaultBlockType: BlockType
+    ) -> [RawParagraph] {
+        guard !lines.isEmpty else { return [] }
+        
+        var blocks: [RawParagraph] = []
+        var currentBlockLines: [VisualLine] = []
+        var currentBlockType: BlockType = defaultBlockType
+        var currentBlockLevel: Int = 1
+        var currentBlockMarker: String? = nil
+        
         func flushCurrentBlock() {
             guard !currentBlockLines.isEmpty else { return }
             blocks.append(RawParagraph(
@@ -155,7 +337,7 @@ public class ParagraphDetector {
                 marker: currentBlockMarker
             ))
             currentBlockLines.removeAll()
-            currentBlockType = .paragraph
+            currentBlockType = defaultBlockType
             currentBlockLevel = 1
             currentBlockMarker = nil
         }
@@ -164,8 +346,25 @@ public class ParagraphDetector {
             let currentLine = lines[i]
             let trimmed = currentLine.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else {
-                // Empty line forces block break
                 flushCurrentBlock()
+                continue
+            }
+            
+            // Check for page furniture (headers, footers, page numbers, captions, footnotes)
+            if let furnitureType = PageFurnitureDetector.shared.classifyLine(
+                line: currentLine,
+                pageBounds: pageBounds,
+                analysis: analysis,
+                medianLineHeight: medianHeight
+            ) {
+                flushCurrentBlock()
+                blocks.append(RawParagraph(
+                    lines: [currentLine],
+                    pageIndex: pageIndex,
+                    blockType: furnitureType,
+                    level: 1,
+                    marker: nil
+                ))
                 continue
             }
             
@@ -183,7 +382,6 @@ public class ParagraphDetector {
             // Check for heading
             if let headingLevel = detectHeading(line: currentLine, trimmedText: trimmed, medianHeight: medianHeight) {
                 flushCurrentBlock()
-                // Headings are always standalone units!
                 blocks.append(RawParagraph(
                     lines: [currentLine],
                     pageIndex: pageIndex,
@@ -195,16 +393,15 @@ public class ParagraphDetector {
             }
             
             // If current block is a list item, check if this line is a continuation line
-            if currentBlockType == .listItem, let previousLine = currentBlockLines.last {
+            if currentBlockType == .listItem, let previousLine = currentBlockLines.last, let firstLine = currentBlockLines.first {
                 let verticalGap = previousLine.bounds.minY - currentLine.bounds.maxY
-                let isNormalSpacing = verticalGap <= (medianHeight * 1.4)
-                let isIndentedOrFlowing = currentLine.bounds.minX >= (previousLine.bounds.minX - 4.0)
+                let isNormalSpacing = verticalGap <= (medianHeight * 1.6)
+                let isIndentedOrFlowing = currentLine.bounds.minX >= (firstLine.bounds.minX - 10.0)
                 
                 if isNormalSpacing && isIndentedOrFlowing {
                     currentBlockLines.append(currentLine)
                     continue
                 } else {
-                    // List item finished, start regular paragraph
                     flushCurrentBlock()
                 }
             }
@@ -212,7 +409,7 @@ public class ParagraphDetector {
             // Handle regular paragraph or quote accumulation
             if currentBlockLines.isEmpty {
                 let isIndentedQuote = currentLine.bounds.minX > (baseMargin + medianHeight * 2.0)
-                currentBlockType = isIndentedQuote ? .quote : .paragraph
+                currentBlockType = isIndentedQuote ? .quote : defaultBlockType
                 currentBlockLines.append(currentLine)
                 continue
             }
@@ -224,15 +421,21 @@ public class ParagraphDetector {
             // 1. Vertical gap is significantly larger than regular line spacing
             let isLargeGap = verticalGap > (medianHeight * 1.5)
             
-            // 2. Previous line ended with terminal punctuation and current line has noticeable left indent
+            // 2. Previous line ended with terminal punctuation and current line has noticeable left indent or previous line was short
             let prevTrimmed = previousLine.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            let hasTerminalPunctuation = prevTrimmed.hasSuffix(".") || prevTrimmed.hasSuffix("?") || prevTrimmed.hasSuffix("!")
-            let hasIndent = currentLine.bounds.minX > (previousLine.bounds.minX + medianHeight * 1.2)
+            let hasTerminalPunctuation = prevTrimmed.hasSuffix(".") || prevTrimmed.hasSuffix("?") || prevTrimmed.hasSuffix("!") || prevTrimmed.hasSuffix(":") || prevTrimmed.hasSuffix("—") || prevTrimmed.hasSuffix("\"") || prevTrimmed.hasSuffix("”") || prevTrimmed.hasSuffix(")")
             
-            if isLargeGap || (hasTerminalPunctuation && hasIndent) {
+            // Indentation check: Indented by at least 5pt from the column base margin or previous line
+            let isIndented = (currentLine.bounds.minX >= (baseMargin + 5.0)) || (currentLine.bounds.minX >= (previousLine.bounds.minX + 5.0))
+            
+            // Short terminal line check: The previous line ended well before the column right margin
+            let columnMaxX = lines.map { $0.bounds.maxX }.max() ?? 400.0
+            let isPreviousLineShort = previousLine.bounds.maxX < (columnMaxX - 25.0)
+            
+            if isLargeGap || (hasTerminalPunctuation && (isIndented || isPreviousLineShort)) {
                 flushCurrentBlock()
                 let isIndentedQuote = currentLine.bounds.minX > (baseMargin + medianHeight * 2.0)
-                currentBlockType = isIndentedQuote ? .quote : .paragraph
+                currentBlockType = isIndentedQuote ? .quote : defaultBlockType
                 currentBlockLines = [currentLine]
             } else {
                 currentBlockLines.append(currentLine)
@@ -268,6 +471,19 @@ public class ParagraphDetector {
         let wordCount = trimmedText.split(whereSeparator: { $0.isWhitespace }).count
         guard wordCount > 0 && wordCount <= 14 else { return nil }
         
+        // Headings must start with an uppercase letter, digit, or roman numeral
+        guard let firstChar = trimmedText.first, firstChar.isLetter || firstChar.isNumber else { return nil }
+        if firstChar.isLetter && firstChar.isLowercase { return nil }
+        
+        // Headings do not end with math operators, arrows, commas, or continuation conjunctions
+        let badSuffixes = [",", ";", "-", "–", "—", "+", "=", "→", "⟶", "<", ">", "/", "\\", "(", "[", "{", "that", "and", "or", "of", "with", "to", "in", "for", "by"]
+        let lowerTrimmed = trimmedText.lowercased()
+        for suffix in badSuffixes {
+            if lowerTrimmed.hasSuffix(suffix) {
+                return nil
+            }
+        }
+        
         let nsText = trimmedText as NSString
         let searchRange = NSRange(location: 0, length: min(nsText.length, 30))
         
@@ -288,9 +504,14 @@ public class ParagraphDetector {
         if hasHeadingPrefix {
             if isLargeFont {
                 return 1
-            } else if trimmedText.lowercased().hasPrefix("chapter") || trimmedText.lowercased().hasPrefix("part") {
-                return 1
-            } else {
+            } else if (trimmedText.lowercased().hasPrefix("chapter") || trimmedText.lowercased().hasPrefix("part")) && wordCount <= 6 {
+                // Short standalone title lines like "Chapter 10: Dimensionality Reduction", not body sentences like "Chapter 10 focuses on..."
+                let bodyVerbs = ["focuses", "introduces", "we", "is", "are", "shows", "will", "discusses", "restate", "provides"]
+                let words = trimmedText.lowercased().components(separatedBy: .whitespaces)
+                if !words.contains(where: { bodyVerbs.contains($0) }) {
+                    return 1
+                }
+            } else if isLargeFont {
                 return 2
             }
         }

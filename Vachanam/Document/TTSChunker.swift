@@ -27,7 +27,11 @@ public class TTSChunker {
     
     /// Groups an array of semantic sentences into TTSChunk objects,
     /// enforcing strict block boundaries and assigning boundary pause durations.
-    public func chunk(sentences: [SemanticSentence], blocks: [SemanticBlock] = []) -> [TTSChunk] {
+    public func chunk(
+        sentences: [SemanticSentence],
+        blocks: [SemanticBlock] = [],
+        skippedBlockTypes: Set<BlockType> = [.pageHeader, .pageFooter, .pageNumber]
+    ) -> [TTSChunk] {
         guard !sentences.isEmpty else { return [] }
         
         var chunks: [TTSChunk] = []
@@ -50,10 +54,12 @@ public class TTSChunker {
                 return 0.4
             case .quote:
                 return 0.5
-            case .caption, .footnote:
+            case .caption, .footnote, .sidenote:
                 return 0.4
             case .paragraph:
                 return isLastChunkOfBlock ? 0.5 : 0.1
+            case .pageHeader, .pageFooter, .pageNumber, .tableOfContents, .symbolTable:
+                return 0.3
             }
         }
         
@@ -87,6 +93,11 @@ public class TTSChunker {
         }
         
         for (index, sentence) in sentences.enumerated() {
+            // Skip non-narrative furniture based on preferences
+            if skippedBlockTypes.contains(sentence.blockType) {
+                continue
+            }
+            
             let sentenceWordCount = sentence.words.count
             let sBlockID = sentence.blockID
             let sBlockType = sentence.blockType
@@ -95,9 +106,9 @@ public class TTSChunker {
             // 1. If currently accumulating and sentence belongs to a new block, finalize!
             let isNewBlock = (currentBlockID != nil && currentBlockID != sBlockID)
             
-            // 2. Standalone blocks (headings and list items) must never be merged with other sentences!
-            let isStandaloneType = (sBlockType == .heading || sBlockType == .listItem)
-            let currentIsStandalone = (currentBlockType == .heading || currentBlockType == .listItem)
+            // 2. Standalone blocks (headings, list items, furniture, marginalia) must never be merged with other sentences!
+            let isStandaloneType = (sBlockType == .heading || sBlockType == .listItem || sBlockType == .caption || sBlockType == .footnote || sBlockType == .sidenote || sBlockType == .symbolTable)
+            let currentIsStandalone = (currentBlockType == .heading || currentBlockType == .listItem || currentBlockType == .caption || currentBlockType == .footnote || currentBlockType == .sidenote || currentBlockType == .symbolTable)
             
             // 3. Word and sentence count budget within paragraph
             let wouldExceedWords = (currentWordCount + sentenceWordCount) > targetMaxWordsPerChunk

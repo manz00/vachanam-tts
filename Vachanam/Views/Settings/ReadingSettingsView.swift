@@ -33,8 +33,43 @@ public struct ReadingSettingsView: View {
                 }
             }
             
-            Section(header: Text("Auto-Scroll Behavior")) {
-                Toggle("Auto-scroll with Spoken Voice", isOn: $accessibilityManager.isAutoScrollEnabled)
+            Section(header: Text("Reading Intelligence (Audio Skipping)")) {
+                Toggle("Skip Running Headers & Footers", isOn: $accessibilityManager.skipHeadersAndFooters)
+                Toggle("Skip Standalone Page Numbers", isOn: $accessibilityManager.skipPageNumbers)
+                Toggle("Skip Footnotes", isOn: $accessibilityManager.skipFootnotes)
+                Toggle("Skip Figure & Table Captions", isOn: $accessibilityManager.skipCaptions)
+                Toggle("Skip Sidenotes & Margin Notes", isOn: $accessibilityManager.skipSidenotes)
+                Toggle("Skip Notation & Symbol Tables", isOn: $accessibilityManager.skipSymbolTables)
+            }
+            
+            Section(
+                header: Text("Math & Scientific Speech"),
+                footer: Text(accessibilityManager.mathSpeechStyle.description)
+            ) {
+                Picker("Speech Style", selection: $accessibilityManager.mathSpeechStyle) {
+                    ForEach(MathSpeechStyle.allCases) { style in
+                        Text(style.rawValue).tag(style)
+                    }
+                }
+            }
+            
+            Section(header: Text("PDF Layout & Scrolling")) {
+                Picker("Layout Mode", selection: $accessibilityManager.pdfDisplayLayout) {
+                    ForEach(PDFDisplayLayoutMode.allCases) { mode in
+                        Label(mode.rawValue, systemImage: mode.iconName).tag(mode)
+                    }
+                }
+            }
+            
+            Section(
+                header: Text("Auto-Scroll Behavior"),
+                footer: Text(accessibilityManager.autoScrollFollowMode.description)
+            ) {
+                Picker("Follow Spoken Voice", selection: $accessibilityManager.autoScrollFollowMode) {
+                    ForEach(AutoScrollFollowMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
             }
             
             Section(header: Text("Speech Speed")) {

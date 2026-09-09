@@ -42,17 +42,36 @@ public final class SentenceSegmenter: @unchecked Sendable {
         var nextParagraphID = 0
         var nextBlockID = 0
         
+        // Pass 1: Extract visual lines and page dimensions across the entire document
+        // to enable cross-page repetition detection (e.g. running headers & footers)
+        var visualLinesByPage: [Int: [VisualLine]] = [:]
+        var pageBoundsByPage: [Int: CGRect] = [:]
+        for pageIndex in 0..<pageCount {
+            guard let page = pdfDocument.page(at: pageIndex) else { continue }
+            pageBoundsByPage[pageIndex] = page.bounds(for: .cropBox)
+            visualLinesByPage[pageIndex] = extractVisualLines(from: page, pageIndex: pageIndex)
+        }
+        let documentAnalysis = PageFurnitureDetector.shared.analyzeDocument(
+            linesByPage: visualLinesByPage,
+            pageBounds: pageBoundsByPage
+        )
+        
         for pageIndex in 0..<pageCount {
             guard let page = pdfDocument.page(at: pageIndex) else { continue }
             guard let pageString = page.string, !pageString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 continue
             }
             
-            // Extract visual lines from PDFKit line selections
-            let visualLines = extractVisualLines(from: page, pageIndex: pageIndex)
+            let visualLines = visualLinesByPage[pageIndex] ?? []
+            let pageBounds = pageBoundsByPage[pageIndex] ?? page.bounds(for: .cropBox)
             
-            // Cluster into coherent raw paragraphs and semantic blocks
-            let rawParagraphs = ParagraphDetector.shared.detectParagraphs(from: visualLines, pageIndex: pageIndex)
+            // Cluster into coherent raw paragraphs and semantic blocks with furniture intelligence
+            let rawParagraphs = ParagraphDetector.shared.detectParagraphs(
+                from: visualLines,
+                pageIndex: pageIndex,
+                pageBounds: pageBounds,
+                analysis: documentAnalysis
+            )
             
             var pageSearchOffset = 0
             let nsPageString = pageString as NSString
@@ -65,21 +84,33 @@ public final class SentenceSegmenter: @unchecked Sendable {
                 nextBlockID += 1
                 
                 let normalizedText = TextNormalizer.shared.normalize(paragraphText)
+                
+                // Protect decimal numbers (e.g. 2.0, 0.5) from being treated as sentence boundaries
+                let decimalProtectedText = normalizedText.replacingOccurrences(
+                    of: #"(?<=\d)\.(?=\d)"#,
+                    with: "__DECIMAL_POINT__",
+                    options: .regularExpression
+                )
+                
                 let sentenceTokenizer = NLTokenizer(unit: .sentence)
-                sentenceTokenizer.string = normalizedText
+                sentenceTokenizer.string = decimalProtectedText
                 
                 var paragraphSentenceIDs: [Int] = []
-                let fullRange = normalizedText.startIndex..<normalizedText.endIndex
+                let fullRange = decimalProtectedText.startIndex..<decimalProtectedText.endIndex
+                
+                // Track search offset within this paragraph's character boundaries
+                var paraSearchOffset = rawPara.characterRange?.location ?? pageSearchOffset
                 
                 sentenceTokenizer.enumerateTokens(in: fullRange) { sRange, _ in
-                    let rawSentence = String(normalizedText[sRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let tokenText = String(decimalProtectedText[sRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let rawSentence = tokenText.replacingOccurrences(of: "__DECIMAL_POINT__", with: ".")
                     guard !rawSentence.isEmpty else { return true }
                     
                     let currentSentenceID = nextSentenceID
                     nextSentenceID += 1
                     paragraphSentenceIDs.append(currentSentenceID)
                     
-                    // Extract words within this sentence using forward-scanning on pageString
+                    // Extract words strictly bounded within this paragraph
                     let (sentenceWords, lineBounds, unionBounds, newOffset) = self.extractWordsForSentence(
                         sentenceText: rawSentence,
                         page: page,
@@ -87,10 +118,13 @@ public final class SentenceSegmenter: @unchecked Sendable {
                         pageIndex: pageIndex,
                         sentenceID: currentSentenceID,
                         startWordID: nextGlobalWordID,
-                        searchOffset: pageSearchOffset
+                        searchOffset: paraSearchOffset,
+                        paraBounds: rawPara.bounds,
+                        paraRange: rawPara.characterRange
                     )
                     
-                    pageSearchOffset = newOffset
+                    paraSearchOffset = newOffset
+                    pageSearchOffset = max(pageSearchOffset, newOffset)
                     nextGlobalWordID += sentenceWords.count
                     allWords.append(contentsOf: sentenceWords)
                     
@@ -130,8 +164,34 @@ public final class SentenceSegmenter: @unchecked Sendable {
             }
         }
         
-        // Chunk sentences into semantic TTS chunks respecting block boundaries
-        let chunks = TTSChunker.shared.chunk(sentences: allSentences, blocks: allBlocks)
+        // Determine skipped block types based on user accessibility preferences
+        var skippedTypes: Set<BlockType> = []
+        if AccessibilityManager.shared.skipHeadersAndFooters {
+            skippedTypes.insert(.pageHeader)
+            skippedTypes.insert(.pageFooter)
+        }
+        if AccessibilityManager.shared.skipPageNumbers {
+            skippedTypes.insert(.pageNumber)
+        }
+        if AccessibilityManager.shared.skipFootnotes {
+            skippedTypes.insert(.footnote)
+        }
+        if AccessibilityManager.shared.skipCaptions {
+            skippedTypes.insert(.caption)
+        }
+        if AccessibilityManager.shared.skipSidenotes {
+            skippedTypes.insert(.sidenote)
+        }
+        if AccessibilityManager.shared.skipSymbolTables {
+            skippedTypes.insert(.symbolTable)
+        }
+        
+        // Chunk sentences into semantic TTS chunks respecting block boundaries and skip preferences
+        let chunks = TTSChunker.shared.chunk(
+            sentences: allSentences,
+            blocks: allBlocks,
+            skippedBlockTypes: skippedTypes
+        )
         
         return SemanticDocument(
             documentID: documentID,
@@ -157,7 +217,8 @@ public final class SentenceSegmenter: @unchecked Sendable {
             guard let lineStr = lineSel.string, !lineStr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 return nil
             }
-            return VisualLine(text: lineStr, bounds: lineSel.bounds(for: page), pageIndex: pageIndex)
+            let r = lineSel.range(at: 0, on: page)
+            return VisualLine(text: lineStr, bounds: lineSel.bounds(for: page), pageIndex: pageIndex, pageRange: r)
         }
     }
     
@@ -168,7 +229,9 @@ public final class SentenceSegmenter: @unchecked Sendable {
         pageIndex: Int,
         sentenceID: Int,
         startWordID: Int,
-        searchOffset: Int
+        searchOffset: Int,
+        paraBounds: CGRect,
+        paraRange: NSRange?
     ) -> ([SemanticWord], [CGRect], CGRect, Int) {
         let wordTokenizer = NLTokenizer(unit: .word)
         wordTokenizer.string = sentenceText
@@ -179,6 +242,17 @@ public final class SentenceSegmenter: @unchecked Sendable {
         var currentOffset = min(searchOffset, nsPageString.length)
         let pageLength = nsPageString.length
         
+        // Define allowable character search window for this paragraph
+        let allowedMinOffset = paraRange?.location ?? 0
+        let allowedMaxOffset = paraRange.map { min(pageLength, $0.location + $0.length + 50) } ?? pageLength
+        
+        if currentOffset < allowedMinOffset {
+            currentOffset = allowedMinOffset
+        }
+        
+        let allowedSpatialBounds = paraBounds.isEmpty ? CGRect(x: 0, y: 0, width: 10000, height: 10000) : paraBounds.insetBy(dx: -8, dy: -8)
+        var lastValidWordBounds: CGRect = .zero
+        
         let fullSentenceRange = sentenceText.startIndex..<sentenceText.endIndex
         
         wordTokenizer.enumerateTokens(in: fullSentenceRange) { wRange, _ in
@@ -187,13 +261,12 @@ public final class SentenceSegmenter: @unchecked Sendable {
             
             let nsSentenceRange = NSRange(wRange, in: sentenceText)
             
-            // Forward-match the word in nsPageString starting from currentOffset
             var wordBounds = CGRect.zero
             var wordLineBounds: [CGRect] = []
             var isHyphenated = false
             
-            // 1. Exact match attempt
-            let searchLength = min(pageLength - currentOffset, 500)
+            // 1. Forward-search attempt within paragraph window
+            let searchLength = min(max(0, allowedMaxOffset - currentOffset), 400)
             let searchSubrange = NSRange(location: currentOffset, length: max(0, searchLength))
             var matchRange = NSRange(location: NSNotFound, length: 0)
             if searchSubrange.length > 0 {
@@ -204,62 +277,101 @@ public final class SentenceSegmenter: @unchecked Sendable {
                 )
             }
             
-            if matchRange.location != NSNotFound {
-                if let sel = page.selection(for: matchRange) {
-                    wordBounds = sel.bounds(for: page)
+            // Validate match against paragraph bounds
+            if matchRange.location != NSNotFound, let sel = page.selection(for: matchRange) {
+                let candidateBounds = sel.bounds(for: page)
+                if allowedSpatialBounds.contains(CGPoint(x: candidateBounds.midX, y: candidateBounds.midY)) {
+                    wordBounds = candidateBounds
                     wordLineBounds = sel.selectionsByLine().map { $0.bounds(for: page) }
+                    currentOffset = matchRange.location + matchRange.length
                 }
-                currentOffset = matchRange.location + matchRange.length
-            } else {
-                // 2. Check for hyphenated break in page string (e.g. "probabil-" and "ity")
-                var foundHyphenSplit = false
-                if wText.count > 3 {
-                    for prefixLen in stride(from: wText.count - 2, through: 2, by: -1) {
-                        let prefix = String(wText.prefix(prefixLen))
-                        let prefixHyphen = prefix + "-"
-                        let pSearchLen = min(pageLength - currentOffset, 300)
-                        guard pSearchLen > 0 else { break }
-                        let pRange = nsPageString.range(
-                            of: prefixHyphen,
-                            options: [.caseInsensitive],
-                            range: NSRange(location: currentOffset, length: pSearchLen)
-                        )
-                        if pRange.location != NSNotFound {
-                            let suffix = String(wText.suffix(wText.count - prefixLen))
-                            let afterPrefix = pRange.location + pRange.length
-                            let sSearchLen = min(pageLength - afterPrefix, 100)
-                            if sSearchLen > 0 {
-                                let sRange = nsPageString.range(
-                                    of: suffix,
-                                    options: [.caseInsensitive],
-                                    range: NSRange(location: afterPrefix, length: sSearchLen)
-                                )
-                                if sRange.location != NSNotFound {
-                                    let sel1 = page.selection(for: pRange)
-                                    let sel2 = page.selection(for: sRange)
-                                    let b1 = sel1?.bounds(for: page) ?? .zero
-                                    let b2 = sel2?.bounds(for: page) ?? .zero
-                                    wordBounds = b1.isEmpty ? b2 : (b2.isEmpty ? b1 : b1.union(b2))
+            }
+            
+            // 2. If not matched, check for hyphenated word split (e.g. "probabil-" and "ity")
+            if wordBounds.isEmpty && wText.count > 3 {
+                for prefixLen in stride(from: wText.count - 2, through: 2, by: -1) {
+                    let prefix = String(wText.prefix(prefixLen))
+                    let prefixHyphen = prefix + "-"
+                    let pSearchLen = min(max(0, allowedMaxOffset - currentOffset), 200)
+                    guard pSearchLen > 0 else { break }
+                    let pRange = nsPageString.range(
+                        of: prefixHyphen,
+                        options: [.caseInsensitive],
+                        range: NSRange(location: currentOffset, length: pSearchLen)
+                    )
+                    if pRange.location != NSNotFound {
+                        let suffix = String(wText.suffix(wText.count - prefixLen))
+                        let afterPrefix = pRange.location + pRange.length
+                        let sSearchLen = min(max(0, allowedMaxOffset - afterPrefix), 100)
+                        if sSearchLen > 0 {
+                            let sRange = nsPageString.range(
+                                of: suffix,
+                                options: [.caseInsensitive],
+                                range: NSRange(location: afterPrefix, length: sSearchLen)
+                            )
+                            if sRange.location != NSNotFound {
+                                let sel1 = page.selection(for: pRange)
+                                let sel2 = page.selection(for: sRange)
+                                let b1 = sel1?.bounds(for: page) ?? .zero
+                                let b2 = sel2?.bounds(for: page) ?? .zero
+                                let combined = b1.isEmpty ? b2 : (b2.isEmpty ? b1 : b1.union(b2))
+                                if allowedSpatialBounds.contains(CGPoint(x: combined.midX, y: combined.midY)) {
+                                    wordBounds = combined
                                     wordLineBounds = [b1, b2].filter { !$0.isEmpty }
                                     isHyphenated = true
                                     currentOffset = sRange.location + sRange.length
-                                    foundHyphenSplit = true
                                     break
                                 }
                             }
                         }
                     }
                 }
-                
-                // 3. Fallback: wider search on the page
-                if !foundHyphenSplit {
-                    let fallbackRange = nsPageString.range(of: wText, options: [.caseInsensitive])
-                    if fallbackRange.location != NSNotFound, let sel = page.selection(for: fallbackRange) {
-                        wordBounds = sel.bounds(for: page)
-                        wordLineBounds = sel.selectionsByLine().map { $0.bounds(for: page) }
-                        currentOffset = max(currentOffset, fallbackRange.location + fallbackRange.length)
+            }
+            
+            // 3. Local forward search strictly starting from currentOffset within paragraph
+            if wordBounds.isEmpty {
+                let startLoc = max(currentOffset, allowedMinOffset)
+                let localSearchLen = max(0, allowedMaxOffset - startLoc)
+                if localSearchLen > 0 {
+                    let localSearchRange = NSRange(location: startLoc, length: localSearchLen)
+                    let localMatch = nsPageString.range(
+                        of: wText,
+                        options: [.caseInsensitive, .diacriticInsensitive],
+                        range: localSearchRange
+                    )
+                    if localMatch.location != NSNotFound, let sel = page.selection(for: localMatch) {
+                        let candidateBounds = sel.bounds(for: page)
+                        if allowedSpatialBounds.contains(CGPoint(x: candidateBounds.midX, y: candidateBounds.midY)) {
+                            wordBounds = candidateBounds
+                            wordLineBounds = sel.selectionsByLine().map { $0.bounds(for: page) }
+                            currentOffset = localMatch.location + localMatch.length
+                        }
                     }
                 }
+            }
+            
+            // 4. Fallback: synthesize adjacent bounds within the paragraph so it NEVER bleeds across paragraphs
+            if wordBounds.isEmpty {
+                if !lastValidWordBounds.isEmpty {
+                    let estX = lastValidWordBounds.maxX + 4
+                    let estWidth = CGFloat(max(wText.count, 1)) * 7.5
+                    wordBounds = CGRect(
+                        x: estX,
+                        y: lastValidWordBounds.minY,
+                        width: min(estWidth, 80),
+                        height: lastValidWordBounds.height
+                    )
+                } else if !paraBounds.isEmpty {
+                    wordBounds = CGRect(
+                        x: paraBounds.minX,
+                        y: paraBounds.maxY - 18,
+                        width: CGFloat(max(wText.count, 1)) * 7.5,
+                        height: 16
+                    )
+                }
+                wordLineBounds = [wordBounds]
+            } else {
+                lastValidWordBounds = wordBounds
             }
             
             let sWord = SemanticWord(
@@ -280,9 +392,11 @@ public final class SentenceSegmenter: @unchecked Sendable {
             return true
         }
         
-        // Compute line bounds and union bounds
+        // Compute line bounds and union bounds strictly within allowed paragraph bounds
         var lineBounds: [CGRect] = []
-        let validBounds = words.flatMap { $0.lineBounds }.filter { !$0.isEmpty }
+        let validBounds = words.flatMap { $0.lineBounds }.filter { rect in
+            !rect.isEmpty && (paraBounds.isEmpty || allowedSpatialBounds.intersects(rect))
+        }
         var unionBounds = CGRect.zero
         if !validBounds.isEmpty {
             unionBounds = validBounds.reduce(validBounds[0]) { $0.union($1) }

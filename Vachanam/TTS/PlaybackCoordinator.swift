@@ -62,6 +62,15 @@ public enum PlaybackMode: String, Sendable {
     case preGenerated
 }
 
+public enum ScrolledAwayDirection: String, Sendable {
+    case above
+    case below
+}
+
+extension Notification.Name {
+    public static let jumpToSpokenSentence = Notification.Name("jumpToSpokenSentence")
+}
+
 public class PlaybackCoordinator: ObservableObject {
     public static let shared = PlaybackCoordinator()
     
@@ -71,6 +80,12 @@ public class PlaybackCoordinator: ObservableObject {
     @Published public var isGenerating: Bool = false
     @Published public var playbackMode: PlaybackMode = .liveSynthesis
     @Published public var preGeneratedManifest: AudiobookManifest?
+    
+    // User Scroll-Away Tracking
+    @Published public var isUserScrolledAway: Bool = false
+    @Published public var scrolledAwayDirection: ScrolledAwayDirection = .below
+    @Published public var scrolledAwayPageIndex: Int?
+    @Published public var scrolledAwaySnippet: String = ""
     
     // Authoritative Cursor & Scope
     @Published public var cursor: PlaybackCursor?
@@ -213,12 +228,32 @@ public class PlaybackCoordinator: ObservableObject {
         }
         
         setCursor(forWord: word, inSentence: sentence)
-        self.currentChunkID = chunk.chunkID
-        
-        // Update visible page to match user's explicit selection
         self.visiblePageIndex = word.pageIndex
         onPageChanged?(word.pageIndex)
         
+        // Fast-path: If user taps within the currently active chunk and audio is available, seek immediately
+        if self.currentChunkID == chunk.chunkID,
+           let audioResult = self.activeAudioResult,
+           audioResult.duration > 0,
+           let wordIdxInChunk = chunk.wordIDs.firstIndex(of: wordID) {
+            
+            var seekTime: TimeInterval = 0.0
+            if wordIdxInChunk < audioResult.wordTimestamps.count {
+                seekTime = audioResult.wordTimestamps[wordIdxInChunk].startTime
+            } else if !chunk.wordIDs.isEmpty {
+                seekTime = (Double(wordIdxInChunk) / Double(chunk.wordIDs.count)) * audioResult.duration
+            }
+            
+            self.isPlaying = true
+            self.isPaused = false
+            AudioPlayer.shared.seek(to: seekTime)
+            if !AudioPlayer.shared.isPlaying {
+                AudioPlayer.shared.resume()
+            }
+            return
+        }
+        
+        self.currentChunkID = chunk.chunkID
         playChunk(chunkID: chunk.chunkID, startWordID: wordID)
     }
     
@@ -234,7 +269,13 @@ public class PlaybackCoordinator: ObservableObject {
         isPlaying = false
         isPaused = false
         isGenerating = false
+        isUserScrolledAway = false
         activeAudioResult = nil
+    }
+    
+    public func jumpToSpokenSentence() {
+        NotificationCenter.default.post(name: .jumpToSpokenSentence, object: nil)
+        isUserScrolledAway = false
     }
     
     public func nextSentence() {
@@ -289,6 +330,7 @@ public class PlaybackCoordinator: ObservableObject {
         }
         
         cancelActiveTasks()
+        AudioPlayer.shared.stop(stopAmbient: false)
         let requestID = UUID()
         self.currentRequestID = requestID
         
@@ -460,8 +502,21 @@ public class PlaybackCoordinator: ObservableObject {
     }
     
     private func speakWithAppleTTS(text: String, profile: ResolvedVoiceProfile, chunk: TTSChunk, startWordID: Int, requestID: UUID) {
+        var textToSpeak = text
+        var wordOffset = 0
+        if let doc = activeSemanticDocument,
+           let startIdx = chunk.wordIDs.firstIndex(of: startWordID),
+           startIdx > 0 {
+            let chunkWords = chunk.wordIDs.compactMap { doc.word(id: $0) }
+            if startIdx < chunkWords.count {
+                let remainingWords = chunkWords[startIdx...]
+                textToSpeak = remainingWords.map { $0.text }.joined(separator: " ")
+                wordOffset = startIdx
+            }
+        }
+        
         AudioPlayer.shared.speakText(
-            text,
+            textToSpeak,
             speed: TTSController.shared.speechSpeed * profile.rateMultiplier,
             pitch: profile.pitchMultiplier,
             voice: profile.voice,
@@ -471,7 +526,8 @@ public class PlaybackCoordinator: ObservableObject {
                 
                 // Map speech range to semantic word
                 let chunkWords = chunk.wordIDs.compactMap { doc.word(id: $0) }
-                if let matched = chunkWords.first(where: { NSIntersectionRange($0.sentenceRange, charRange).length > 0 }) {
+                let effectiveWords = Array(chunkWords.dropFirst(wordOffset))
+                if let matched = effectiveWords.first(where: { NSIntersectionRange($0.sentenceRange, charRange).length > 0 }) {
                     if self.currentWordID != matched.globalWordID {
                         self.setCursor(forWord: matched, inSentence: doc.sentence(id: matched.sentenceID)!)
                     }
@@ -487,7 +543,33 @@ public class PlaybackCoordinator: ObservableObject {
     private func handleChunkCompleted(chunkID: Int, requestID: UUID) {
         guard currentRequestID == requestID, let doc = activeSemanticDocument else { return }
         
-        let nextChunkID = chunkID + 1
+        var nextChunkID = chunkID + 1
+        
+        // Skip any chunk whose blockType matches active skipped types
+        var skippedTypes: Set<BlockType> = []
+        if AccessibilityManager.shared.skipHeadersAndFooters {
+            skippedTypes.insert(.pageHeader)
+            skippedTypes.insert(.pageFooter)
+        }
+        if AccessibilityManager.shared.skipPageNumbers {
+            skippedTypes.insert(.pageNumber)
+        }
+        if AccessibilityManager.shared.skipFootnotes {
+            skippedTypes.insert(.footnote)
+        }
+        if AccessibilityManager.shared.skipCaptions {
+            skippedTypes.insert(.caption)
+        }
+        if AccessibilityManager.shared.skipSidenotes {
+            skippedTypes.insert(.sidenote)
+        }
+        if AccessibilityManager.shared.skipSymbolTables {
+            skippedTypes.insert(.symbolTable)
+        }
+        
+        while nextChunkID < doc.chunks.count && skippedTypes.contains(doc.chunks[nextChunkID].blockType) {
+            nextChunkID += 1
+        }
         
         // Strict boundary check: End of document
         guard nextChunkID < doc.chunks.count else {

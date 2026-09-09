@@ -1,0 +1,113 @@
+{
+  "system": "SI Units and Metric Prefixes",
+  "version": "1.0",
+  "prefixes": [
+    { "symbol": "Y", "name": "yotta", "factor": "1e24" },
+    { "symbol": "Z", "name": "zetta", "factor": "1e21" },
+    { "symbol": "E", "name": "exa", "factor": "1e18" },
+    { "symbol": "P", "name": "peta", "factor": "1e15" },
+    { "symbol": "T", "name": "tera", "factor": "1e12" },
+    { "symbol": "G", "name": "giga", "factor": "1e9" },
+    { "symbol": "M", "name": "mega", "factor": "1e6" },
+    { "symbol": "k", "name": "kilo", "factor": "1e3" },
+    { "symbol": "h", "name": "hecto", "factor": "1e2" },
+    { "symbol": "da", "name": "deca", "factor": "1e1" },
+    { "symbol": "d", "name": "deci", "factor": "1e-1" },
+    { "symbol": "c", "name": "centi", "factor": "1e-2" },
+    { "symbol": "m", "name": "milli", "factor": "1e-3" },
+    { "symbol": "u", "name": "micro", "factor": "1e-6" },
+    { "symbol": "μ", "name": "micro", "factor": "1e-6" },
+    { "symbol": "n", "name": "nano", "factor": "1e-9" },
+    { "symbol": "p", "name": "pico", "factor": "1e-12" },
+    { "symbol": "f", "name": "femto", "factor": "1e-15" },
+    { "symbol": "a", "name": "atto", "factor": "1e-18" },
+    { "symbol": "z", "name": "zepto", "factor": "1e-21" },
+    { "symbol": "y", "name": "yocto", "factor": "1e-24" }
+  ],
+  "compound_units": [
+    { "symbol": "km/h", "spoken": "kilometers per hour" },
+    { "symbol": "m/s^2", "spoken": "meters per second squared" },
+    { "symbol": "m/s²", "spoken": "meters per second squared" },
+    { "symbol": "m/s", "spoken": "meters per second" },
+    { "symbol": "kg/m^3", "spoken": "kilograms per cubic meter" },
+    { "symbol": "kg/m³", "spoken": "kilograms per cubic meter" },
+    { "symbol": "kW·h", "spoken": "kilowatt hours" },
+    { "symbol": "kWh", "spoken": "kilowatt hours" }
+  ],
+  "units_prefixed": [
+    { "symbol": "nm", "singular": "nanometer", "plural": "nanometers" },
+    { "symbol": "um", "singular": "micrometer", "plural": "micrometers" },
+    { "symbol": "μm", "singular": "micrometer", "plural": "micrometers" },
+    { "symbol": "mm", "singular": "millimeter", "plural": "millimeters" },
+    { "symbol": "cm", "singular": "centimeter", "plural": "centimeters" },
+    { "symbol": "km", "singular": "kilometer", "plural": "kilometers" },
+
+    { "symbol": "ns", "singular": "nanosecond", "plural": "nanoseconds" },
+    { "symbol": "us", "singular": "microsecond", "plural": "microseconds" },
+    { "symbol": "μs", "singular": "microsecond", "plural": "microseconds" },
+    { "symbol": "ms", "singular": "millisecond", "plural": "milliseconds" },
+
+    { "symbol": "mg", "singular": "milligram", "plural": "milligrams" },
+    { "symbol": "kg", "singular": "kilogram", "plural": "kilograms" },
+
+    { "symbol": "Hz", "singular": "hertz", "plural": "hertz" },
+    { "symbol": "kHz", "singular": "kilohertz", "plural": "kilohertz" },
+    { "symbol": "MHz", "singular": "megahertz", "plural": "megahertz" },
+    { "symbol": "GHz", "singular": "gigahertz", "plural": "gigahertz" },
+    { "symbol": "THz", "singular": "terahertz", "plural": "terahertz" },
+
+    { "symbol": "mV", "singular": "millivolt", "plural": "millivolts" },
+    { "symbol": "kV", "singular": "kilovolt", "plural": "kilovolts" },
+    { "symbol": "MV", "singular": "megavolt", "plural": "megavolts" },
+
+    { "symbol": "mA", "singular": "milliampere", "plural": "milliamperes" },
+    { "symbol": "uA", "singular": "microampere", "plural": "microamperes" },
+    { "symbol": "μA", "singular": "microampere", "plural": "microamperes" },
+    { "symbol": "kA", "singular": "kiloampere", "plural": "kiloamperes" },
+
+    { "symbol": "mW", "singular": "milliwatt", "plural": "milliwatts" },
+    { "symbol": "kW", "singular": "kilowatt", "plural": "kilowatts" },
+    { "symbol": "MW", "singular": "megawatt", "plural": "megawatts" },
+    { "symbol": "GW", "singular": "gigawatt", "plural": "gigawatts" },
+
+    { "symbol": "mJ", "singular": "millijoule", "plural": "milljoules" },
+    { "symbol": "kJ", "singular": "kilojoule", "plural": "kilojoules" },
+    { "symbol": "MJ", "singular": "megajoule", "plural": "megajoules" },
+    { "symbol": "eV", "singular": "electron volt", "plural": "electron volts" },
+    { "symbol": "keV", "singular": "kiloelectron volt", "plural": "kiloelectron volts" },
+    { "symbol": "MeV", "singular": "megaelectron volt", "plural": "megaelectron volts" },
+    { "symbol": "GeV", "singular": "gigaelectron volt", "plural": "gigaelectron volts" },
+
+    { "symbol": "Pa", "singular": "pascal", "plural": "pascals" },
+    { "symbol": "kPa", "singular": "kilopascal", "plural": "kilopascals" },
+    { "symbol": "MPa", "singular": "megapascal", "plural": "megapascals" },
+    { "symbol": "GPa", "singular": "gigapascal", "plural": "gigapascals" },
+    { "symbol": "mbar", "singular": "millibar", "plural": "millibars" },
+    { "symbol": "bar", "singular": "bar", "plural": "bars" },
+
+    { "symbol": "pF", "singular": "picofarad", "plural": "picofarads" },
+    { "symbol": "nF", "singular": "nanofarad", "plural": "nanofarads" },
+    { "symbol": "uF", "singular": "microfarad", "plural": "microfarads" },
+    { "symbol": "μF", "singular": "microfarad", "plural": "microfarads" },
+
+    { "symbol": "kΩ", "singular": "kilo-ohm", "plural": "kilo-ohms" },
+    { "symbol": "MΩ", "singular": "mega-ohm", "plural": "mega-ohms" },
+    { "symbol": "Ω", "singular": "ohm", "plural": "ohms" },
+
+    { "symbol": "dB", "singular": "decibel", "plural": "decibels" },
+    { "symbol": "mol", "singular": "mole", "plural": "moles" },
+    { "symbol": "mmol", "singular": "millimole", "plural": "millimoles" },
+    { "symbol": "umol", "singular": "micromole", "plural": "micromoles" },
+    { "symbol": "μmol", "singular": "micromole", "plural": "micromoles" },
+
+    { "symbol": "KB", "singular": "kilobyte", "plural": "kilobytes" },
+    { "symbol": "MB", "singular": "megabyte", "plural": "megabytes" },
+    { "symbol": "GB", "singular": "gigabyte", "plural": "gigabytes" },
+    { "symbol": "TB", "singular": "terabyte", "plural": "terabytes" },
+
+    { "symbol": "V", "singular": "volt", "plural": "volts" },
+    { "symbol": "W", "singular": "watt", "plural": "watts" },
+    { "symbol": "J", "singular": "joule", "plural": "joules" },
+    { "symbol": "N", "singular": "newton", "plural": "newtons" }
+  ]
+}

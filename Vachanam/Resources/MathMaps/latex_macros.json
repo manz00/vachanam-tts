@@ -1,0 +1,86 @@
+{
+  "system": "Academic LaTeX Macro Vocalization",
+  "version": "1.0",
+  "macro_rules": [
+    {
+      "pattern": "\\\\frac\\{([^\\{\\}]+)\\}\\{([^\\{\\}]+)\\}",
+      "conversational": "$1 over $2",
+      "mathspeak": "start fraction, $1, divided by, $2, end fraction"
+    },
+    {
+      "pattern": "\\\\sqrt\\[([^\\]]+)\\]\\{([^\\{\\}]+)\\}",
+      "conversational": "the $1th root of $2",
+      "mathspeak": "start root index $1, of, $2, end root"
+    },
+    {
+      "pattern": "\\\\sqrt\\{([^\\{\\}]+)\\}",
+      "conversational": "square root of $1",
+      "mathspeak": "start square root, $1, end square root"
+    },
+    {
+      "pattern": "\\\\sum_\\{([^\\}]+)\\}\\^\\{([^\\}]+)\\}",
+      "conversational": "sum from $1 to $2 of",
+      "mathspeak": "sum from $1 to $2 of"
+    },
+    {
+      "pattern": "\\\\sum_\\{([^\\}]+)\\}\\^([a-zA-Z0-9]+)",
+      "conversational": "sum from $1 to $2 of",
+      "mathspeak": "sum from $1 to $2 of"
+    },
+    {
+      "pattern": "\\\\sum_([a-zA-Z0-9]+)\\^([a-zA-Z0-9]+)",
+      "conversational": "sum from $1 to $2 of",
+      "mathspeak": "sum from $1 to $2 of"
+    },
+    {
+      "pattern": "\\\\int_\\{([^\\}]+)\\}\\^\\{([^\\}]+)\\}",
+      "conversational": "integral from $1 to $2 of",
+      "mathspeak": "integral from $1 to $2 of"
+    },
+    {
+      "pattern": "\\\\int_\\{([^\\}]+)\\}\\^([a-zA-Z0-9]+)",
+      "conversational": "integral from $1 to $2 of",
+      "mathspeak": "integral from $1 to $2 of"
+    },
+    {
+      "pattern": "\\\\int_([a-zA-Z0-9]+)\\^([a-zA-Z0-9]+)",
+      "conversational": "integral from $1 to $2 of",
+      "mathspeak": "integral from $1 to $2 of"
+    },
+    {
+      "pattern": "\\\\prod_\\{([^\\}]+)\\}\\^\\{([^\\}]+)\\}",
+      "conversational": "product from $1 to $2 of",
+      "mathspeak": "product from $1 to $2 of"
+    },
+    {
+      "pattern": "\\\\mathbf\\{([^\\}]+)\\}",
+      "conversational": "bold $1",
+      "mathspeak": "bold $1"
+    },
+    {
+      "pattern": "\\\\mathbb\\{([^\\}]+)\\}",
+      "conversational": "$1",
+      "mathspeak": "blackboard bold $1"
+    },
+    {
+      "pattern": "\\\\mathcal\\{([^\\}]+)\\}",
+      "conversational": "calligraphic $1",
+      "mathspeak": "calligraphic $1"
+    },
+    {
+      "pattern": "\\\\(?:text|mathrm|textrm)\\{([^\\}]+)\\}",
+      "conversational": "$1",
+      "mathspeak": "$1"
+    }
+  ],
+  "delimiter_rules": [
+    { "pattern": "\\\\left\\(", "replacement": "(" },
+    { "pattern": "\\\\right\\)", "replacement": ")" },
+    { "pattern": "\\\\left\\[", "replacement": "[" },
+    { "pattern": "\\\\right\\]", "replacement": "]" },
+    { "pattern": "\\\\left\\\\\\{", "replacement": "{" },
+    { "pattern": "\\\\right\\\\\\}", "replacement": "}" },
+    { "pattern": "\\\\left\\|", "replacement": "|" },
+    { "pattern": "\\\\right\\|", "replacement": "|" }
+  ]
+}

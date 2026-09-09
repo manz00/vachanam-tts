@@ -44,6 +44,26 @@ public enum HighlightColorChoice: String, CaseIterable, Identifiable, Codable {
     }
 }
 
+public enum AutoScrollFollowMode: String, CaseIterable, Identifiable, Codable {
+    case promptWhenScrolled = "Prompt When Scrolled"
+    case alwaysFollow = "Always Follow"
+    case off = "Off"
+    
+    public var id: String { rawValue }
+    
+    public var description: String {
+        switch self {
+        case .promptWhenScrolled:
+            return "Follow speech naturally. Scrolling away lets you read freely without snap-back, displaying a prompt to jump back to speech."
+        case .alwaysFollow:
+            return "Always keep the viewport centered on the currently spoken sentence, snapping back automatically."
+        case .off:
+            return "Manual scrolling only; the viewport never scrolls automatically."
+        }
+    }
+}
+
+
 public class AccessibilityManager: ObservableObject {
     public static let shared = AccessibilityManager()
     
@@ -83,9 +103,66 @@ public class AccessibilityManager: ObservableObject {
         }
     }
     
+    @Published public var autoScrollFollowMode: AutoScrollFollowMode = .promptWhenScrolled {
+        didSet {
+            UserDefaults.standard.set(autoScrollFollowMode.rawValue, forKey: "autoScrollFollowMode")
+            isAutoScrollEnabled = (autoScrollFollowMode != .off)
+        }
+    }
+    
     @Published public var readingSpeedWPM: Int = 180 {
         didSet {
             UserDefaults.standard.set(readingSpeedWPM, forKey: "readingSpeedWPM")
+        }
+    }
+    
+    // MARK: - Reading Intelligence Preferences
+    
+    @Published public var skipHeadersAndFooters: Bool = true {
+        didSet {
+            UserDefaults.standard.set(skipHeadersAndFooters, forKey: "skipHeadersAndFooters")
+        }
+    }
+    
+    @Published public var skipPageNumbers: Bool = true {
+        didSet {
+            UserDefaults.standard.set(skipPageNumbers, forKey: "skipPageNumbers")
+        }
+    }
+    
+    @Published public var skipFootnotes: Bool = true {
+        didSet {
+            UserDefaults.standard.set(skipFootnotes, forKey: "skipFootnotes")
+        }
+    }
+    
+    @Published public var skipCaptions: Bool = false {
+        didSet {
+            UserDefaults.standard.set(skipCaptions, forKey: "skipCaptions")
+        }
+    }
+    
+    @Published public var skipSidenotes: Bool = true {
+        didSet {
+            UserDefaults.standard.set(skipSidenotes, forKey: "skipSidenotes")
+        }
+    }
+    
+    @Published public var skipSymbolTables: Bool = true {
+        didSet {
+            UserDefaults.standard.set(skipSymbolTables, forKey: "skipSymbolTables")
+        }
+    }
+    
+    @Published public var pdfDisplayLayout: PDFDisplayLayoutMode = .singlePage {
+        didSet {
+            UserDefaults.standard.set(pdfDisplayLayout.rawValue, forKey: "pdfDisplayLayout")
+        }
+    }
+    
+    @Published public var mathSpeechStyle: MathSpeechStyle = .conversational {
+        didSet {
+            UserDefaults.standard.set(mathSpeechStyle.rawValue, forKey: "mathSpeechStyle")
         }
     }
     
@@ -106,10 +183,43 @@ public class AccessibilityManager: ObservableObject {
         let savedOpacity = UserDefaults.standard.double(forKey: "readingRulerOpacity")
         if savedOpacity > 0 { self.readingRulerOpacity = savedOpacity }
         
-        if UserDefaults.standard.object(forKey: "isAutoScrollEnabled") != nil {
-            self.isAutoScrollEnabled = UserDefaults.standard.bool(forKey: "isAutoScrollEnabled")
+        if let followStr = UserDefaults.standard.string(forKey: "autoScrollFollowMode"),
+           let mode = AutoScrollFollowMode(rawValue: followStr) {
+            self.autoScrollFollowMode = mode
+            self.isAutoScrollEnabled = (mode != .off)
+        } else if UserDefaults.standard.object(forKey: "isAutoScrollEnabled") != nil {
+            let enabled = UserDefaults.standard.bool(forKey: "isAutoScrollEnabled")
+            self.isAutoScrollEnabled = enabled
+            self.autoScrollFollowMode = enabled ? .promptWhenScrolled : .off
         }
         let savedWpm = UserDefaults.standard.integer(forKey: "readingSpeedWPM")
         if savedWpm > 0 { self.readingSpeedWPM = savedWpm }
+        
+        if UserDefaults.standard.object(forKey: "skipHeadersAndFooters") != nil {
+            self.skipHeadersAndFooters = UserDefaults.standard.bool(forKey: "skipHeadersAndFooters")
+        }
+        if UserDefaults.standard.object(forKey: "skipPageNumbers") != nil {
+            self.skipPageNumbers = UserDefaults.standard.bool(forKey: "skipPageNumbers")
+        }
+        if UserDefaults.standard.object(forKey: "skipFootnotes") != nil {
+            self.skipFootnotes = UserDefaults.standard.bool(forKey: "skipFootnotes")
+        }
+        if UserDefaults.standard.object(forKey: "skipCaptions") != nil {
+            self.skipCaptions = UserDefaults.standard.bool(forKey: "skipCaptions")
+        }
+        if UserDefaults.standard.object(forKey: "skipSidenotes") != nil {
+            self.skipSidenotes = UserDefaults.standard.bool(forKey: "skipSidenotes")
+        }
+        if UserDefaults.standard.object(forKey: "skipSymbolTables") != nil {
+            self.skipSymbolTables = UserDefaults.standard.bool(forKey: "skipSymbolTables")
+        }
+        if let layoutStr = UserDefaults.standard.string(forKey: "pdfDisplayLayout"),
+           let layout = PDFDisplayLayoutMode(rawValue: layoutStr) {
+            self.pdfDisplayLayout = layout
+        }
+        if let mathStr = UserDefaults.standard.string(forKey: "mathSpeechStyle"),
+           let style = MathSpeechStyle(rawValue: mathStr) {
+            self.mathSpeechStyle = style
+        }
     }
 }
