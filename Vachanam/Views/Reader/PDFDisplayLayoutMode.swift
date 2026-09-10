@@ -43,8 +43,5 @@ public enum PDFDisplayLayoutMode: String, CaseIterable, Identifiable, Codable, S
         case .twoUpContinuous: return .vertical
         }
     }
-    
-    public var usesPageViewController: Bool {
-        return self == .singlePage
-    }
 }
+

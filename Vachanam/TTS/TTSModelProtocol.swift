@@ -78,6 +78,7 @@ public enum TTSError: LocalizedError {
     case modelNotLoaded
     case weightsNotFound
     case synthesisFailed(String)
+    case insufficientHardware(String)
     
     public var errorDescription: String? {
         switch self {
@@ -87,6 +88,8 @@ public enum TTSError: LocalizedError {
             return "Neural weights package (.mlmodelc) not found on device"
         case .synthesisFailed(let msg):
             return "Synthesis failed: \(msg)"
+        case .insufficientHardware(let reason):
+            return "Incompatible hardware: \(reason)"
         }
     }
 }

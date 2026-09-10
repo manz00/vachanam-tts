@@ -65,4 +65,69 @@ public class AudioSession {
         
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
     }
+    
+    public var onInterruptionBegan: (() -> Void)?
+    public var onInterruptionEnded: ((_ shouldResume: Bool) -> Void)?
+    public var onRouteChangeShouldPause: (() -> Void)?
+    
+    private var isObserversSetup: Bool = false
+    
+    public func setupInterruptionObservers(
+        onInterruptionBegan: (() -> Void)? = nil,
+        onInterruptionEnded: ((_ shouldResume: Bool) -> Void)? = nil,
+        onRouteChangeShouldPause: (() -> Void)? = nil
+    ) {
+        if let onBegan = onInterruptionBegan { self.onInterruptionBegan = onBegan }
+        if let onEnded = onInterruptionEnded { self.onInterruptionEnded = onEnded }
+        if let onRoute = onRouteChangeShouldPause { self.onRouteChangeShouldPause = onRoute }
+        
+        #if os(iOS) || targetEnvironment(macCatalyst)
+        guard !isObserversSetup else { return }
+        isObserversSetup = true
+        
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] notification in
+            guard let userInfo = notification.userInfo,
+                  let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+                  let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+                return
+            }
+            
+            switch type {
+            case .began:
+                self?.onInterruptionBegan?()
+            case .ended:
+                let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+                let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+                let shouldResume = options.contains(.shouldResume)
+                self?.onInterruptionEnded?(shouldResume)
+            @unknown default:
+                break
+            }
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] notification in
+            guard let userInfo = notification.userInfo,
+                  let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
+                  let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
+                return
+            }
+            
+            switch reason {
+            case .oldDeviceUnavailable:
+                // User pulled out headphones or disconnected bluetooth audio
+                self?.onRouteChangeShouldPause?()
+            default:
+                break
+            }
+        }
+        #endif
+    }
 }

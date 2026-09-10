@@ -196,8 +196,12 @@ public class TTSController: ObservableObject {
     // MARK: - Document Loading & Playback Forwarding
     
     /// Loads a full SemanticDocument into the PlaybackCoordinator.
-    public func loadDocument(_ document: SemanticDocument, initialSentenceID: Int = 0) {
-        PlaybackCoordinator.shared.loadDocument(document, initialSentenceID: initialSentenceID)
+    public func loadDocument(_ document: SemanticDocument, initialSentenceID: Int? = nil, initialWordID: Int? = nil) {
+        PlaybackCoordinator.shared.loadDocument(document, initialSentenceID: initialSentenceID, initialWordID: initialWordID)
+    }
+    
+    public func saveCurrentProgress() {
+        PlaybackCoordinator.shared.saveCurrentProgress()
     }
     
     /// Legacy array-based sentence loader for backward compatibility.

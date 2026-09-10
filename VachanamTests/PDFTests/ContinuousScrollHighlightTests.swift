@@ -17,10 +17,10 @@ final class ContinuousScrollHighlightTests: XCTestCase {
         XCTAssertEqual(PDFDisplayLayoutMode.singlePageContinuous.pdfDisplayMode, .singlePageContinuous)
         XCTAssertEqual(PDFDisplayLayoutMode.twoUp.pdfDisplayMode, .twoUp)
         XCTAssertEqual(PDFDisplayLayoutMode.twoUpContinuous.pdfDisplayMode, .twoUpContinuous)
-        
-        XCTAssertTrue(PDFDisplayLayoutMode.singlePage.usesPageViewController)
-        XCTAssertFalse(PDFDisplayLayoutMode.singlePageContinuous.usesPageViewController)
-        XCTAssertFalse(PDFDisplayLayoutMode.twoUpContinuous.usesPageViewController)
+        XCTAssertEqual(PDFDisplayLayoutMode.singlePage.pdfDisplayDirection, .horizontal)
+        XCTAssertEqual(PDFDisplayLayoutMode.singlePageContinuous.pdfDisplayDirection, .vertical)
+        XCTAssertEqual(PDFDisplayLayoutMode.twoUp.pdfDisplayDirection, .horizontal)
+        XCTAssertEqual(PDFDisplayLayoutMode.twoUpContinuous.pdfDisplayDirection, .vertical)
     }
     
     func testHighlightOverlayViewRendering() {

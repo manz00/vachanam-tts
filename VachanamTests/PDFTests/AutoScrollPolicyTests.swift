@@ -127,7 +127,7 @@ final class AutoScrollPolicyTests: XCTestCase {
     func testDefaultDisplayLayoutModeIsContinuous() {
         let manager = AccessibilityManager()
         XCTAssertEqual(manager.pdfDisplayLayout, .singlePageContinuous, "Default layout mode should be singlePageContinuous to enable vertical scrolling")
-        XCTAssertFalse(manager.pdfDisplayLayout.usesPageViewController, "Continuous layout should not use page view controller")
+        XCTAssertEqual(manager.pdfDisplayLayout.pdfDisplayDirection, .vertical, "Continuous layout should scroll vertically")
     }
     
     func testCoordinatorUserScrollDetection() {

@@ -67,6 +67,12 @@ public class ModelManager: ObservableObject {
         guard isModelDownloaded(id) else {
             throw TTSError.weightsNotFound
         }
+        if let metadata = ModelRegistry.shared.model(withId: id) {
+            guard DeviceCapability.shared.canRun(model: metadata) else {
+                let reason = DeviceCapability.shared.compatibilityReason(for: metadata) ?? "Requires more device RAM"
+                throw TTSError.insufficientHardware(reason)
+            }
+        }
         if activeModelId != id {
             activeModelId = id
         }

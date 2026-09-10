@@ -131,20 +131,37 @@ public class PlaybackCoordinator: ObservableObject {
     
     // MARK: - Document Loading
     
-    public func loadDocument(_ document: SemanticDocument, initialSentenceID: Int = 0) {
+    public func loadDocument(_ document: SemanticDocument, initialSentenceID: Int? = nil, initialWordID: Int? = nil) {
         stop()
         activeAudioResult = nil
         
         self.activeSemanticDocument = document
         
-        let targetSentenceID = min(max(initialSentenceID, 0), max(document.sentences.count - 1, 0))
-        if let sentence = document.sentence(id: targetSentenceID), let firstWord = sentence.words.first {
+        if let wid = initialWordID, let word = document.word(id: wid), let sentence = document.sentence(id: word.sentenceID) {
+            setCursor(forWord: word, inSentence: sentence)
+            if let chunk = document.chunk(forWordID: word.globalWordID) {
+                self.currentChunkID = chunk.chunkID
+            }
+            self.visiblePageIndex = word.pageIndex
+        } else if let sid = initialSentenceID, let sentence = document.sentence(id: sid), let firstWord = sentence.words.first {
             setCursor(forWord: firstWord, inSentence: sentence)
             if let chunk = document.chunk(forSentenceID: sentence.sentenceID) {
                 self.currentChunkID = chunk.chunkID
             }
+            self.visiblePageIndex = firstWord.pageIndex
+        } else if let sentence = document.sentences.first, let firstWord = sentence.words.first {
+            setCursor(forWord: firstWord, inSentence: sentence)
+            if let chunk = document.chunk(forSentenceID: sentence.sentenceID) {
+                self.currentChunkID = chunk.chunkID
+            }
+            self.visiblePageIndex = firstWord.pageIndex
         } else {
             clearCursor()
+            self.visiblePageIndex = 0
+        }
+        
+        if let c = self.cursor {
+            print("[TTS] loadDocument – starting cursor at page \(c.pageIndex), word \(c.globalWordID)")
         }
         
         // Auto-detect pre-generated audiobook bundle
@@ -207,15 +224,17 @@ public class PlaybackCoordinator: ObservableObject {
     }
     
     public func play(page: Int) {
-        guard let doc = activeSemanticDocument else { return }
         self.scope = .page(page)
+        guard let doc = activeSemanticDocument else { return }
         self.visiblePageIndex = page
+        onPageChanged?(page)
         
         if let firstWord = doc.firstWord(onPageIndex: page),
            let sentence = doc.sentence(id: firstWord.sentenceID),
            let chunk = doc.chunk(forWordID: firstWord.globalWordID) {
             setCursor(forWord: firstWord, inSentence: sentence)
             self.currentChunkID = chunk.chunkID
+            saveCurrentProgress()
             playChunk(chunkID: chunk.chunkID, startWordID: firstWord.globalWordID)
         }
     }
@@ -231,6 +250,7 @@ public class PlaybackCoordinator: ObservableObject {
         setCursor(forWord: word, inSentence: sentence)
         self.visiblePageIndex = word.pageIndex
         onPageChanged?(word.pageIndex)
+        saveCurrentProgress()
         
         // Fast-path: If user taps within the currently active chunk and audio player is active, seek immediately
         if self.currentChunkID == chunk.chunkID,
@@ -259,13 +279,47 @@ public class PlaybackCoordinator: ObservableObject {
         playChunk(chunkID: chunk.chunkID, startWordID: wordID)
     }
     
+    public func saveCurrentProgress() {
+        guard let semDoc = activeSemanticDocument else { return }
+        guard let doc = AppState.shared.currentDocument,
+              (doc.id == semDoc.documentID || doc.title == semDoc.title) else { return }
+        let page: Int
+        let wordID: Int?
+        let sentenceID: Int?
+        
+        if isPlaying, let c = cursor {
+            page = c.pageIndex
+            wordID = currentWordID ?? c.globalWordID
+            sentenceID = currentSentenceID ?? c.sentenceIndex
+        } else if let c = cursor, c.pageIndex == visiblePageIndex {
+            page = visiblePageIndex
+            wordID = currentWordID ?? c.globalWordID
+            sentenceID = currentSentenceID ?? c.sentenceIndex
+        } else {
+            page = visiblePageIndex
+            wordID = nil
+            sentenceID = nil
+        }
+        
+        ReadingProgressTracker.shared.recordProgress(
+            documentURL: doc.fileURL,
+            title: doc.title,
+            currentPage: page,
+            totalPages: doc.pageCount,
+            lastWordID: wordID,
+            lastSentenceID: sentenceID
+        )
+    }
+    
     public func pause() {
+        saveCurrentProgress()
         AudioPlayer.shared.pause()
         isPaused = true
         isPlaying = false
     }
     
     public func stop() {
+        saveCurrentProgress()
         cancelActiveTasks()
         AudioPlayer.shared.stop()
         isPlaying = false
@@ -658,7 +712,8 @@ public class PlaybackCoordinator: ObservableObject {
             if matchIndex < 0 {
                 // If past the end of the last word (e.g. during trailing silence pause), hold last word;
                 // during inter-word gap, hold the preceding word instead of jumping back to 0.
-                matchIndex = (time >= timestamps.last!.startTime) ? (timestamps.count - 1) : max(0, min(high, timestamps.count - 1))
+                let lastStart = timestamps.last?.startTime ?? 0
+                matchIndex = (time >= lastStart) ? (timestamps.count - 1) : max(0, min(high, timestamps.count - 1))
             }
             
             if matchIndex < chunkWords.count {

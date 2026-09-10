@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "179A148380C6445CAED45B1F"
+               BlueprintIdentifier = "22CA9B8F2B7C4D5DA8B22326"
                BuildableName = "Vachanam.app"
                BlueprintName = "Vachanam"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -28,7 +28,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "95950E5481914B5B80FD355C"
+               BlueprintIdentifier = "F35C6645C81F47F3A793C4DF"
                BuildableName = "VachanamTests.xctest"
                BlueprintName = "VachanamTests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -42,7 +42,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "26BB86D09F21425689AEAF53"
+               BlueprintIdentifier = "48A5357574BB4608B019DF65"
                BuildableName = "VachanamUITests.xctest"
                BlueprintName = "VachanamUITests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -60,7 +60,7 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "95950E5481914B5B80FD355C"
+               BlueprintIdentifier = "F35C6645C81F47F3A793C4DF"
                BuildableName = "VachanamTests.xctest"
                BlueprintName = "VachanamTests"
                ReferencedContainer = "container:Vachanam.xcodeproj">
@@ -94,7 +94,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "179A148380C6445CAED45B1F"
+            BlueprintIdentifier = "22CA9B8F2B7C4D5DA8B22326"
             BuildableName = "Vachanam.app"
             BlueprintName = "Vachanam"
             ReferencedContainer = "container:Vachanam.xcodeproj">

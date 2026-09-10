@@ -63,20 +63,64 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
   - **Table of Symbols & Notation Detection**: Automatically identifies frontmatter/appendix notation tables and summary pages, tagging entries as `.symbolTable`.
   - **User-Configurable Audio Skipping**: Configurable in **Reading Settings** with individual toggles for skipping running headers & footers, page numbers, footnotes, captions, sidenotes & margin notes, and notation & symbol tables so audio narration flows smoothly and naturally.
 - **📜 Multi-Layout PDF Display Modes (`PDFDisplayLayoutMode`)**:
-  - **Single Page**: Classic horizontal swipe/turn navigation with `UIPageViewController`.
+  - **Single Page**: Fluid horizontal swipe/turn paging powered by PDFKit's native scroll-paging engine (avoiding brittle `UIPageViewController` containment and eliminating SwiftUI `AttributeGraph` cycles).
   - **Continuous Scroll**: Vertical smooth scrolling for long reading sessions and academic papers.
-  - **Two-Page Spread**: Side-by-side book spread ideal for landscape iPad and Mac reading.
+  - **Two-Page Spread**: Side-by-side book spread ideal for landscape iPad and Mac reading, with intelligent multi-page spread tracking that prevents page-jumping or index overwrites.
   - **Continuous Spread**: Side-by-side pages with continuous vertical scrolling.
-  - **Quick Switcher Menu**: One-tap layout menu in the Reader header bar with instant switching.
-  - **Rock-Solid Continuous Scroll Highlighting**: Synchronized via KVO content offset tracking on PDFView's internal scroll hierarchy, ensuring highlights move smoothly in real-time without disappearing or lagging. Overlay CALayers are kept frontmost above all PDF views.
+  - **Quick Switcher Menu**: One-tap layout menu in the Reader header bar with instant switching, coordinated layout transitions, and debounced reading progress persistence.
+  - **Rock-Solid Continuous & Spread Highlighting**: Synchronized via KVO content offset tracking on PDFView's internal scroll hierarchy with automatic retry, ensuring highlights move smoothly in real-time without disappearing or lagging. Overlay CALayers are kept frontmost above all PDF views.
   - **Multi-Page Sentence Span Highlighting**: Accurately projects sentence bounds across all visible pages in two-page and continuous scrolling modes.
   - **Human-Centered Auto-Scroll & Free Reading Flow (`AutoScrollFollowMode`)**:
     - **Pause-on-Scroll Lifecycle & Zero Snap-Back**: When listening to speech, initiating a manual scroll immediately pauses the built-in auto-scrolling engine. Users are completely free to scroll ahead or back across multiple pages without the viewport being forcefully yanked back to the active highlight. The viewport strictly stays wherever the user scrolls and stops.
     - **Interactive "Auto-Scroll" Prompt Capsule**: When scrolled away from the active sentence, a compact floating capsule appears (`[ ⬆ / ⬇ Spoken text is above/below • P. X • Auto-Scroll ▶ ]`) with a real-time spoken sentence snippet and directional indicator. It uses an intrinsic-width capsule centered above the playback bar to keep document text clearly visible. Tapping **Auto-Scroll** smoothly navigates directly back to the active spoken sentence and unpauses continuous auto-scroll. If the user manually scrolls all the way back to the sentence and stops, auto-follow unpauses automatically.
-    - **State Loop Isolation**: `PDFReaderView` isolates internal `PDFView` scroll offset changes from external navigation triggers via `lastHandledPageIndex`, `isProgrammaticScroll`, and touch-state tracking (`isUserScrolling`), preventing SwiftUI view re-renders from triggering unwanted programmatic snaps.
+    - **State Loop & Cycle Isolation**: `PDFReaderView` isolates internal `PDFView` scroll offset and page changes from external navigation triggers via `lastHandledPageIndex`, `isHandlingPageChange`, `isProgrammaticScroll`, and touch-state tracking (`isUserScrolling`), preventing SwiftUI view re-renders from triggering AttributeGraph cycles or unwanted programmatic snaps.
     - **User-Configurable**: Three selectable modes in **Reading Settings**: `Prompt When Scrolled (Free Scroll)`, `Always Follow`, and `Off`.
   - **PDFKit Hit-Test Sanitization (`PDFDocumentViewHitTestSanitizer` & `VachanamPDFView`)**:
     - Intercepts internal PDFKit hit-testing on Mac Catalyst and iPadOS pointer interactions to eliminate UIKit `Invalid returned hit test result for view in hierarchy: <PDFAnnotationPointerTrackingView>` console error assertions while preserving normal annotation interaction.
+- **⚡️ Scroll Navigation, Gestures & Keyboard Shortcuts Suite**:
+  - **Touch & Trackpad Swipe Gestures**:
+    - Horizontal swipe left advances to the next page; swipe right navigates to the previous page in Single Page and Two-Page Spread modes.
+    - Intelligent scale-factor and scroll-edge awareness: when zoomed in to inspect formulas or diagrams, panning freely moves across the page without accidental page turns; swipes only turn the page when the viewport reaches the far left or right page boundary.
+  - **Floating Page Navigation & Scrubber Bar (`ReaderScrubberBar`)**:
+    - Glassmorphic floating toolbar situated conveniently above the audio controls.
+    - **Previous / Next Page Buttons**: One-tap paging with disabled state awareness at document boundaries.
+    - **Live Scrubbing Slider**: Smooth slider scrubbing with real-time page preview, allowing effortless scrubbing through 500+ page documents.
+    - **Page Number Badge & Quick Jump (`Cmd+J`)**: Interactive badge ("Page 14 of 320") that opens a quick numeric jump popover to instantly navigate to any page number.
+    - **Document Boundary Jump**: First page (`arrow.up.to.line`) and Last page (`arrow.down.to.line`) buttons.
+    - **Zoom Controls**: Quick zoom out (`minus.magnifyingglass`), fit page (`arrow.up.left.and.arrow.down.right`), and zoom in (`plus.magnifyingglass`).
+    - **Cheatsheet Button**: Opens the built-in keyboard shortcuts reference modal.
+  - **Comprehensive Keyboard Shortcuts (iPad & Mac Catalyst)**:
+    - **Page & Document Navigation**:
+      - `→` / `↓` / `Page Down` / `Space`: Next page (or scroll down in continuous view)
+      - `←` / `↑` / `Page Up` / `Shift+Space`: Previous page (or scroll up in continuous view)
+      - `⌘ + ←` / `Home` / `⌘ + ↑`: First page (or scroll to top)
+      - `⌘ + →` / `End` / `⌘ + ↓`: Last page (or scroll to bottom)
+      - `⌘ + J`: Jump to page dialog
+    - **Zoom & View Layouts**:
+      - `⌘ + +` / `⌘ + =`: Zoom in
+      - `⌘ + -`: Zoom out
+      - `⌘ + 0`: Reset zoom / fit page to screen
+      - `⌘ + 1`: Single Page mode
+      - `⌘ + 2`: Continuous Scroll mode
+      - `⌘ + 3`: Two-Page Spread mode
+      - `⌘ + 4`: Continuous Spread mode
+    - **Text-to-Speech Playback**:
+      - `⌥ + Space`: Play / Pause TTS
+      - `⌥ + →` or `⌘ + ]`: Next spoken sentence
+      - `⌥ + ←` or `⌘ + [`: Previous spoken sentence
+    - **Reader Tools**:
+      - `⌘ + B`: Toggle bookmark on current page
+      - `⌘ + T`: Table of contents
+      - `⌘ + G`: Thumbnail grid overview
+      - `⌘ + D`: Toggle Dyslexia reading ruler
+      - `⌘ + E`: Export notes and annotations to Markdown
+      - `⌘ + ,`: Highlight and reading settings
+      - `?` or `⌘ + /`: Display keyboard shortcuts cheatsheet
+      - `Esc`: Return to Library
+  - **Native Mac Catalyst Menu Bar Integration (`VachanamApp.commands`)**:
+    - Full native Mac menu bar integration under **Navigate**, **View**, and **Speech** menus with keyboard shortcut glyphs.
+  - **Hardware Keyboard Support (`VachanamPDFView.keyCommands`)**:
+    - `VachanamPDFView` implements `canBecomeFirstResponder = true` and `UIKeyCommand` interception so physical keyboards on iPad (Magic Keyboard, Smart Keyboard Folio) and Mac Catalyst work even when the PDFKit view is focused.
 - **📐 Mathematical & Academic Speech Intelligence (`TextNormalizer`)**:
   - **Vector Arrow Notations**: Recognizes all forms of vector arrows generated by LaTeX and PDF typographers: combining vector arrow above (`x⃗` $\to$ `vector x`), inline vectors (`→x`, `→y` $\to$ `vector x`, `vector y`), multi-arrow stacking artifacts (`→→x` $\to$ `vector x`), and math-minus arrow representations (`−→ x` $\to$ `vector x`).
   - **Superscripts, Exponents & Carets**:
@@ -207,6 +251,11 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
   - Interactive Table of Contents (TOC) and Bookmarks sidebar.
   - Visual page thumbnail scrubber grid.
   - Reading history with percentage tracking and estimated completion time.
+  - **Exact Reading Progress & Cursor Restoration (AUD-01)**:
+    - Automatically restores the active document to the exact page, sentence, and word where the user left off across app relaunches, background/foreground transitions, and library navigation.
+    - Isolates programmatic scroll jumps from user-driven page changes (`isProgrammaticScroll`), preventing intermediate page layout transitions from clobbering saved progress back to page 0.
+    - Synchronizes `UserDefaults` state immediately upon document changes and progress updates, ensuring sudden process termination retains the exact reading position.
+    - Respects playback pause states: paused audio cursors remain anchored to their visible page rather than defaulting to page 0.
   - Keyboard shortcuts (Spacebar for Play/Pause).
 
 ---
@@ -947,9 +996,56 @@ For users with multiple devices (MacBook, iPad, iPhone, Android), Vachanam suppo
 
 ---
 
+## Production Audit & Verification
+
+A systematic pre-release production audit was conducted across the 17 core dimensions of the application:
+
+### 1. Audit Coverage & Status Matrix
+
+| Dimension | Verification Scope | Status | Notes |
+|---|---|---|---|
+| **0. Pre-Audit Setup** | Documents, benchmark PDF, sanitizers | `Pass` | 4-page multi-discipline benchmark verified |
+| **1. Crash & Fatal Paths** | Cold start, hit-testing, interruptions, lifecycle | `Pass` | Gated RAM checks, interruption observers installed |
+| **2. TTS & Highlighting** | 1:1 words contract, sentence bounds, auto-scroll | `Pass` | Binary search lookup, trailing silence protection |
+| **3. Multi-Format Ingestion** | EPUB, Markdown, Plain Text, Web Articles | `Pass` | Resolved via `DocumentParserResolver` |
+| **4. Models & Voices** | Apple Natural, Kokoro CoreML, voice resolver | `Pass` | Content-hashed cache with pronunciation revisions |
+| **5. Audiobook Studio** | Batch `.m4a` generation, iCloud sync | `Pass` | Resumable generation & `PreGeneratedPlaybackAdapter` |
+| **6. Annotations & PencilKit** | PencilKit canvas, shapes, notes, export | `Pass` | Touch pass-through when inactive, markdown export |
+| **7. Accessibility & UX** | Reading ruler, OpenDyslexic, keyboard shortcuts | `Pass` | Space, left/right arrow sentence navigation |
+| **8. Audio Session** | Ambient soundscapes, study mode, background audio | `Pass` | Interruption and route change handling |
+| **9. Performance & Battery** | CALayer reuse, CADisplayLink 60fps, background tasks | `Pass` | Zero cooperative thread starvation |
+| **10. Diagnostics & Sanitizers**| PDFLoggingSanitizer, TTS metrics, clean stderr | `Pass` | CoreGraphics/CoreText warnings suppressed |
+| **11. Edge Documents** | Corrupt PDFs, password-protected, unmapped glyphs | `Pass` | Cleaned via `TextNormalizer` & safe fallbacks |
+| **12. Settings Persistence** | Highlight styles, ruler, intelligence toggles | `Pass` | Persisted across relaunches in `UserDefaults` |
+| **13. Build & Distribution** | `generate_project.py`, modern Xcode 16 settings | `Pass` | Clean build without settings validation warnings |
+
+### 2. Resolved Audit Findings
+
+1. **[AUD-01] AppState Lifecycle & Reading Progress Restoration**:
+   - Fixed regression where reopening a document reset reading progress to page 0.
+   - Synchronously initializes `ReaderContainerView` with the saved page (`_currentPageIndex = State(initialValue: validPage)`), eliminating race conditions with PDFKit view initialization.
+   - Removed continuous scroll mode restrictions on programmatic navigation in `PDFReaderView`, ensuring page restore, TOC navigation, and thumbnail jumps accurately scroll the PDF view in all layout modes.
+   - Enhanced `ReadingRecord` and `ReadingProgressTracker` to track fine-grained positions (`lastWordID` and `lastSentenceID`) alongside `currentPage`.
+   - Restores the TTS playback cursor directly to the saved word and sentence upon document ingestion in `PlaybackCoordinator`.
+   - Aggressively flushes reading progress on `.background` and `.inactive` scene phases, pause, stop, tap-to-speak seek, and explicit close actions.
+   - Enforces strict cross-document cursor isolation so switching documents cleanly unloads previous playback state and never contaminates another document's progress.
+   - Deduplicates identical progress writes in `ReadingProgressTracker` to prevent redundant disk I/O and console log spam.
+   - Explicitly clears `vachanam_last_opened_document_path` only when the user chooses to close the document back to the Library.
+2. **[AUD-02] AudioSession Interruption & Route Change Observers**:
+   - Added listeners for `AVAudioSession.interruptionNotification` and `AVAudioSession.routeChangeNotification`.
+   - Incoming phone calls and Siri pause playback cleanly; disconnecting headphones pauses audio immediately; playback auto-remuses if the interruption ends with `.shouldResume`.
+3. **[AUD-03] Hardware RAM Gating for Heavy Neural Models**:
+   - Added `TTSError.insufficientHardware` and checked `DeviceCapability.shared.canRun(model:)` in `ModelManager.loadModel`.
+   - Disabled "Activate & Load" and "Load into RAM" buttons in `ModelCard.swift` with clear hardware requirement labels when device RAM is insufficient.
+4. **[AUD-04] Keyboard Navigation Shortcuts**:
+   - Added `.onKeyPress(.leftArrow)` and `.onKeyPress(.rightArrow)` in `ContentView.swift` to enable instant sentence navigation from hardware keyboards on Mac and iPad.
+5. **[AUD-05] Background Extraction Dismissal Guard**:
+   - Guarded `AppState.shared.currentDocument?.id == targetDoc.id` before applying extracted sentences to `TTSController`, preventing dismissed documents from taking over active state.
+6. **[AUD-06] Force-Unwrap Elimination**:
+   - Replaced all `.first!` and `timestamps.last!` usages across `DocumentLibraryView`, `TTSAudioCache`, `KokoroAdapter`, and `PlaybackCoordinator` with safe optional unwraps and fallbacks.
+
+---
+
 ## License
 
 Personal accessibility open-source project. Free for all users.
-
-
-

@@ -284,8 +284,12 @@ public struct DocumentLibraryView: View {
         }
     }
     
+    private static var documentsDirectory: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory
+    }
+    
     private func copyToLocalDocuments(url: URL) -> URL {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let docs = Self.documentsDirectory
         let dest = docs.appendingPathComponent(url.lastPathComponent)
         try? FileManager.default.copyItem(at: url, to: dest)
         return FileManager.default.fileExists(atPath: dest.path) ? dest : url
@@ -293,7 +297,7 @@ public struct DocumentLibraryView: View {
     
     @discardableResult
     private func ensureGettingStartedGuideExists() -> URL {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let docs = Self.documentsDirectory
         let guideURL = docs.appendingPathComponent("Vachanam_Getting_Started.pdf")
         
         if FileManager.default.fileExists(atPath: guideURL.path) {
@@ -370,7 +374,7 @@ public struct DocumentLibraryView: View {
     @discardableResult
     public static func ensureBenchmarkDocumentExists() -> URL {
         let filename = "The_Ultimate_Multi_Discipline_TTS_Benchmark.pdf"
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let docs = documentsDirectory
         let destURL = docs.appendingPathComponent(filename)
         
         let bundleURL = Bundle.main.url(forResource: "The_Ultimate_Multi_Discipline_TTS_Benchmark", withExtension: "pdf", subdirectory: "Benchmark") ??
@@ -397,7 +401,17 @@ public struct DocumentLibraryView: View {
     private func openBenchmark() {
         let benchmarkURL = Self.ensureBenchmarkDocumentExists()
         if let doc = ReaderDocument(url: benchmarkURL) {
-            progressTracker.recordProgress(documentURL: benchmarkURL, title: doc.title, currentPage: 0, totalPages: doc.pageCount)
+            let savedPage = progressTracker.lastPage(for: benchmarkURL)
+            let savedWordID = progressTracker.lastWordID(for: benchmarkURL)
+            let savedSentenceID = progressTracker.lastSentenceID(for: benchmarkURL)
+            progressTracker.recordProgress(
+                documentURL: benchmarkURL,
+                title: doc.title,
+                currentPage: savedPage,
+                totalPages: doc.pageCount,
+                lastWordID: savedWordID,
+                lastSentenceID: savedSentenceID
+            )
             onSelectDocument(doc)
         }
     }
@@ -405,7 +419,17 @@ public struct DocumentLibraryView: View {
     private func openBuiltinSample() {
         let guideURL = ensureGettingStartedGuideExists()
         if let doc = ReaderDocument(url: guideURL) {
-            progressTracker.recordProgress(documentURL: guideURL, title: doc.title, currentPage: 0, totalPages: doc.pageCount)
+            let savedPage = progressTracker.lastPage(for: guideURL)
+            let savedWordID = progressTracker.lastWordID(for: guideURL)
+            let savedSentenceID = progressTracker.lastSentenceID(for: guideURL)
+            progressTracker.recordProgress(
+                documentURL: guideURL,
+                title: doc.title,
+                currentPage: savedPage,
+                totalPages: doc.pageCount,
+                lastWordID: savedWordID,
+                lastSentenceID: savedSentenceID
+            )
             onSelectDocument(doc)
         }
     }

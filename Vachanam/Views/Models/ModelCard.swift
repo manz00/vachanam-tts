@@ -179,6 +179,18 @@ public struct ModelCard: View {
                             }
                         }
                         
+                        // Incompatibility warning if device RAM is insufficient
+                        if !isCompatible, let reason = DeviceCapability.shared.compatibilityReason(for: model) {
+                            HStack(spacing: 5) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.caption2)
+                                Text(reason)
+                                    .font(.caption2.weight(.medium))
+                            }
+                            .foregroundColor(.red)
+                            .padding(.vertical, 2)
+                        }
+                        
                         // Action Buttons
                         HStack(spacing: 12) {
                             if !isActive {
@@ -189,6 +201,7 @@ public struct ModelCard: View {
                                 }
                                 .buttonStyle(.borderedProminent)
                                 .tint(Color.tealAccent)
+                                .disabled(!isCompatible)
                             } else {
                                 if isLoaded {
                                     Button("Unload") {
@@ -204,7 +217,7 @@ public struct ModelCard: View {
                                     }
                                     .buttonStyle(.borderedProminent)
                                     .tint(Color.amberAccent)
-                                    .disabled(isLoading)
+                                    .disabled(isLoading || !isCompatible)
                                 }
                             }
                             

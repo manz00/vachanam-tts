@@ -26,7 +26,7 @@ public class TTSAudioCache: @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.vachanam.audiocache", attributes: .concurrent)
     
     public init() {
-        let cachesURL = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        let cachesURL = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first ?? fileManager.temporaryDirectory
         self.diskDirectory = cachesURL.appendingPathComponent("TTSAudioCache", isDirectory: true)
         try? fileManager.createDirectory(at: diskDirectory, withIntermediateDirectories: true)
         

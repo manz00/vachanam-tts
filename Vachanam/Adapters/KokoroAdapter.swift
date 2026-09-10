@@ -32,7 +32,30 @@ public class KokoroAdapter: TTSModelProtocol {
     
     public init(metadata: TTSModelMetadata? = nil, g2p: G2PProtocol = MisakiG2P.shared) {
         _ = Self.initializeEnvironment
-        self.metadata = metadata ?? ModelRegistry.shared.model(withId: "kokoro-v1.0-en")!
+        if let meta = metadata ?? ModelRegistry.shared.model(withId: "kokoro-v1.0-en") {
+            self.metadata = meta
+        } else {
+            self.metadata = TTSModelMetadata(
+                id: "kokoro-v1.0-en",
+                name: "Kokoro",
+                version: "v1.0",
+                description: "High-quality 82M parameter CoreML neural voice model.",
+                sizeBytes: 82 * 1024 * 1024,
+                ramRequired: 500 * 1024 * 1024,
+                languages: ["en-US", "en-GB"],
+                format: .coreML,
+                requiresG2P: true,
+                g2pEngine: "misaki",
+                quality: .premium,
+                supportsVoiceCloning: false,
+                supportsEmotionControl: false,
+                supportsStreaming: true,
+                supportsWordTimestamps: true,
+                minDeviceRAM: 4,
+                tier: .lightweight,
+                voices: ["af_heart", "af_bella", "af_nicole", "af_sarah", "af_sky", "am_adam", "am_michael", "bf_emma", "bf_isabella", "bm_george", "bm_lewis"]
+            )
+        }
         self.g2p = g2p
     }
     

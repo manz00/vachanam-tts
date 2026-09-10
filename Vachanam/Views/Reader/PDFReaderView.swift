@@ -132,12 +132,89 @@ extension UIView {
 }
 
 public class VachanamPDFView: PDFView {
+    public override var canBecomeFirstResponder: Bool {
+        return true
+    }
+    
     public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let result = super.hitTest(point, with: event)
         if let result = result, result.window == nil {
             return self
         }
         return result
+    }
+    
+    public override var keyCommands: [UIKeyCommand]? {
+        let prevPage = UIKeyCommand(title: "Previous Page", image: nil, action: #selector(pdfKeyPrevPage), input: UIKeyCommand.inputLeftArrow, modifierFlags: [])
+        let nextPage = UIKeyCommand(title: "Next Page", image: nil, action: #selector(pdfKeyNextPage), input: UIKeyCommand.inputRightArrow, modifierFlags: [])
+        let upPage = UIKeyCommand(title: "Scroll Up / Prev", image: nil, action: #selector(pdfKeyUp), input: UIKeyCommand.inputUpArrow, modifierFlags: [])
+        let downPage = UIKeyCommand(title: "Scroll Down / Next", image: nil, action: #selector(pdfKeyDown), input: UIKeyCommand.inputDownArrow, modifierFlags: [])
+        let pageUp = UIKeyCommand(title: "Page Up", image: nil, action: #selector(pdfKeyPageUp), input: UIKeyCommand.inputPageUp, modifierFlags: [])
+        let pageDown = UIKeyCommand(title: "Page Down", image: nil, action: #selector(pdfKeyPageDown), input: UIKeyCommand.inputPageDown, modifierFlags: [])
+        let space = UIKeyCommand(title: "Space Scroll / Page", image: nil, action: #selector(pdfKeySpace), input: " ", modifierFlags: [])
+        let shiftSpace = UIKeyCommand(title: "Shift Space Scroll Up", image: nil, action: #selector(pdfKeyShiftSpace), input: " ", modifierFlags: .shift)
+        let home = UIKeyCommand(title: "First Page", image: nil, action: #selector(pdfKeyFirstPage), input: UIKeyCommand.inputHome, modifierFlags: [])
+        let end = UIKeyCommand(title: "Last Page", image: nil, action: #selector(pdfKeyLastPage), input: UIKeyCommand.inputEnd, modifierFlags: [])
+        let cmdLeft = UIKeyCommand(title: "First Page", image: nil, action: #selector(pdfKeyFirstPage), input: UIKeyCommand.inputLeftArrow, modifierFlags: .command)
+        let cmdRight = UIKeyCommand(title: "Last Page", image: nil, action: #selector(pdfKeyLastPage), input: UIKeyCommand.inputRightArrow, modifierFlags: .command)
+        let zoomInPlus = UIKeyCommand(title: "Zoom In", image: nil, action: #selector(pdfKeyZoomIn), input: "+", modifierFlags: .command)
+        let zoomInEquals = UIKeyCommand(title: "Zoom In", image: nil, action: #selector(pdfKeyZoomIn), input: "=", modifierFlags: .command)
+        let zoomOut = UIKeyCommand(title: "Zoom Out", image: nil, action: #selector(pdfKeyZoomOut), input: "-", modifierFlags: .command)
+        let zoomReset = UIKeyCommand(title: "Actual Size", image: nil, action: #selector(pdfKeyResetZoom), input: "0", modifierFlags: .command)
+        
+        return [prevPage, nextPage, upPage, downPage, pageUp, pageDown, space, shiftSpace, home, end, cmdLeft, cmdRight, zoomInPlus, zoomInEquals, zoomOut, zoomReset]
+    }
+    
+    @objc func pdfKeyPrevPage() {
+        NotificationCenter.default.post(name: .readerGoToPreviousPage, object: nil)
+    }
+    
+    @objc func pdfKeyNextPage() {
+        NotificationCenter.default.post(name: .readerGoToNextPage, object: nil)
+    }
+    
+    @objc func pdfKeyUp() {
+        NotificationCenter.default.post(name: .readerScrollUp, object: nil)
+    }
+    
+    @objc func pdfKeyDown() {
+        NotificationCenter.default.post(name: .readerScrollDown, object: nil)
+    }
+    
+    @objc func pdfKeyPageUp() {
+        NotificationCenter.default.post(name: .readerPageUp, object: nil)
+    }
+    
+    @objc func pdfKeyPageDown() {
+        NotificationCenter.default.post(name: .readerPageDown, object: nil)
+    }
+    
+    @objc func pdfKeySpace() {
+        NotificationCenter.default.post(name: .readerPageDown, object: nil)
+    }
+    
+    @objc func pdfKeyShiftSpace() {
+        NotificationCenter.default.post(name: .readerPageUp, object: nil)
+    }
+    
+    @objc func pdfKeyFirstPage() {
+        NotificationCenter.default.post(name: .readerGoToFirstPage, object: nil)
+    }
+    
+    @objc func pdfKeyLastPage() {
+        NotificationCenter.default.post(name: .readerGoToLastPage, object: nil)
+    }
+    
+    @objc func pdfKeyZoomIn() {
+        NotificationCenter.default.post(name: .readerZoomIn, object: nil)
+    }
+    
+    @objc func pdfKeyZoomOut() {
+        NotificationCenter.default.post(name: .readerZoomOut, object: nil)
+    }
+    
+    @objc func pdfKeyResetZoom() {
+        NotificationCenter.default.post(name: .readerResetZoom, object: nil)
     }
 }
 
@@ -164,7 +241,7 @@ public struct PDFReaderView: UIViewRepresentable {
         pdfView.autoScales = true
         pdfView.displayMode = layoutMode.pdfDisplayMode
         pdfView.displayDirection = layoutMode.pdfDisplayDirection
-        pdfView.usePageViewController(layoutMode.usesPageViewController)
+        pdfView.usePageViewController(false)
         pdfView.backgroundColor = UIColor(Color(red: 0.05, green: 0.08, blue: 0.13))
         
         let overlayView = PDFHighlightOverlayView()
@@ -180,8 +257,22 @@ public struct PDFReaderView: UIViewRepresentable {
         tapGesture.cancelsTouchesInView = false
         pdfView.addGestureRecognizer(tapGesture)
         
+        // Horizontal swipe gestures for page navigation
+        let swipeLeft = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleSwipeLeft(_:)))
+        swipeLeft.direction = .left
+        swipeLeft.cancelsTouchesInView = false
+        swipeLeft.delegate = context.coordinator
+        pdfView.addGestureRecognizer(swipeLeft)
+        
+        let swipeRight = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleSwipeRight(_:)))
+        swipeRight.direction = .right
+        swipeRight.cancelsTouchesInView = false
+        swipeRight.delegate = context.coordinator
+        pdfView.addGestureRecognizer(swipeRight)
+        
         context.coordinator.pdfView = pdfView
         context.coordinator.overlayView = overlayView
+        context.coordinator.lastAppliedLayoutMode = layoutMode
         context.coordinator.setupObservers()
         context.coordinator.attachScrollObserver()
         
@@ -204,48 +295,65 @@ public struct PDFReaderView: UIViewRepresentable {
             object: pdfView
         )
         
+        context.coordinator.isProgrammaticScroll = true
         if let page = document.page(at: currentPageIndex) {
             pdfView.go(to: page)
         }
         context.coordinator.lastHandledPageIndex = currentPageIndex
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            context.coordinator.isProgrammaticScroll = false
+        }
         
         return pdfView
     }
     
     public func updateUIView(_ uiView: PDFView, context: Context) {
+        if context.coordinator.isHandlingPageChange {
+            return
+        }
+        
         if uiView.document != document.pdfDocument {
             uiView.document = document.pdfDocument
         }
         
-        if uiView.displayMode != layoutMode.pdfDisplayMode {
+        let layoutChanged = context.coordinator.lastAppliedLayoutMode != layoutMode
+        if layoutChanged {
+            context.coordinator.lastAppliedLayoutMode = layoutMode
+            context.coordinator.isProgrammaticScroll = true
             uiView.displayMode = layoutMode.pdfDisplayMode
             uiView.displayDirection = layoutMode.pdfDisplayDirection
-            uiView.usePageViewController(layoutMode.usesPageViewController)
+            uiView.usePageViewController(false)
             uiView.autoScales = true
-            context.coordinator.attachScrollObserver()
+            
+            let targetIndex = currentPageIndex
+            context.coordinator.lastHandledPageIndex = targetIndex
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak uiView, weak coordinator = context.coordinator] in
+                guard let uiView = uiView, let coordinator = coordinator else { return }
+                if let target = uiView.document?.page(at: targetIndex) {
+                    uiView.go(to: target)
+                }
+                coordinator.attachScrollObserver()
+                coordinator.updateHighlights()
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak coordinator = context.coordinator] in
+                coordinator?.isProgrammaticScroll = false
+            }
         } else if context.coordinator.scrollObserver == nil {
             context.coordinator.attachScrollObserver()
         }
         
-        let coord = PlaybackCoordinator.shared
-        if context.coordinator.lastHandledPageIndex != currentPageIndex {
-            let isUserInteracting = context.coordinator.isUserScrolling
-            let isScrolledAwayDuringPlayback = coord.isPlaying && coord.isUserScrolledAway
-            let isContinuous = (layoutMode == .singlePageContinuous || layoutMode == .twoUpContinuous)
-            
-            // In continuous scroll modes, smooth scrolling naturally transitions between pages.
-            // Only perform programmatic go(to: target) if NOT in a continuous layout mode.
-            if !isContinuous && !isUserInteracting && !isScrolledAwayDuringPlayback {
+        if !layoutChanged {
+            if context.coordinator.lastHandledPageIndex != currentPageIndex {
+                // Programmatic page change from scrubber, keyboard shortcuts, buttons, TOC, or thumbnails.
                 context.coordinator.lastHandledPageIndex = currentPageIndex
                 if let target = document.page(at: currentPageIndex) {
                     context.coordinator.isProgrammaticScroll = true
                     uiView.go(to: target)
-                    DispatchQueue.main.async {
-                        context.coordinator.isProgrammaticScroll = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak coordinator = context.coordinator] in
+                        coordinator?.isProgrammaticScroll = false
                     }
                 }
-            } else {
-                context.coordinator.lastHandledPageIndex = currentPageIndex
             }
         }
         
@@ -259,7 +367,7 @@ public struct PDFReaderView: UIViewRepresentable {
         Coordinator(self)
     }
     
-    public class Coordinator: NSObject {
+    public class Coordinator: NSObject, UIGestureRecognizerDelegate {
         var parent: PDFReaderView
         weak var pdfView: PDFView?
         weak var overlayView: PDFHighlightOverlayView?
@@ -268,6 +376,8 @@ public struct PDFReaderView: UIViewRepresentable {
         
         var lastHandledPageIndex: Int = -1
         var isProgrammaticScroll: Bool = false
+        var isHandlingPageChange: Bool = false
+        var lastAppliedLayoutMode: PDFDisplayLayoutMode?
         var lastUserScrollTime: Date = .distantPast
         
         var internalScrollView: UIScrollView? {
@@ -299,15 +409,20 @@ public struct PDFReaderView: UIViewRepresentable {
             scrollObserver?.invalidate()
         }
         
-        func attachScrollObserver() {
+        func attachScrollObserver(retryCount: Int = 3) {
             scrollObserver?.invalidate()
             scrollObserver = nil
             
             guard let pdfView = pdfView else { return }
             if let scrollView = findScrollView(in: pdfView) {
                 #if targetEnvironment(macCatalyst)
-                scrollView.showsVerticalScrollIndicator = true
-                scrollView.showsHorizontalScrollIndicator = false
+                if self.parent.layoutMode.pdfDisplayDirection == .horizontal {
+                    scrollView.showsHorizontalScrollIndicator = true
+                    scrollView.showsVerticalScrollIndicator = false
+                } else {
+                    scrollView.showsVerticalScrollIndicator = true
+                    scrollView.showsHorizontalScrollIndicator = false
+                }
                 #endif
                 scrollObserver = scrollView.observe(\.contentOffset, options: [.new]) { [weak self] sv, _ in
                     guard let self = self else { return }
@@ -316,6 +431,10 @@ public struct PDFReaderView: UIViewRepresentable {
                         self.evaluateScrollAwayState(scrollView: sv)
                     }
                     self.updateHighlights()
+                }
+            } else if retryCount > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+                    self?.attachScrollObserver(retryCount: retryCount - 1)
                 }
             }
         }
@@ -472,27 +591,208 @@ public struct PDFReaderView: UIViewRepresentable {
                 .sink { [weak self] _ in self?.updateHighlights() }
                 .store(in: &cancellables)
             
-            AccessibilityManager.shared.$pdfDisplayLayout
+            NotificationCenter.default.publisher(for: .readerGoToNextPage)
                 .receive(on: RunLoop.main)
-                .sink { [weak self] newLayout in
-                    guard let self = self, let pdfView = self.pdfView else { return }
-                    if pdfView.displayMode != newLayout.pdfDisplayMode {
-                        pdfView.displayMode = newLayout.pdfDisplayMode
-                        pdfView.displayDirection = newLayout.pdfDisplayDirection
-                        pdfView.usePageViewController(newLayout.usesPageViewController)
-                        pdfView.autoScales = true
-                        if let target = self.parent.document.page(at: self.parent.currentPageIndex) {
-                            pdfView.go(to: target)
-                        }
-                        self.attachScrollObserver()
-                        self.updateHighlights()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                            self?.attachScrollObserver()
-                            self?.updateHighlights()
+                .sink { [weak self] _ in self?.handleNextPage() }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerGoToPreviousPage)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in self?.handlePreviousPage() }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerGoToFirstPage)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in self?.handleFirstPage() }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerGoToLastPage)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in self?.handleLastPage() }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerScrollDown)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in
+                    guard let self = self else { return }
+                    if self.parent.layoutMode == .singlePageContinuous || self.parent.layoutMode == .twoUpContinuous {
+                        self.scrollBy(offset: 140)
+                    } else {
+                        self.handleNextPage()
+                    }
+                }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerScrollUp)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in
+                    guard let self = self else { return }
+                    if self.parent.layoutMode == .singlePageContinuous || self.parent.layoutMode == .twoUpContinuous {
+                        self.scrollBy(offset: -140)
+                    } else {
+                        self.handlePreviousPage()
+                    }
+                }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerPageDown)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in self?.handleNextPage() }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerPageUp)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in self?.handlePreviousPage() }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerZoomIn)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in self?.pdfView?.zoomIn(nil) }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerZoomOut)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in self?.pdfView?.zoomOut(nil) }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerResetZoom)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in
+                    guard let pdf = self?.pdfView else { return }
+                    pdf.autoScales = true
+                    pdf.scaleFactor = pdf.scaleFactorForSizeToFit
+                }
+                .store(in: &cancellables)
+            
+            NotificationCenter.default.publisher(for: .readerJumpToPage)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] notification in
+                    guard let self = self, let targetIndex = notification.userInfo?["pageIndex"] as? Int else { return }
+                    if let targetPage = self.parent.document.page(at: targetIndex) {
+                        self.isProgrammaticScroll = true
+                        self.pdfView?.go(to: targetPage)
+                        self.lastHandledPageIndex = targetIndex
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            self.isProgrammaticScroll = false
                         }
                     }
                 }
                 .store(in: &cancellables)
+        }
+        
+        public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            return true
+        }
+        
+        @objc func handleSwipeLeft(_ gesture: UISwipeGestureRecognizer) {
+            guard parent.layoutMode == .singlePage || parent.layoutMode == .twoUp else { return }
+            guard let pdfView = pdfView else { return }
+            
+            // If zoomed in, only turn page when at the far right edge of the page
+            if let sv = internalScrollView, pdfView.scaleFactor > (pdfView.scaleFactorForSizeToFit * 1.15) {
+                let atRightEdge = sv.contentOffset.x >= (sv.contentSize.width - sv.bounds.width - 25)
+                guard atRightEdge else { return }
+            }
+            
+            handleNextPage()
+        }
+        
+        @objc func handleSwipeRight(_ gesture: UISwipeGestureRecognizer) {
+            guard parent.layoutMode == .singlePage || parent.layoutMode == .twoUp else { return }
+            guard let pdfView = pdfView else { return }
+            
+            // If zoomed in, only turn page when at the far left edge of the page
+            if let sv = internalScrollView, pdfView.scaleFactor > (pdfView.scaleFactorForSizeToFit * 1.15) {
+                let atLeftEdge = sv.contentOffset.x <= 25
+                guard atLeftEdge else { return }
+            }
+            
+            handlePreviousPage()
+        }
+        
+        func handleNextPage() {
+            guard let pdfView = pdfView else { return }
+            if parent.layoutMode == .singlePage || parent.layoutMode == .twoUp {
+                if pdfView.canGoToNextPage {
+                    isProgrammaticScroll = true
+                    pdfView.goToNextPage(nil)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                        self?.isProgrammaticScroll = false
+                    }
+                } else if parent.currentPageIndex < parent.document.pageCount - 1 {
+                    parent.currentPageIndex += 1
+                }
+            } else {
+                scrollBy(offset: pdfView.bounds.height * 0.85)
+            }
+        }
+        
+        func handlePreviousPage() {
+            guard let pdfView = pdfView else { return }
+            if parent.layoutMode == .singlePage || parent.layoutMode == .twoUp {
+                if pdfView.canGoToPreviousPage {
+                    isProgrammaticScroll = true
+                    pdfView.goToPreviousPage(nil)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                        self?.isProgrammaticScroll = false
+                    }
+                } else if parent.currentPageIndex > 0 {
+                    parent.currentPageIndex -= 1
+                }
+            } else {
+                scrollBy(offset: -pdfView.bounds.height * 0.85)
+            }
+        }
+        
+        func handleFirstPage() {
+            guard let pdfView = pdfView else { return }
+            if parent.layoutMode == .singlePage || parent.layoutMode == .twoUp {
+                if pdfView.canGoToFirstPage {
+                    isProgrammaticScroll = true
+                    pdfView.goToFirstPage(nil)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                        self?.isProgrammaticScroll = false
+                    }
+                } else {
+                    parent.currentPageIndex = 0
+                }
+            } else {
+                scrollToTop()
+            }
+        }
+        
+        func handleLastPage() {
+            guard let pdfView = pdfView else { return }
+            if parent.layoutMode == .singlePage || parent.layoutMode == .twoUp {
+                if pdfView.canGoToLastPage {
+                    isProgrammaticScroll = true
+                    pdfView.goToLastPage(nil)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                        self?.isProgrammaticScroll = false
+                    }
+                } else {
+                    parent.currentPageIndex = max(0, parent.document.pageCount - 1)
+                }
+            } else {
+                scrollToBottom()
+            }
+        }
+        
+        func scrollBy(offset: CGFloat, animated: Bool = true) {
+            guard let sv = internalScrollView else { return }
+            let targetY = max(0, min(sv.contentOffset.y + offset, max(0, sv.contentSize.height - sv.bounds.height)))
+            sv.setContentOffset(CGPoint(x: sv.contentOffset.x, y: targetY), animated: animated)
+        }
+        
+        func scrollToTop(animated: Bool = true) {
+            guard let sv = internalScrollView else { return }
+            sv.setContentOffset(CGPoint(x: sv.contentOffset.x, y: 0), animated: animated)
+        }
+        
+        func scrollToBottom(animated: Bool = true) {
+            guard let sv = internalScrollView else { return }
+            let maxY = max(0, sv.contentSize.height - sv.bounds.height)
+            sv.setContentOffset(CGPoint(x: sv.contentOffset.x, y: maxY), animated: animated)
         }
         
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {
@@ -512,15 +812,39 @@ public struct PDFReaderView: UIViewRepresentable {
         }
         
         @objc func pageChanged(_ notification: Notification) {
-            guard let pdfView = pdfView, let page = pdfView.currentPage else { return }
+            guard !isProgrammaticScroll else { return }
+            guard !isHandlingPageChange else { return }
+            guard let pdfView = pdfView else { return }
+            
+            // In two-up spread modes, check if current page index is already visible
+            let reportedPage = pdfView.currentPage
+            let visiblePages = pdfView.visiblePages
+            let targetPage: PDFPage?
+            if (parent.layoutMode == .twoUp || parent.layoutMode == .twoUpContinuous), !visiblePages.isEmpty {
+                let visibleIndices = visiblePages.map { parent.document.pdfDocument.index(for: $0) }
+                if visibleIndices.contains(parent.currentPageIndex) {
+                    // Current page index is already visible on the spread; preserve it
+                    return
+                }
+                targetPage = visiblePages.first ?? reportedPage
+            } else {
+                targetPage = reportedPage
+            }
+            
+            guard let page = targetPage else { return }
             let index = parent.document.pdfDocument.index(for: page)
             guard index >= 0 else { return }
+            if lastHandledPageIndex == index { return }
             lastHandledPageIndex = index
             if parent.currentPageIndex != index {
-                DispatchQueue.main.async {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    guard !self.isProgrammaticScroll else { return }
+                    self.isHandlingPageChange = true
                     self.parent.currentPageIndex = index
                     PlaybackCoordinator.shared.setVisiblePageIndex(index)
                     self.updateHighlights()
+                    self.isHandlingPageChange = false
                 }
             }
         }

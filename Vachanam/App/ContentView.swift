@@ -61,5 +61,13 @@ public struct ContentView: View {
             }
             return .handled
         }
+        .onKeyPress(.leftArrow) {
+            ttsController.previousSentence()
+            return .handled
+        }
+        .onKeyPress(.rightArrow) {
+            ttsController.nextSentence()
+            return .handled
+        }
     }
 }
