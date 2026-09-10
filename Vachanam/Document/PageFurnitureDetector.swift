@@ -204,8 +204,9 @@ public struct PageFurnitureDetector: Sendable {
             return .footnote
         }
         
-        // 4. Publication notices & disclaimers in footer or footnote zone (e.g. Cambridge University Press / arXiv / copyright)
-        if (inFooterZone || inFootnoteZone) && isPublicationDisclaimer(trimmed) {
+        // 4. Publication notices & disclaimers (e.g. Cambridge University Press / arXiv / copyright)
+        // Disclaimers are never narrative body text regardless of vertical line position
+        if isPublicationDisclaimer(trimmed) {
             return .pageFooter
         }
         

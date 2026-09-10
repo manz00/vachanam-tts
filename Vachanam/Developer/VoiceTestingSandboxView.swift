@@ -30,6 +30,7 @@ public struct VoiceTestingSandboxView: View {
     
     @State private var synthesizedAudioResult: TTSAudioResult? = nil
     @State private var shareURL: URL? = nil
+    @State private var audioFileURL: URL? = nil
     @State private var copied: Bool = false
     
     private let availableVoices = [
@@ -244,6 +245,21 @@ public struct VoiceTestingSandboxView: View {
                             .foregroundColor(.secondary)
                         
                         Spacer()
+                        
+                        if let audioURL = audioFileURL {
+                            ShareLink(item: audioURL) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.down.circle.fill")
+                                    Text("Download Audio (WAV)")
+                                }
+                                .font(.system(size: 13, weight: .semibold))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 7)
+                                .background(Color.cyan.opacity(0.2))
+                                .foregroundColor(Color.cyan)
+                                .cornerRadius(8)
+                            }
+                        }
                     }
                 }
                 .padding(12)
@@ -435,10 +451,17 @@ public struct VoiceTestingSandboxView: View {
             testedAt: ISO8601DateFormatter().string(from: Date())
         )
         let jsonStr = PageStructureExporter.exportJSONString(from: report)
+        let timestamp = Int(Date().timeIntervalSince1970)
         self.shareURL = PageStructureExporter.writeTemporaryJSONFile(
-            filename: "voice_test_report_\(Int(Date().timeIntervalSince1970)).json",
+            filename: "voice_test_report_\(timestamp).json",
             jsonString: jsonStr
         )
+        if let audioResult = synthesizedAudioResult {
+            let wavData = AudioPlayer.prepareWavData(from: audioResult)
+            let tempWavURL = FileManager.default.temporaryDirectory.appendingPathComponent("voice_test_audio_\(timestamp).wav")
+            try? wavData.write(to: tempWavURL, options: .atomic)
+            self.audioFileURL = tempWavURL
+        }
     }
     
     private func copyReport() {

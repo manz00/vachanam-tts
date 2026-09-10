@@ -231,4 +231,57 @@ final class MathAndSymbolNormalizationTests: XCTestCase {
         // Verify that Fledgling Composer is separated by a period for natural speech pausing
         XCTAssertTrue(fullCombined.contains("Fledgling Composer. As machine learning"), "Expected run-in heading to have period delimiter for natural speech")
     }
+    
+    func testLineBreakDehyphenation() {
+        let input = "Every vector space V possesses a basis B. The preceding exam-\nples show that there can be many bases of a vector space V, i.e., there is no unique basis."
+        let spoken = normalizer.normalizeForSpeech(input)
+        XCTAssertTrue(spoken.contains("preceding examples show"), "Expected 'preceding examples show' in: \(spoken)")
+        XCTAssertFalse(spoken.contains("exam-"), "Hyphen should have been removed: \(spoken)")
+        XCTAssertFalse(spoken.contains("apples"), "'ples' should not become 'apples': \(spoken)")
+    }
+    
+    func testUnpunctuatedLineDoesNotMergeCopyrightFooter() {
+        // Page 50 regression test: line ends with unpunctuated formula 'dim(U) ='
+        // and is followed by the publisher copyright line.
+        let pageBounds = CGRect(x: 0, y: 0, width: 612, height: 792)
+        let lines: [VisualLine] = [
+            VisualLine(
+                text: "We only consider finite-dimensional vector spaces V. In this case, the",
+                bounds: CGRect(x: 72, y: 150, width: 450, height: 12),
+                pageIndex: 50
+            ),
+            VisualLine(
+                text: "dimension of V is the number of basis vectors of V, and we write dim(V).",
+                bounds: CGRect(x: 72, y: 135, width: 450, height: 12),
+                pageIndex: 50
+            ),
+            VisualLine(
+                text: "If U ⊆ V is a subspace of V, then dim(U) <= dim(V) and dim(U) =",
+                bounds: CGRect(x: 72, y: 120, width: 450, height: 12),
+                pageIndex: 50
+            ),
+            VisualLine(
+                text: "©2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).",
+                bounds: CGRect(x: 72, y: 40, width: 500, height: 11),
+                pageIndex: 50
+            )
+        ]
+        
+        let paragraphs = ParagraphDetector.shared.detectParagraphs(
+            from: lines,
+            pageIndex: 50,
+            pageBounds: pageBounds,
+            analysis: nil
+        )
+        
+        XCTAssertEqual(paragraphs.count, 3, "Expected 2 body paragraphs and 1 footer to remain separate blocks")
+        let unpunctuatedPara = paragraphs[1]
+        XCTAssertEqual(unpunctuatedPara.blockType, .paragraph)
+        XCTAssertFalse(unpunctuatedPara.combinedText.contains("Cambridge University Press"), "Unpunctuated body line must not merge footer")
+        XCTAssertTrue(unpunctuatedPara.combinedText.contains("dim(U) ="))
+        
+        let footerPara = paragraphs[2]
+        XCTAssertEqual(footerPara.blockType, .pageFooter)
+        XCTAssertTrue(footerPara.combinedText.contains("Cambridge University Press"))
+    }
 }

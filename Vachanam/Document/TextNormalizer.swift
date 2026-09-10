@@ -70,6 +70,24 @@ public struct TextNormalizer {
             options: .regularExpression
         )
         
+        // Reconstruct words broken across line breaks (e.g. "exam-\nples" -> "examples")
+        let lineHyphenPattern = #"(\b\p{L}+)[-‐‑‒]\s*[\r\n]+\s*(\p{L}+\b)"#
+        if let regex = try? NSRegularExpression(pattern: lineHyphenPattern) {
+            let nsString = result as NSString
+            let matches = regex.matches(in: result, range: NSRange(location: 0, length: nsString.length))
+            for match in matches.reversed() {
+                if let r1 = Range(match.range(at: 1), in: result),
+                   let r2 = Range(match.range(at: 2), in: result) {
+                    let p1 = String(result[r1]) + "-"
+                    let p2 = String(result[r2])
+                    let resolved = WordReconstructor.shared.resolveHyphenation(firstPart: p1, secondPart: p2)
+                    if let fullRange = Range(match.range, in: result) {
+                        result.replaceSubrange(fullRange, with: resolved.reconstructedWord)
+                    }
+                }
+            }
+        }
+        
         // Clean multiple spaces on single lines (preserving deliberate newlines)
         result = result.replacingOccurrences(of: "[ ]{2,}", with: " ", options: .regularExpression)
         

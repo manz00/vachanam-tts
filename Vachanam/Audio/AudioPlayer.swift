@@ -94,7 +94,7 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
         self.onCompleteHandler = onComplete
         
         // Prepare WAV formatted data from raw audio
-        let wavData = prepareWavData(from: result)
+        let wavData = Self.prepareWavData(from: result)
         
         do {
             avPlayer = try AVAudioPlayer(data: wavData)
@@ -244,7 +244,7 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
     
     // MARK: - WAV Header Helper
     
-    private func prepareWavData(from result: TTSAudioResult) -> Data {
+    public static func prepareWavData(from result: TTSAudioResult) -> Data {
         let sampleRate = Int32(result.sampleRate)
         let numChannels: Int16 = 1
         let bitsPerSample: Int16 = 16

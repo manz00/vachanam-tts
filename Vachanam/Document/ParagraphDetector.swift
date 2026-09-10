@@ -362,6 +362,20 @@ public class ParagraphDetector {
                 continue
             }
             
+            // Publication notices & disclaimers (e.g. Cambridge University Press / arXiv / copyright)
+            // must be isolated immediately into .pageFooter and never merged into narrative body paragraphs.
+            if PageFurnitureDetector.shared.isPublicationDisclaimer(trimmed) {
+                flushCurrentBlock()
+                blocks.append(RawParagraph(
+                    lines: [currentLine],
+                    pageIndex: pageIndex,
+                    blockType: .pageFooter,
+                    level: 1,
+                    marker: nil
+                ))
+                continue
+            }
+            
             // A line starting with a lowercase letter is a grammatical continuation of the preceding text
             // and should never be broken into standalone page furniture.
             let startsWithLowercase = trimmed.first?.isLowercase == true
@@ -385,8 +399,9 @@ public class ParagraphDetector {
                 medianLineHeight: medianHeight
             ) {
                 // If this line is a continuation of an incomplete sentence from the current block at normal line spacing,
-                // it is narrative text and must not be broken into standalone page furniture.
-                if isSentenceContinuation && (furnitureType == .pageHeader || furnitureType == .pageFooter) {
+                // and NOT a publication disclaimer or page number, it is narrative text and must not be broken into standalone page furniture.
+                let isDisclaimer = PageFurnitureDetector.shared.isPublicationDisclaimer(trimmed)
+                if isSentenceContinuation && (furnitureType == .pageHeader || furnitureType == .pageFooter) && !isDisclaimer {
                     // Fall through to regular block accumulation
                 } else {
                     flushCurrentBlock()

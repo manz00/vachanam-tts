@@ -93,10 +93,11 @@ public final class SentenceSegmenter: @unchecked Sendable {
                 )
                 
                 // Protect periods immediately preceding an equation tag (e.g. "... . equation 2.67" or "... . (2.67)")
-                // so that equation labels remain attached to the preceding equation clause rather than forming an isolated orphan sentence.
+                // so that equation labels remain attached to the preceding equation clause rather than forming an isolated orphan sentence,
+                // without mutating the period into a comma.
                 decimalProtectedText = decimalProtectedText.replacingOccurrences(
                     of: #"\.\s+(equation\s+\d+|(?:\(\d+(?:__DECIMAL_POINT__\d+)?\)))"#,
-                    with: ", $1",
+                    with: "__EQUATION_PERIOD__ $1",
                     options: .regularExpression
                 )
                 
@@ -113,7 +114,9 @@ public final class SentenceSegmenter: @unchecked Sendable {
                 var sentenceTokens: [SentenceTokenInfo] = []
                 sentenceTokenizer.enumerateTokens(in: fullRange) { sRange, _ in
                     let tokenText = String(decimalProtectedText[sRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                    let rawSentence = tokenText.replacingOccurrences(of: "__DECIMAL_POINT__", with: ".")
+                    let rawSentence = tokenText
+                        .replacingOccurrences(of: "__DECIMAL_POINT__", with: ".")
+                        .replacingOccurrences(of: "__EQUATION_PERIOD__", with: ".")
                     if !rawSentence.isEmpty {
                         sentenceTokens.append(SentenceTokenInfo(text: rawSentence, range: sRange))
                     }
