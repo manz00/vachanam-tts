@@ -91,6 +91,7 @@ public struct TextNormalizer {
         result = MathSpeechEngine.shared.vocalizeSIUnits(result)
         result = MathSpeechEngine.shared.translateLatexMacros(result, style: mathStyle)
         result = MathSpeechEngine.shared.vocalizeScientificNotation(result, style: mathStyle)
+        result = MathSpeechEngine.shared.vocalizeUnicodeSuperscripts(result, style: mathStyle)
         
         // 1. URLs and DOIs for natural audio narration (must run before hyphen/dash replacements)
         // DOIs: doi:10.1000/182 -> publication link
@@ -261,7 +262,7 @@ public struct TextNormalizer {
         
         // Matrix / variable inverse: A^-1, A⁻¹, A^{-1}, A-1, A−1, (AB)-1, (AB)−1
         result = result.replacingOccurrences(
-            of: #"(?:(?<=\b[A-Z0-9])|(?<=\)))\s*(?:\^|ˆ)?\s*(?:[-−]1|\{[-−]1\})\b|(?<=[a-zA-Z0-9\)])⁻¹"#,
+            of: #"(?:(?<=\b[A-Z0-9])|(?<=\)))\s*(?:\^|ˆ)?\s*(?:[-−]1|\{[-−]1\})\b|(?<=[a-zA-Z0-9\)])⁻¹(?![⁰¹²³⁴⁵⁶⁷⁸⁹])"#,
             with: " inverse",
             options: .regularExpression
         )
@@ -296,13 +297,13 @@ public struct TextNormalizer {
         // Powers:
         // Squared: x^2, x², (x+y)^2
         result = result.replacingOccurrences(
-            of: #"(?:(?<=\b[a-zA-Z0-9])|(?<=\)))\s*(?:\^|ˆ)\s*2\b|(?<=[a-zA-Z0-9\)])²"#,
+            of: #"(?:(?<=\b[a-zA-Z0-9])|(?<=\)))\s*(?:\^|ˆ)\s*2\b|(?<![⁺⁻⁰¹²³⁴⁵⁶⁷⁸⁹])(?<=[a-zA-Z0-9\)])²(?![⁰¹²³⁴⁵⁶⁷⁸⁹])"#,
             with: " squared",
             options: .regularExpression
         )
         // Cubed: x^3, x³, (x+y)^3
         result = result.replacingOccurrences(
-            of: #"(?:(?<=\b[a-zA-Z0-9])|(?<=\)))\s*(?:\^|ˆ)\s*3\b|(?<=[a-zA-Z0-9\)])³"#,
+            of: #"(?:(?<=\b[a-zA-Z0-9])|(?<=\)))\s*(?:\^|ˆ)\s*3\b|(?<![⁺⁻⁰¹²³⁴⁵⁶⁷⁸⁹])(?<=[a-zA-Z0-9\)])³(?![⁰¹²³⁴⁵⁶⁷⁸⁹])"#,
             with: " cubed",
             options: .regularExpression
         )

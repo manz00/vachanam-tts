@@ -15,7 +15,7 @@ public struct PageFurnitureDetector: Sendable {
     public struct Configuration: Sendable {
         /// Top percentage of page height considered the header band (default: 0.88 to 1.0, i.e. top 12%)
         public var headerBandYRatio: CGFloat
-        /// Bottom percentage of page height considered the footer band (default: 0.0 to 0.18, i.e. bottom 18%)
+        /// Bottom percentage of page height considered the footer band (default: 0.0 to 0.10, i.e. bottom 10%)
         public var footerBandYRatio: CGFloat
         /// Extended bottom percentage for multi-line footnotes (default: bottom 22%)
         public var footnoteBandYRatio: CGFloat
@@ -24,7 +24,7 @@ public struct PageFurnitureDetector: Sendable {
         
         public init(
             headerBandYRatio: CGFloat = 0.88,
-            footerBandYRatio: CGFloat = 0.18,
+            footerBandYRatio: CGFloat = 0.10,
             footnoteBandYRatio: CGFloat = 0.22,
             minRepetitionCount: Int = 2
         ) {
@@ -190,7 +190,7 @@ public struct PageFurnitureDetector: Sendable {
         let inFootnoteZone = relY <= config.footnoteBandYRatio
         
         // 1. Page numbers (highest priority in header or footer bands)
-        if (inHeaderZone || inFooterZone || line.text.count <= 15) && isPageNumber(trimmed) {
+        if (inHeaderZone || inFooterZone) && isPageNumber(trimmed) {
             return .pageNumber
         }
         
@@ -204,8 +204,8 @@ public struct PageFurnitureDetector: Sendable {
             return .footnote
         }
         
-        // 4. Publication notices & disclaimers in footer band (e.g. Cambridge University Press / arXiv / copyright)
-        if inFooterZone && isPublicationDisclaimer(trimmed) {
+        // 4. Publication notices & disclaimers in footer or footnote zone (e.g. Cambridge University Press / arXiv / copyright)
+        if (inFooterZone || inFootnoteZone) && isPublicationDisclaimer(trimmed) {
             return .pageFooter
         }
         
@@ -239,8 +239,19 @@ public struct PageFurnitureDetector: Sendable {
             if let analysis = analysis, analysis.recurringFooters.contains(normalized) {
                 return .pageFooter
             }
-            if !hasTerminalPunctuation && trimmed.count < 80 {
-                return .pageFooter
+            // If whole-document analysis was performed, non-recurring lines in the footer band
+            // are normal body text unless they match a publication disclaimer or page number.
+            // When analysis is nil (e.g. single-page document or isolated test), only classify if
+            // it starts with an uppercase letter, is not a continuation, and lies in the bottom margin (relY <= 0.08).
+            if analysis == nil {
+                let startsWithLetter = trimmed.first?.isLetter == true
+                let startsWithUppercase = trimmed.first?.isUppercase == true
+                let isContinuation = trimmed.first?.isLowercase == true ||
+                                     trimmed.hasSuffix(":") || trimmed.hasSuffix(",") ||
+                                     trimmed.hasSuffix(";") || trimmed.hasSuffix("-")
+                if startsWithLetter && startsWithUppercase && !isContinuation && !hasTerminalPunctuation && trimmed.count < 80 && relY <= 0.08 {
+                    return .pageFooter
+                }
             }
         }
         

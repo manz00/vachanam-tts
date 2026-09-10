@@ -10,6 +10,7 @@ import SwiftUI
 public struct ReadingSettingsView: View {
     @ObservedObject var accessibilityManager = AccessibilityManager.shared
     @ObservedObject var ttsController = TTSController.shared
+    @ObservedObject var developerModeManager = DeveloperModeManager.shared
     
     public init() {}
     
@@ -84,6 +85,22 @@ public struct ReadingSettingsView: View {
                         get: { Double(ttsController.speechSpeed) },
                         set: { ttsController.speechSpeed = Float($0) }
                     ), in: 0.5...2.0, step: 0.05)
+                }
+            }
+            
+            Section(
+                header: Text("Developer & Diagnostics"),
+                footer: Text("Developer mode enables page layout diagnostics, bounding box inspections, paragraph JSON downloads, and the interactive voice synthesis testing sandbox.")
+            ) {
+                Toggle("Developer Mode", isOn: $developerModeManager.isDeveloperModeEnabled)
+                
+                if developerModeManager.isDeveloperModeEnabled {
+                    Button {
+                        NotificationCenter.default.post(name: .openDeveloperInspector, object: nil)
+                    } label: {
+                        Label("Open Developer Inspector", systemImage: "wrench.and.screwdriver")
+                            .foregroundColor(Color.cyan)
+                    }
                 }
             }
         }

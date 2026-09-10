@@ -177,11 +177,15 @@ public actor KokoroTTS {
         processor: KokoroTextProcessor,
         prepared: inout [KokoroPreparedInput]
     ) throws {
+        let trimmed = chunk.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.contains(where: { $0.isLetter || $0.isNumber }) else {
+            return
+        }
         do {
-            let phonemes = try processor.phonemize(chunk)
+            let phonemes = try processor.phonemize(trimmed)
             let refS = try voiceTable.refS(voiceID: voice, phonemeCount: phonemes.utf16Count)
             let input = try processor.prepare(
-                text: chunk,
+                text: trimmed,
                 voice: voice,
                 refS: refS,
                 options: options,
@@ -189,7 +193,7 @@ public actor KokoroTTS {
             )
             if let numTokens = input.numTokens,
                numTokens > Self.runtimeDurationTokenLength {
-                let halves = try Self.splitOversizedChunk(chunk)
+                let halves = try Self.splitOversizedChunk(trimmed)
                 for half in halves {
                     try appendPreparedChunk(
                         half,
@@ -203,7 +207,7 @@ public actor KokoroTTS {
                 prepared.append(input)
             }
         } catch KokoroTextProcessingError.tokenBudgetExceeded {
-            let halves = try Self.splitOversizedChunk(chunk)
+            let halves = try Self.splitOversizedChunk(trimmed)
             for half in halves {
                 try appendPreparedChunk(
                     half,

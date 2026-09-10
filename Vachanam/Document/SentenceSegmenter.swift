@@ -86,9 +86,17 @@ public final class SentenceSegmenter: @unchecked Sendable {
                 let normalizedText = TextNormalizer.shared.normalize(paragraphText)
                 
                 // Protect decimal numbers (e.g. 2.0, 0.5) from being treated as sentence boundaries
-                let decimalProtectedText = normalizedText.replacingOccurrences(
+                var decimalProtectedText = normalizedText.replacingOccurrences(
                     of: #"(?<=\d)\.(?=\d)"#,
                     with: "__DECIMAL_POINT__",
+                    options: .regularExpression
+                )
+                
+                // Protect periods immediately preceding an equation tag (e.g. "... . equation 2.67" or "... . (2.67)")
+                // so that equation labels remain attached to the preceding equation clause rather than forming an isolated orphan sentence.
+                decimalProtectedText = decimalProtectedText.replacingOccurrences(
+                    of: #"\.\s+(equation\s+\d+|(?:\(\d+(?:__DECIMAL_POINT__\d+)?\)))"#,
+                    with: ", $1",
                     options: .regularExpression
                 )
                 

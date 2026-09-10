@@ -59,15 +59,7 @@ public struct ReaderScrubberBar: View {
             // Interactive Page Scrubber Slider
             if totalPages > 1 {
                 Slider(
-                    value: Binding(
-                        get: { scrubbedPageIndex },
-                        set: { newValue in
-                            scrubbedPageIndex = newValue
-                            if !isScrubbing {
-                                isScrubbing = true
-                            }
-                        }
-                    ),
+                    value: $scrubbedPageIndex,
                     in: 0...Double(max(1, totalPages - 1)),
                     step: 1.0,
                     onEditingChanged: { editing in

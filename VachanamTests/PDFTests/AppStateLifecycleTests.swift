@@ -12,6 +12,18 @@ import PDFKit
 
 final class AppStateLifecycleTests: XCTestCase {
     
+    override func setUp() {
+        super.setUp()
+        AppState.shared.closeCurrentDocument()
+        PlaybackCoordinator.shared.stop()
+    }
+    
+    override func tearDown() {
+        AppState.shared.closeCurrentDocument()
+        PlaybackCoordinator.shared.stop()
+        super.tearDown()
+    }
+    
     func testAppStateOpenAndCloseDocumentLifecycle() {
         let appState = AppState.shared
         let benchmarkURL = DocumentLibraryView.ensureBenchmarkDocumentExists()

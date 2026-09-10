@@ -87,6 +87,29 @@ final class PageFurnitureDetectorTests: XCTestCase {
         XCTAssertNil(bodyType)
     }
     
+    func testSentenceEndingColonOrContinuationNotClassifiedAsFooter() {
+        let detector = PageFurnitureDetector.shared
+        let pageBounds = CGRect(x: 0, y: 0, width: 612, height: 792)
+        
+        // Line in bottom margin (e.g. y: 65, relY: ~0.08) ending with a colon or lowercase continuation
+        let colonLine = VisualLine(
+            text: "row echelon form (the reduced row-echelon form is unnecessary here):",
+            bounds: CGRect(x: 54, y: 65, width: 450, height: 12),
+            pageIndex: 0
+        )
+        let colonClassified = detector.classifyLine(line: colonLine, pageBounds: pageBounds)
+        XCTAssertNil(colonClassified, "A sentence ending with a colon must not be classified as a page footer")
+        
+        // Lowercase continuation line in bottom margin
+        let lowercaseLine = VisualLine(
+            text: "vectors as columns of a matrix A and perform elimination.",
+            bounds: CGRect(x: 54, y: 55, width: 400, height: 12),
+            pageIndex: 0
+        )
+        let lowercaseClassified = detector.classifyLine(line: lowercaseLine, pageBounds: pageBounds)
+        XCTAssertNil(lowercaseClassified, "A lowercase sentence continuation line must not be classified as a page footer")
+    }
+    
     func testCrossPageRepetitionDetection() {
         let detector = PageFurnitureDetector.shared
         let pageBounds = CGRect(x: 0, y: 0, width: 612, height: 792)
@@ -231,6 +254,56 @@ final class PageFurnitureDetectorTests: XCTestCase {
         
         let classified = detector.classifyLine(line: lines0[0], pageBounds: pageBounds, analysis: analysis)
         XCTAssertEqual(classified, .pageHeader)
+    }
+    
+    func testParagraphTrailingLinePreservedInFooterZone() {
+        let pageBounds = CGRect(x: 0, y: 0, width: 612, height: 792)
+        
+        let lines: [VisualLine] = [
+            VisualLine(
+                text: "▪ A practical way of checking whether vectors x1, ..., xk in V are linearly",
+                bounds: CGRect(x: 54, y: 120, width: 450, height: 12),
+                pageIndex: 47
+            ),
+            VisualLine(
+                text: "independent is to use Gaussian elimination: Write all vectors as columns",
+                bounds: CGRect(x: 68, y: 105, width: 436, height: 12),
+                pageIndex: 47
+            ),
+            VisualLine(
+                text: "of a matrix A and perform Gaussian elimination until the matrix is in",
+                bounds: CGRect(x: 68, y: 90, width: 436, height: 12),
+                pageIndex: 47
+            ),
+            VisualLine(
+                text: "row echelon form (the reduced row-echelon form is unnecessary here):",
+                bounds: CGRect(x: 68, y: 75, width: 436, height: 12),
+                pageIndex: 47
+            ),
+            VisualLine(
+                text: "©2024 M. P. Deisenroth, A. A. Faisal, C. S. Ong. Published by Cambridge University Press (2020).",
+                bounds: CGRect(x: 54, y: 35, width: 500, height: 12),
+                pageIndex: 47
+            )
+        ]
+        
+        let paragraphs = ParagraphDetector.shared.detectParagraphs(
+            from: lines,
+            pageIndex: 47,
+            pageBounds: pageBounds,
+            analysis: nil
+        )
+        
+        // We expect two blocks: the 4-line list item and the copyright footer
+        XCTAssertEqual(paragraphs.count, 2)
+        let listItem = paragraphs[0]
+        XCTAssertEqual(listItem.blockType, .listItem)
+        XCTAssertEqual(listItem.lines.count, 4)
+        XCTAssertTrue(listItem.combinedText.contains("row echelon form"))
+        
+        let footer = paragraphs[1]
+        XCTAssertEqual(footer.blockType, .pageFooter)
+        XCTAssertTrue(footer.combinedText.contains("Cambridge University Press"))
     }
 }
 

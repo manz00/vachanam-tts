@@ -160,12 +160,14 @@ public class MathSpeechEngine: @unchecked Sendable {
                 SymbolEntry(char: "≠", conversational: "not equal to", mathspeak: "not equal to"),
                 SymbolEntry(char: "≤", conversational: "less than or equal to", mathspeak: "less than or equal to"),
                 SymbolEntry(char: "≥", conversational: "greater than or equal to", mathspeak: "greater than or equal to"),
+                SymbolEntry(char: "<", conversational: "less than", mathspeak: "less than"),
+                SymbolEntry(char: ">", conversational: "greater than", mathspeak: "greater than"),
                 SymbolEntry(char: "≈", conversational: "approximately", mathspeak: "almost equal to"),
                 SymbolEntry(char: "≡", conversational: "identically equal to", mathspeak: "strictly equivalent to"),
                 SymbolEntry(char: "∝", conversational: "proportional to", mathspeak: "proportional to"),
                 SymbolEntry(char: "±", conversational: "plus or minus", mathspeak: "plus or minus"),
                 SymbolEntry(char: "∓", conversational: "minus or plus", mathspeak: "minus or plus"),
-                SymbolEntry(char: "×", conversational: "times", mathspeak: "cross"),
+                SymbolEntry(char: "×", conversational: "times", mathspeak: "times"),
                 SymbolEntry(char: "÷", conversational: "divided by", mathspeak: "divided by"),
                 SymbolEntry(char: "⋅", conversational: "dot", mathspeak: "center dot"),
                 SymbolEntry(char: "∈", conversational: "in", mathspeak: "element of"),
@@ -202,7 +204,8 @@ public class MathSpeechEngine: @unchecked Sendable {
                 SymbolEntry(char: "⊥", conversational: "perpendicular to", mathspeak: "perpendicular to"),
                 SymbolEntry(char: "∥", conversational: "parallel to", mathspeak: "parallel to"),
                 SymbolEntry(char: "∠", conversational: "angle", mathspeak: "angle"),
-                SymbolEntry(char: "ℏ", conversational: "h bar", mathspeak: "planck constant over 2 pi, h bar"),
+                SymbolEntry(char: "ℏ", conversational: "h bar", mathspeak: "h bar"),
+                SymbolEntry(char: "ħ", conversational: "h bar", mathspeak: "h bar"),
                 SymbolEntry(char: "ℵ", conversational: "aleph", mathspeak: "aleph")
             ]
         }
@@ -582,6 +585,74 @@ public class MathSpeechEngine: @unchecked Sendable {
     
     // MARK: - 2. Scientific Notation
     
+    public static func parseUnicodeSuperscriptToInt(_ s: String) -> Int? {
+        var isNegative = false
+        var digitsStr = ""
+        for char in s {
+            switch char {
+            case "⁻", "-":
+                isNegative = true
+            case "⁺", "+":
+                isNegative = false
+            case "⁰": digitsStr.append("0")
+            case "¹": digitsStr.append("1")
+            case "²": digitsStr.append("2")
+            case "³": digitsStr.append("3")
+            case "⁴": digitsStr.append("4")
+            case "⁵": digitsStr.append("5")
+            case "⁶": digitsStr.append("6")
+            case "⁷": digitsStr.append("7")
+            case "⁸": digitsStr.append("8")
+            case "⁹": digitsStr.append("9")
+            default:
+                if let d = char.wholeNumberValue {
+                    digitsStr.append(String(d))
+                }
+            }
+        }
+        guard !digitsStr.isEmpty, let val = Int(digitsStr) else { return nil }
+        return isNegative ? -val : val
+    }
+    
+    public func spokenPowerOfTen(exponent: Int, style: MathSpeechStyle) -> String {
+        switch style {
+        case .conversational:
+            if exponent == 0 {
+                return "ten to the power of zero"
+            } else if exponent == 1 {
+                return "ten"
+            } else if exponent == 2 {
+                return "ten squared"
+            } else if exponent == 3 {
+                return "ten cubed"
+            } else if exponent > 0 {
+                if let ordinal = ordinalPowers[exponent] {
+                    return "ten to the \(ordinal)"
+                } else {
+                    let cardinalWord = spellOutFormatter.string(from: NSNumber(value: exponent)) ?? "\(exponent)"
+                    return "ten to the power of \(cardinalWord)"
+                }
+            } else {
+                let absExp = abs(exponent)
+                let cardinalWord = spellOutFormatter.string(from: NSNumber(value: absExp)) ?? "\(absExp)"
+                return "ten to the minus \(cardinalWord)"
+            }
+        case .mathSpeakRigorous:
+            if exponent == 0 {
+                return "ten to the power zero"
+            } else if exponent == 1 {
+                return "ten"
+            } else if exponent >= 0 {
+                let cardinalWord = spellOutFormatter.string(from: NSNumber(value: exponent)) ?? "\(exponent)"
+                return "ten to the power \(cardinalWord)"
+            } else {
+                let absExp = abs(exponent)
+                let cardinalWord = spellOutFormatter.string(from: NSNumber(value: absExp)) ?? "\(absExp)"
+                return "ten to the negative \(cardinalWord) power"
+            }
+        }
+    }
+    
     public func vocalizeScientificNotation(_ text: String, style: MathSpeechStyle) -> String {
         var result = text
         
@@ -601,8 +672,24 @@ public class MathSpeechEngine: @unchecked Sendable {
             }
         }
         
-        // B. Explicit power of ten: 6.022 x 10^23, 1.5 * 10^-4, 3.0 × 10^8
-        let explicitPattern = #"(?<![a-zA-Z0-9_])([+-]?\d+(?:\.\d+)?)\s*(?:[x×*]|\*|\\times)\s*10\s*(?:\^|\*\*)\s*\{?([+-]?\d+)\}?(?![a-zA-Z0-9_])"#
+        // B. Mantissa with Unicode superscripts: 6.626 × 10⁻³⁴, 6.022 * 10²³, 5.670 x 10⁻⁸
+        let unicodePowerPattern = #"(?<![a-zA-Z0-9_])([+-]?\d+(?:\.\d+)?)\s*(?:[x×*]|\*|\\times|·|⋅)\s*10\s*([⁻⁺]?[⁰¹²³⁴⁵⁶⁷⁸⁹]+)(?![a-zA-Z0-9_⁰¹²³⁴⁵⁶⁷⁸⁹])"#
+        if let regex = regex(for: unicodePowerPattern) {
+            let nsString = result as NSString
+            let matches = regex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length))
+            for match in matches.reversed() {
+                guard match.numberOfRanges >= 3 else { continue }
+                let mantissa = nsString.substring(with: match.range(at: 1))
+                let exponentStr = nsString.substring(with: match.range(at: 2))
+                if let exp = Self.parseUnicodeSuperscriptToInt(exponentStr) {
+                    let spoken = spokenScientificForm(mantissa: mantissa, exponent: exp, style: style)
+                    result = (result as NSString).replacingCharacters(in: match.range, with: spoken)
+                }
+            }
+        }
+        
+        // C. Explicit power of ten: 6.022 x 10^23, 1.5 * 10^-4, 3.0 × 10^8
+        let explicitPattern = #"(?<![a-zA-Z0-9_])([+-]?\d+(?:\.\d+)?)\s*(?:[x×*]|\*|\\times|·|⋅)\s*10\s*(?:\^|\*\*)\s*\{?([+-]?\d+)\}?(?![a-zA-Z0-9_])"#
         if let regex = regex(for: explicitPattern) {
             let nsString = result as NSString
             let matches = regex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length))
@@ -617,6 +704,90 @@ public class MathSpeechEngine: @unchecked Sendable {
             }
         }
         
+        // D. Standalone 10 with Unicode superscripts: 10⁻³⁴, 10²³, 10⁻⁸, 10⁻¹²
+        let standaloneUnicodePattern = #"(?<![a-zA-Z0-9_])10\s*([⁻⁺][⁰¹²³⁴⁵⁶⁷⁸⁹]+|[⁰¹²³⁴⁵⁶⁷⁸⁹]{2,})(?![a-zA-Z0-9_⁰¹²³⁴⁵⁶⁷⁸⁹])"#
+        if let regex = regex(for: standaloneUnicodePattern) {
+            let nsString = result as NSString
+            let matches = regex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length))
+            for match in matches.reversed() {
+                guard match.numberOfRanges >= 2 else { continue }
+                let exponentStr = nsString.substring(with: match.range(at: 1))
+                if let exp = Self.parseUnicodeSuperscriptToInt(exponentStr) {
+                    let spoken = spokenPowerOfTen(exponent: exp, style: style)
+                    result = (result as NSString).replacingCharacters(in: match.range, with: spoken)
+                }
+            }
+        }
+        
+        // E. Standalone 10 with explicit caret: 10^5, 10^{-34}, 10^-4
+        let standaloneCaretPattern = #"(?<![a-zA-Z0-9_])10\s*(?:\^|\*\*)\s*\{?([+-]?\d+)\}?(?![a-zA-Z0-9_])"#
+        if let regex = regex(for: standaloneCaretPattern) {
+            let nsString = result as NSString
+            let matches = regex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length))
+            for match in matches.reversed() {
+                guard match.numberOfRanges >= 2 else { continue }
+                let exponentStr = nsString.substring(with: match.range(at: 1))
+                if let exp = Int(exponentStr) {
+                    let spoken = spokenPowerOfTen(exponent: exp, style: style)
+                    result = (result as NSString).replacingCharacters(in: match.range, with: spoken)
+                }
+            }
+        }
+        
+        return result
+    }
+    
+    // MARK: - 2b. General Unicode Superscripts
+    
+    public func vocalizeUnicodeSuperscripts(_ text: String, style: MathSpeechStyle) -> String {
+        var result = text
+        // Matches base variable/number followed by multi-character or negative superscript, e.g. x⁻², m⁻², K⁻⁴, x⁴, x⁵
+        let superPattern = #"([a-zA-Z0-9\)])\s*([⁻⁺][⁰¹²³⁴⁵⁶⁷⁸⁹]+|[⁰¹²³⁴⁵⁶⁷⁸⁹]+)(?![⁰¹²³⁴⁵⁶⁷⁸⁹])"#
+        if let regex = regex(for: superPattern) {
+            let nsString = result as NSString
+            let matches = regex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length))
+            for match in matches.reversed() {
+                guard match.numberOfRanges >= 3 else { continue }
+                let base = nsString.substring(with: match.range(at: 1))
+                let supStr = nsString.substring(with: match.range(at: 2))
+                guard let exp = Self.parseUnicodeSuperscriptToInt(supStr) else { continue }
+                
+                let spoken: String
+                switch style {
+                case .conversational:
+                    if exp == -1 {
+                        spoken = "\(base) inverse"
+                    } else if exp == 2 {
+                        spoken = "\(base) squared"
+                    } else if exp == 3 {
+                        spoken = "\(base) cubed"
+                    } else if exp > 0 {
+                        if let ord = ordinalPowers[exp] {
+                            spoken = "\(base) to the \(ord)"
+                        } else {
+                            let card = spellOutFormatter.string(from: NSNumber(value: exp)) ?? "\(exp)"
+                            spoken = "\(base) to the power of \(card)"
+                        }
+                    } else {
+                        let absExp = abs(exp)
+                        let card = spellOutFormatter.string(from: NSNumber(value: absExp)) ?? "\(absExp)"
+                        spoken = "\(base) to the minus \(card)"
+                    }
+                case .mathSpeakRigorous:
+                    if exp == -1 {
+                        spoken = "\(base) inverse"
+                    } else if exp >= 0 {
+                        let card = spellOutFormatter.string(from: NSNumber(value: exp)) ?? "\(exp)"
+                        spoken = "\(base) to the power \(card)"
+                    } else {
+                        let absExp = abs(exp)
+                        let card = spellOutFormatter.string(from: NSNumber(value: absExp)) ?? "\(absExp)"
+                        spoken = "\(base) to the negative \(card) power"
+                    }
+                }
+                result = (result as NSString).replacingCharacters(in: match.range, with: spoken)
+            }
+        }
         return result
     }
     
@@ -627,38 +798,8 @@ public class MathSpeechEngine: @unchecked Sendable {
         } else if mantissaSpoken.hasPrefix("+") {
             mantissaSpoken = String(mantissaSpoken.dropFirst())
         }
-        
-        switch style {
-        case .conversational:
-            if exponent == 0 {
-                return "\(mantissaSpoken) times ten to the power of zero"
-            } else if exponent > 0 {
-                if exponent == 2 {
-                    return "\(mantissaSpoken) times ten squared"
-                } else if exponent == 3 {
-                    return "\(mantissaSpoken) times ten cubed"
-                } else if let ordinal = ordinalPowers[exponent] {
-                    return "\(mantissaSpoken) times ten to the \(ordinal)"
-                } else {
-                    let cardinalWord = spellOutFormatter.string(from: NSNumber(value: exponent)) ?? "\(exponent)"
-                    return "\(mantissaSpoken) times ten to the power of \(cardinalWord)"
-                }
-            } else {
-                let absExp = abs(exponent)
-                let cardinalWord = spellOutFormatter.string(from: NSNumber(value: absExp)) ?? "\(absExp)"
-                return "\(mantissaSpoken) times ten to the minus \(cardinalWord)"
-            }
-            
-        case .mathSpeakRigorous:
-            if exponent >= 0 {
-                let cardinalWord = spellOutFormatter.string(from: NSNumber(value: exponent)) ?? "\(exponent)"
-                return "\(mantissaSpoken) times ten to the power \(cardinalWord)"
-            } else {
-                let absExp = abs(exponent)
-                let cardinalWord = spellOutFormatter.string(from: NSNumber(value: absExp)) ?? "\(absExp)"
-                return "\(mantissaSpoken) times ten to the negative \(cardinalWord) power"
-            }
-        }
+        let powerSpoken = spokenPowerOfTen(exponent: exponent, style: style)
+        return "\(mantissaSpoken) times \(powerSpoken)"
     }
     
     // MARK: - 3. SI Units and Prefixes
@@ -686,19 +827,18 @@ public class MathSpeechEngine: @unchecked Sendable {
         result = result.replacingOccurrences(of: #"\\text\{\s*V\s*\}"#, with: " volts", options: .regularExpression)
         result = result.replacingOccurrences(of: #"\\%"#, with: " percent", options: .regularExpression)
         
-        // 1. Compound units (e.g., km/h, m/s, m/s^2, m/s², kW·h, kWh)
+        // 1. Compound units (e.g., km/h, m/s, m/s^2, m/s², kW·h, kWh, J·s, J/K, W·m⁻²·K⁻⁴, F/m, mol⁻)
         let sortedCompounds = compoundUnits.sorted { $0.symbol.count > $1.symbol.count }
         for compound in sortedCompounds {
             let escaped = NSRegularExpression.escapedPattern(for: compound.symbol)
-            let pattern = #"(\b\d+(?:\.\d+)?)\s*"# + escaped + #"(?![a-zA-Z0-9/·^²³])"#
+            let pattern = #"(?:(?<=[\s\(\[\{:~≈=0-9⁰¹²³⁴⁵⁶⁷⁸⁹])|^)"# + escaped + #"(?![a-zA-Z0-9/·^²³⁻])"#
             if let regex = self.regex(for: pattern) {
                 let ns = result as NSString
                 let matches = regex.matches(in: result, options: [], range: NSRange(location: 0, length: ns.length))
                 if !matches.isEmpty {
                     let mutable = NSMutableString(string: result)
                     for match in matches.reversed() {
-                        let num = ns.substring(with: match.range(at: 1))
-                        mutable.replaceCharacters(in: match.range, with: "\(num) \(compound.spoken)")
+                        mutable.replaceCharacters(in: match.range, with: " \(compound.spoken) ")
                     }
                     result = mutable as String
                 }

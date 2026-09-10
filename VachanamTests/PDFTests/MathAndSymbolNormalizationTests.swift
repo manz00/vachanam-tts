@@ -52,7 +52,7 @@ final class MathAndSymbolNormalizationTests: XCTestCase {
     }
     
     func testMathOperators() {
-        let input = "∀ x ∈ S, ∃ y such that A ⊆ B and A ∩ B = ∅ while x ↦ y with xᵀ."
+        let input = "∀ x ∈ S, ∃ y such that A ⊆ B and A ∩ B = ∅ while x ↦ y with xᵀ. Also p < 0.05 and q > 10."
         let spoken = normalizer.normalizeForSpeech(input)
         XCTAssertTrue(spoken.contains("for all"), "Expected 'for all' in: \(spoken)")
         XCTAssertTrue(spoken.contains("there exists"), "Expected 'there exists' in: \(spoken)")
@@ -61,6 +61,8 @@ final class MathAndSymbolNormalizationTests: XCTestCase {
         XCTAssertTrue(spoken.contains("empty set"), "Expected 'empty set' in: \(spoken)")
         XCTAssertTrue(spoken.contains("maps to"), "Expected 'maps to' in: \(spoken)")
         XCTAssertTrue(spoken.contains("transpose"), "Expected 'transpose' in: \(spoken)")
+        XCTAssertTrue(spoken.contains("less than"), "Expected 'less than' for < in: \(spoken)")
+        XCTAssertTrue(spoken.contains("greater than"), "Expected 'greater than' for > in: \(spoken)")
     }
     
     func testVectorArrowNormalization() {
@@ -116,6 +118,17 @@ final class MathAndSymbolNormalizationTests: XCTestCase {
         let spoken4 = normalizer.normalizeForSpeech(input4)
         XCTAssertTrue(spoken4.contains("x hat"), "Expected 'x hat' in: \(spoken4)")
         XCTAssertTrue(spoken4.contains("y hat"), "Expected 'y hat' in: \(spoken4)")
+        
+        // Multi-digit superscripts & powers of ten (e.g. 10²³, 10⁻³⁴, 10⁻¹², x²³)
+        let input5 = "Avogadro's constant is 6.022 × 10²³ and Planck's constant has 10⁻³⁴ while x²³ + y⁻¹²."
+        let spoken5 = normalizer.normalizeForSpeech(input5)
+        XCTAssertTrue(spoken5.contains("ten to the power of twenty three"), "Expected 'ten to the power of twenty three' in: \(spoken5)")
+        XCTAssertFalse(spoken5.contains("squared cubed"), "Must never split 10²³ into squared cubed")
+        XCTAssertTrue(spoken5.contains("ten to the minus thirty four"), "Expected 'ten to the minus thirty four' in: \(spoken5)")
+        XCTAssertTrue(spoken5.contains("x to the power of twenty three"), "Expected 'x to the power of twenty three' in: \(spoken5)")
+        XCTAssertFalse(spoken5.contains("squared cubed"), "Must never split x²³ into squared cubed")
+        XCTAssertTrue(spoken5.contains("y to the minus twelve"), "Expected 'y to the minus twelve' in: \(spoken5)")
+        XCTAssertFalse(spoken5.contains("inverse squared"), "Must never split ⁻¹² into inverse squared")
     }
     
     func testSubscriptsAndMatrixDimensions() {

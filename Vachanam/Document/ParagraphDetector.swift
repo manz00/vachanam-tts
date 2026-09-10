@@ -362,22 +362,43 @@ public class ParagraphDetector {
                 continue
             }
             
+            // A line starting with a lowercase letter is a grammatical continuation of the preceding text
+            // and should never be broken into standalone page furniture.
+            let startsWithLowercase = trimmed.first?.isLowercase == true
+            
+            // Check if current line continues an incomplete sentence from the current block at normal line spacing
+            let isSentenceContinuation: Bool
+            if let previousLine = currentBlockLines.last {
+                let verticalGap = previousLine.bounds.minY - currentLine.bounds.maxY
+                let prevTrimmed = previousLine.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                let prevHasTerminalPunctuation = prevTrimmed.hasSuffix(".") || prevTrimmed.hasSuffix("?") || prevTrimmed.hasSuffix("!")
+                isSentenceContinuation = (verticalGap <= medianHeight * 1.8) && !prevHasTerminalPunctuation
+            } else {
+                isSentenceContinuation = false
+            }
+            
             // Check for page furniture (headers, footers, page numbers, captions, footnotes)
-            if let furnitureType = PageFurnitureDetector.shared.classifyLine(
+            if !startsWithLowercase, let furnitureType = PageFurnitureDetector.shared.classifyLine(
                 line: currentLine,
                 pageBounds: pageBounds,
                 analysis: analysis,
                 medianLineHeight: medianHeight
             ) {
-                flushCurrentBlock()
-                blocks.append(RawParagraph(
-                    lines: [currentLine],
-                    pageIndex: pageIndex,
-                    blockType: furnitureType,
-                    level: 1,
-                    marker: nil
-                ))
-                continue
+                // If this line is a continuation of an incomplete sentence from the current block at normal line spacing,
+                // it is narrative text and must not be broken into standalone page furniture.
+                if isSentenceContinuation && (furnitureType == .pageHeader || furnitureType == .pageFooter) {
+                    // Fall through to regular block accumulation
+                } else {
+                    flushCurrentBlock()
+                    blocks.append(RawParagraph(
+                        lines: [currentLine],
+                        pageIndex: pageIndex,
+                        blockType: furnitureType,
+                        level: 1,
+                        marker: nil
+                    ))
+                    continue
+                }
             }
             
             // Check for list item
@@ -511,6 +532,9 @@ public class ParagraphDetector {
     private func detectHeading(line: VisualLine, trimmedText: String, medianHeight: CGFloat) -> Int? {
         let wordCount = trimmedText.split(whereSeparator: { $0.isWhitespace }).count
         guard wordCount > 0 && wordCount <= 14 else { return nil }
+        
+        // Headings must contain at least one alphabetic character (reject pure matrix rows or numbers like "1 1 -1")
+        guard trimmedText.rangeOfCharacter(from: .letters) != nil else { return nil }
         
         // Headings must start with an uppercase letter, digit, or roman numeral
         guard let firstChar = trimmedText.first, firstChar.isLetter || firstChar.isNumber else { return nil }

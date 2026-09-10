@@ -100,7 +100,7 @@ public struct VachanamApp: App {
                 .keyboardShortcut(.upArrow, modifiers: [])
             }
             
-            CommandMenu("View") {
+            CommandGroup(after: .toolbar) {
                 Button("Zoom In") {
                     NotificationCenter.default.post(name: .readerZoomIn, object: nil)
                 }
@@ -137,6 +137,13 @@ public struct VachanamApp: App {
                     AccessibilityManager.shared.pdfDisplayLayout = .twoUpContinuous
                 }
                 .keyboardShortcut("4", modifiers: .command)
+                
+                Divider()
+                
+                Button("Developer Inspector...") {
+                    NotificationCenter.default.post(name: .openDeveloperInspector, object: nil)
+                }
+                .keyboardShortcut("d", modifiers: [.command, .option])
             }
             
             CommandMenu("Speech") {

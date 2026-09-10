@@ -132,6 +132,17 @@ extension UIView {
 }
 
 public class VachanamPDFView: PDFView {
+    var onFirstLayout: (() -> Void)?
+    private var hasLaidOut = false
+    
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        if !hasLaidOut && bounds.width > 0 && bounds.height > 0 {
+            hasLaidOut = true
+            onFirstLayout?()
+        }
+    }
+    
     public override var canBecomeFirstResponder: Bool {
         return true
     }
@@ -295,13 +306,18 @@ public struct PDFReaderView: UIViewRepresentable {
             object: pdfView
         )
         
-        context.coordinator.isProgrammaticScroll = true
-        if let page = document.page(at: currentPageIndex) {
-            pdfView.go(to: page)
-        }
-        context.coordinator.lastHandledPageIndex = currentPageIndex
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            context.coordinator.isProgrammaticScroll = false
+        pdfView.onFirstLayout = { [weak pdfView, weak coordinator = context.coordinator] in
+            guard let pdfView = pdfView, let coordinator = coordinator else { return }
+            let targetIndex = coordinator.parent.currentPageIndex
+            if let target = pdfView.document?.page(at: targetIndex) {
+                coordinator.isProgrammaticScroll = true
+                pdfView.go(to: target)
+                coordinator.lastHandledPageIndex = targetIndex
+                coordinator.updateHighlights()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    coordinator.isProgrammaticScroll = false
+                }
+            }
         }
         
         return pdfView
@@ -347,11 +363,18 @@ public struct PDFReaderView: UIViewRepresentable {
             if context.coordinator.lastHandledPageIndex != currentPageIndex {
                 // Programmatic page change from scrubber, keyboard shortcuts, buttons, TOC, or thumbnails.
                 context.coordinator.lastHandledPageIndex = currentPageIndex
-                if let target = document.page(at: currentPageIndex) {
-                    context.coordinator.isProgrammaticScroll = true
-                    uiView.go(to: target)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak coordinator = context.coordinator] in
-                        coordinator?.isProgrammaticScroll = false
+                context.coordinator.isProgrammaticScroll = true
+                let targetIndex = currentPageIndex
+                DispatchQueue.main.async { [weak uiView, weak coordinator = context.coordinator] in
+                    guard let uiView = uiView, let coordinator = coordinator else { return }
+                    if let target = uiView.document?.page(at: targetIndex) {
+                        uiView.go(to: target)
+                        coordinator.updateHighlights()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            coordinator.isProgrammaticScroll = false
+                        }
+                    } else {
+                        coordinator.isProgrammaticScroll = false
                     }
                 }
             }
@@ -537,7 +560,9 @@ public struct PDFReaderView: UIViewRepresentable {
                                         self.lastHandledPageIndex = s.pageIndex
                                         DispatchQueue.main.async {
                                             self.isProgrammaticScroll = false
-                                            self.parent.currentPageIndex = s.pageIndex
+                                            if self.parent.currentPageIndex != s.pageIndex {
+                                                self.parent.currentPageIndex = s.pageIndex
+                                            }
                                             PlaybackCoordinator.shared.setVisiblePageIndex(s.pageIndex)
                                         }
                                     }
@@ -565,7 +590,9 @@ public struct PDFReaderView: UIViewRepresentable {
                     pdfView.go(to: s.bounds, on: targetPage)
                     self.lastHandledPageIndex = s.pageIndex
                     DispatchQueue.main.async {
-                        self.parent.currentPageIndex = s.pageIndex
+                        if self.parent.currentPageIndex != s.pageIndex {
+                            self.parent.currentPageIndex = s.pageIndex
+                        }
                         PlaybackCoordinator.shared.setVisiblePageIndex(s.pageIndex)
                         PlaybackCoordinator.shared.isUserScrolledAway = false
                         self.updateHighlights()
@@ -637,12 +664,12 @@ public struct PDFReaderView: UIViewRepresentable {
             
             NotificationCenter.default.publisher(for: .readerPageDown)
                 .receive(on: RunLoop.main)
-                .sink { [weak self] _ in self?.handleNextPage() }
+                .sink { [weak self] _ in self?.handlePageDown() }
                 .store(in: &cancellables)
             
             NotificationCenter.default.publisher(for: .readerPageUp)
                 .receive(on: RunLoop.main)
-                .sink { [weak self] _ in self?.handlePreviousPage() }
+                .sink { [weak self] _ in self?.handlePageUp() }
                 .store(in: &cancellables)
             
             NotificationCenter.default.publisher(for: .readerZoomIn)
@@ -672,6 +699,7 @@ public struct PDFReaderView: UIViewRepresentable {
                         self.isProgrammaticScroll = true
                         self.pdfView?.go(to: targetPage)
                         self.lastHandledPageIndex = targetIndex
+                        self.updateHighlights()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                             self.isProgrammaticScroll = false
                         }
@@ -712,33 +740,51 @@ public struct PDFReaderView: UIViewRepresentable {
         
         func handleNextPage() {
             guard let pdfView = pdfView else { return }
-            if parent.layoutMode == .singlePage || parent.layoutMode == .twoUp {
-                if pdfView.canGoToNextPage {
-                    isProgrammaticScroll = true
-                    pdfView.goToNextPage(nil)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-                        self?.isProgrammaticScroll = false
-                    }
-                } else if parent.currentPageIndex < parent.document.pageCount - 1 {
-                    parent.currentPageIndex += 1
+            let nextIndex = min(parent.currentPageIndex + 1, parent.document.pageCount - 1)
+            guard nextIndex != parent.currentPageIndex else { return }
+            if let target = parent.document.page(at: nextIndex) {
+                isProgrammaticScroll = true
+                pdfView.go(to: target)
+                lastHandledPageIndex = nextIndex
+                parent.currentPageIndex = nextIndex
+                PlaybackCoordinator.shared.setVisiblePageIndex(nextIndex)
+                updateHighlights()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                    self?.isProgrammaticScroll = false
                 }
-            } else {
-                scrollBy(offset: pdfView.bounds.height * 0.85)
             }
         }
         
         func handlePreviousPage() {
             guard let pdfView = pdfView else { return }
-            if parent.layoutMode == .singlePage || parent.layoutMode == .twoUp {
-                if pdfView.canGoToPreviousPage {
-                    isProgrammaticScroll = true
-                    pdfView.goToPreviousPage(nil)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-                        self?.isProgrammaticScroll = false
-                    }
-                } else if parent.currentPageIndex > 0 {
-                    parent.currentPageIndex -= 1
+            let prevIndex = max(parent.currentPageIndex - 1, 0)
+            guard prevIndex != parent.currentPageIndex else { return }
+            if let target = parent.document.page(at: prevIndex) {
+                isProgrammaticScroll = true
+                pdfView.go(to: target)
+                lastHandledPageIndex = prevIndex
+                parent.currentPageIndex = prevIndex
+                PlaybackCoordinator.shared.setVisiblePageIndex(prevIndex)
+                updateHighlights()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                    self?.isProgrammaticScroll = false
                 }
+            }
+        }
+        
+        func handlePageDown() {
+            guard let pdfView = pdfView else { return }
+            if parent.layoutMode == .singlePage || parent.layoutMode == .twoUp {
+                handleNextPage()
+            } else {
+                scrollBy(offset: pdfView.bounds.height * 0.85)
+            }
+        }
+        
+        func handlePageUp() {
+            guard let pdfView = pdfView else { return }
+            if parent.layoutMode == .singlePage || parent.layoutMode == .twoUp {
+                handlePreviousPage()
             } else {
                 scrollBy(offset: -pdfView.bounds.height * 0.85)
             }
@@ -754,7 +800,9 @@ public struct PDFReaderView: UIViewRepresentable {
                         self?.isProgrammaticScroll = false
                     }
                 } else {
-                    parent.currentPageIndex = 0
+                    if parent.currentPageIndex != 0 {
+                        parent.currentPageIndex = 0
+                    }
                 }
             } else {
                 scrollToTop()
@@ -771,7 +819,10 @@ public struct PDFReaderView: UIViewRepresentable {
                         self?.isProgrammaticScroll = false
                     }
                 } else {
-                    parent.currentPageIndex = max(0, parent.document.pageCount - 1)
+                    let lastIdx = max(0, parent.document.pageCount - 1)
+                    if parent.currentPageIndex != lastIdx {
+                        parent.currentPageIndex = lastIdx
+                    }
                 }
             } else {
                 scrollToBottom()
@@ -841,7 +892,9 @@ public struct PDFReaderView: UIViewRepresentable {
                     guard let self = self else { return }
                     guard !self.isProgrammaticScroll else { return }
                     self.isHandlingPageChange = true
-                    self.parent.currentPageIndex = index
+                    if self.parent.currentPageIndex != index {
+                        self.parent.currentPageIndex = index
+                    }
                     PlaybackCoordinator.shared.setVisiblePageIndex(index)
                     self.updateHighlights()
                     self.isHandlingPageChange = false
@@ -871,7 +924,7 @@ public struct PDFReaderView: UIViewRepresentable {
             
             guard isHighlightActive, let currentSentence = sentence else {
                 overlay.clear()
-                if TTSController.shared.currentSentenceViewRect != nil {
+                if AccessibilityManager.shared.isReadingRulerEnabled && TTSController.shared.currentSentenceViewRect != nil {
                     DispatchQueue.main.async {
                         if TTSController.shared.currentSentenceViewRect != nil {
                             TTSController.shared.currentSentenceViewRect = nil
@@ -931,12 +984,16 @@ public struct PDFReaderView: UIViewRepresentable {
                 let firstLine = sentenceViewRects.first
                 if TTSController.shared.currentSentenceViewRect != firstLine {
                     DispatchQueue.main.async {
-                        TTSController.shared.currentSentenceViewRect = firstLine
+                        if TTSController.shared.currentSentenceViewRect != firstLine {
+                            TTSController.shared.currentSentenceViewRect = firstLine
+                        }
                     }
                 }
             } else if TTSController.shared.currentSentenceViewRect != nil {
                 DispatchQueue.main.async {
-                    TTSController.shared.currentSentenceViewRect = nil
+                    if TTSController.shared.currentSentenceViewRect != nil {
+                        TTSController.shared.currentSentenceViewRect = nil
+                    }
                 }
             }
             
