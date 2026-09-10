@@ -223,14 +223,19 @@ public struct PDFReaderView: UIViewRepresentable {
             uiView.usePageViewController(layoutMode.usesPageViewController)
             uiView.autoScales = true
             context.coordinator.attachScrollObserver()
+        } else if context.coordinator.scrollObserver == nil {
+            context.coordinator.attachScrollObserver()
         }
         
         let coord = PlaybackCoordinator.shared
         if context.coordinator.lastHandledPageIndex != currentPageIndex {
             let isUserInteracting = context.coordinator.isUserScrolling
             let isScrolledAwayDuringPlayback = coord.isPlaying && coord.isUserScrolledAway
+            let isContinuous = (layoutMode == .singlePageContinuous || layoutMode == .twoUpContinuous)
             
-            if !isUserInteracting && !isScrolledAwayDuringPlayback {
+            // In continuous scroll modes, smooth scrolling naturally transitions between pages.
+            // Only perform programmatic go(to: target) if NOT in a continuous layout mode.
+            if !isContinuous && !isUserInteracting && !isScrolledAwayDuringPlayback {
                 context.coordinator.lastHandledPageIndex = currentPageIndex
                 if let target = document.page(at: currentPageIndex) {
                     context.coordinator.isProgrammaticScroll = true
@@ -259,10 +264,11 @@ public struct PDFReaderView: UIViewRepresentable {
         weak var pdfView: PDFView?
         weak var overlayView: PDFHighlightOverlayView?
         private var cancellables = Set<AnyCancellable>()
-        private var scrollObserver: NSKeyValueObservation?
+        var scrollObserver: NSKeyValueObservation?
         
         var lastHandledPageIndex: Int = -1
         var isProgrammaticScroll: Bool = false
+        var lastUserScrollTime: Date = .distantPast
         
         var internalScrollView: UIScrollView? {
             guard let pdfView = pdfView else { return nil }
@@ -270,6 +276,9 @@ public struct PDFReaderView: UIViewRepresentable {
         }
         
         var isUserScrolling: Bool {
+            if Date().timeIntervalSince(lastUserScrollTime) < 0.6 {
+                return true
+            }
             guard let sv = internalScrollView else { return false }
             return sv.isDragging || sv.isTracking || sv.isDecelerating
         }
@@ -296,12 +305,17 @@ public struct PDFReaderView: UIViewRepresentable {
             
             guard let pdfView = pdfView else { return }
             if let scrollView = findScrollView(in: pdfView) {
+                #if targetEnvironment(macCatalyst)
+                scrollView.showsVerticalScrollIndicator = true
+                scrollView.showsHorizontalScrollIndicator = false
+                #endif
                 scrollObserver = scrollView.observe(\.contentOffset, options: [.new]) { [weak self] sv, _ in
                     guard let self = self else { return }
-                    self.updateHighlights()
                     if !self.isProgrammaticScroll {
+                        self.lastUserScrollTime = Date()
                         self.evaluateScrollAwayState(scrollView: sv)
                     }
+                    self.updateHighlights()
                 }
             }
         }

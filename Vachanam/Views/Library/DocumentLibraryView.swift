@@ -43,7 +43,17 @@ public struct DocumentLibraryView: View {
                                 .foregroundColor(.secondary)
                         }
                         
-                        Spacer()
+                        Button {
+                            openBenchmark()
+                        } label: {
+                            Label("Benchmark PDF", systemImage: "sparkles")
+                                .font(.headline)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(Color.amberAccent.opacity(0.20))
+                                .foregroundColor(Color.amberAccent)
+                                .cornerRadius(10)
+                        }
                         
                         Button {
                             isWebArticleImportPresented = true
@@ -91,16 +101,30 @@ public struct DocumentLibraryView: View {
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: 440)
                             
-                            Button {
-                                openBuiltinSample()
-                            } label: {
-                                Label("Open Sample Guide", systemImage: "book.fill")
-                                    .font(.headline)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color.tealAccent.opacity(0.25))
-                                    .foregroundColor(Color.tealAccent)
-                                    .cornerRadius(8)
+                            HStack(spacing: 12) {
+                                Button {
+                                    openBenchmark()
+                                } label: {
+                                    Label("Open Benchmark PDF", systemImage: "sparkles")
+                                        .font(.headline)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(Color.amberAccent)
+                                        .foregroundColor(.black)
+                                        .cornerRadius(8)
+                                }
+                                
+                                Button {
+                                    openBuiltinSample()
+                                } label: {
+                                    Label("Open Sample Guide", systemImage: "book.fill")
+                                        .font(.headline)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(Color.tealAccent.opacity(0.25))
+                                        .foregroundColor(Color.tealAccent)
+                                        .cornerRadius(8)
+                                }
                             }
                             .padding(.top, 8)
                         }
@@ -206,6 +230,7 @@ public struct DocumentLibraryView: View {
                 ModelManagerView()
             }
             .onAppear {
+                Self.ensureBenchmarkDocumentExists()
                 ensureGettingStartedGuideExists()
                 DispatchQueue.main.async {
                     reconcileHistoryPaths()
@@ -236,7 +261,12 @@ public struct DocumentLibraryView: View {
             return docURL
         }
         
-        // 2. If it's the Getting Started guide, regenerate in Documents directory
+        // 2. If it's the Benchmark document, resolve via ensureBenchmarkDocumentExists
+        if filename.contains("Benchmark") || record.title.contains("Benchmark") {
+            return Self.ensureBenchmarkDocumentExists()
+        }
+        
+        // 3. If it's the Getting Started guide, regenerate in Documents directory
         if filename.contains("Getting_Started") || record.title.contains("Getting_Started") || record.title.contains("Getting Started") {
             let guideURL = ensureGettingStartedGuideExists()
             return guideURL
@@ -335,6 +365,41 @@ public struct DocumentLibraryView: View {
         }
         
         return guideURL
+    }
+    
+    @discardableResult
+    public static func ensureBenchmarkDocumentExists() -> URL {
+        let filename = "The_Ultimate_Multi_Discipline_TTS_Benchmark.pdf"
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let destURL = docs.appendingPathComponent(filename)
+        
+        let bundleURL = Bundle.main.url(forResource: "The_Ultimate_Multi_Discipline_TTS_Benchmark", withExtension: "pdf", subdirectory: "Benchmark") ??
+                        Bundle.main.url(forResource: "The_Ultimate_Multi_Discipline_TTS_Benchmark", withExtension: "pdf")
+        let localRelPath = "Vachanam/Resources/Benchmark/\(filename)"
+        let srcURL = bundleURL ?? (FileManager.default.fileExists(atPath: localRelPath) ? URL(fileURLWithPath: localRelPath) : nil)
+        
+        if let src = srcURL {
+            let destAttrs = try? FileManager.default.attributesOfItem(atPath: destURL.path)
+            let srcAttrs = try? FileManager.default.attributesOfItem(atPath: src.path)
+            let destSize = destAttrs?[.size] as? UInt64 ?? 0
+            let srcSize = srcAttrs?[.size] as? UInt64 ?? 0
+            
+            if !FileManager.default.fileExists(atPath: destURL.path) || destSize != srcSize {
+                try? FileManager.default.removeItem(at: destURL)
+                try? FileManager.default.copyItem(at: src, to: destURL)
+            }
+            return FileManager.default.fileExists(atPath: destURL.path) ? destURL : src
+        }
+        
+        return destURL
+    }
+    
+    private func openBenchmark() {
+        let benchmarkURL = Self.ensureBenchmarkDocumentExists()
+        if let doc = ReaderDocument(url: benchmarkURL) {
+            progressTracker.recordProgress(documentURL: benchmarkURL, title: doc.title, currentPage: 0, totalPages: doc.pageCount)
+            onSelectDocument(doc)
+        }
     }
     
     private func openBuiltinSample() {

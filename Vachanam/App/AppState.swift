@@ -14,7 +14,19 @@ public class AppState: ObservableObject {
     @Published public var currentDocument: ReaderDocument?
     @Published public var selectedTab: String = "library"
     
-    public init() {}
+    public init() {
+        // Auto-load benchmark PDF on launch so user can immediately evaluate functioning
+        let benchmarkURL = DocumentLibraryView.ensureBenchmarkDocumentExists()
+        if let doc = ReaderDocument(url: benchmarkURL) {
+            self.currentDocument = doc
+            ReadingProgressTracker.shared.recordProgress(
+                documentURL: benchmarkURL,
+                title: doc.title,
+                currentPage: 0,
+                totalPages: doc.pageCount
+            )
+        }
+    }
     
     public func openDocument(_ document: ReaderDocument) {
         self.currentDocument = document

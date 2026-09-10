@@ -164,7 +164,7 @@ public class AccessibilityManager: ObservableObject {
         }
     }
     
-    @Published public var pdfDisplayLayout: PDFDisplayLayoutMode = .singlePage {
+    @Published public var pdfDisplayLayout: PDFDisplayLayoutMode = .singlePageContinuous {
         didSet {
             UserDefaults.standard.set(pdfDisplayLayout.rawValue, forKey: "pdfDisplayLayout")
         }
@@ -226,6 +226,8 @@ public class AccessibilityManager: ObservableObject {
         if let layoutStr = UserDefaults.standard.string(forKey: "pdfDisplayLayout"),
            let layout = PDFDisplayLayoutMode(rawValue: layoutStr) {
             self.pdfDisplayLayout = layout
+        } else {
+            self.pdfDisplayLayout = .singlePageContinuous
         }
         if let mathStr = UserDefaults.standard.string(forKey: "mathSpeechStyle"),
            let style = MathSpeechStyle(rawValue: mathStr) {

@@ -83,10 +83,14 @@ public struct TextNormalizer {
         
         var result = normalize(text)
         
-        // 0. LaTeX Macros, Scientific Exponential Notation, and SI Units
+        // 0. LaTeX Matrices, Delimiters, SI Units, Macros, and Scientific Exponential Notation
+        result = MathSpeechEngine.shared.vocalizeMatrices(result, style: mathStyle)
+        // Strip display math delimiters $$ and single $ (excluding \$ and currency amounts $50)
+        result = result.replacingOccurrences(of: #"\$\$"#, with: " ", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"(?<!\\)\$(?!\d|\$)"#, with: "", options: .regularExpression)
+        result = MathSpeechEngine.shared.vocalizeSIUnits(result)
         result = MathSpeechEngine.shared.translateLatexMacros(result, style: mathStyle)
         result = MathSpeechEngine.shared.vocalizeScientificNotation(result, style: mathStyle)
-        result = MathSpeechEngine.shared.vocalizeSIUnits(result)
         
         // 1. URLs and DOIs for natural audio narration (must run before hyphen/dash replacements)
         // DOIs: doi:10.1000/182 -> publication link
@@ -143,31 +147,36 @@ public struct TextNormalizer {
             options: .regularExpression
         )
         
-        // Currencies: $100 -> 100 dollars, €50 -> 50 euros, etc.
+        // Currencies: $100 -> 100 dollars, $4,500 -> 4,500 dollars, €50 -> 50 euros, etc.
         result = result.replacingOccurrences(
-            of: #"\$(\d+(?:\.\d{1,2})?)\b"#,
+            of: #"\$(\d+(?:,\d+)*(?:\.\d{1,2})?)\b"#,
             with: "$1 dollars",
             options: .regularExpression
         )
         result = result.replacingOccurrences(
-            of: #"€(\d+(?:\.\d{1,2})?)\b"#,
+            of: #"€(\d+(?:,\d+)*(?:\.\d{1,2})?)\b"#,
             with: "$1 euros",
             options: .regularExpression
         )
         result = result.replacingOccurrences(
-            of: #"£(\d+(?:\.\d{1,2})?)\b"#,
+            of: #"£(\d+(?:,\d+)*(?:\.\d{1,2})?)\b"#,
             with: "$1 pounds",
             options: .regularExpression
         )
         result = result.replacingOccurrences(
-            of: #"¥(\d+)\b"#,
+            of: #"¥(\d+(?:,\d+)*)\b"#,
             with: "$1 yen",
             options: .regularExpression
         )
-        
-        // Percentages: 25% -> 25 percent
         result = result.replacingOccurrences(
-            of: #"(\d+(?:\.\d+)?)\s*%"#,
+            of: #"₹(\d+(?:,\d+)*(?:\.\d{1,2})?)\b"#,
+            with: "$1 rupees",
+            options: .regularExpression
+        )
+        
+        // Percentages: 25% or 25\% -> 25 percent
+        result = result.replacingOccurrences(
+            of: #"(\d+(?:\.\d+)?)\s*\\?%"#,
             with: "$1 percent",
             options: .regularExpression
         )
@@ -339,9 +348,9 @@ public struct TextNormalizer {
         result = result.replacingOccurrences(of: "([a-zA-Z])[\\u0304\\u0305\\u00AF]", with: "$1 bar", options: .regularExpression)
         // Tildes: x̃ -> x tilde
         result = result.replacingOccurrences(of: "([a-zA-Z])[\\u0303\\u02DC]", with: "$1 tilde", options: .regularExpression)
-        // Primes: x' -> x prime, x'' -> x double prime
-        result = result.replacingOccurrences(of: #"([a-zA-Z0-9])(?:′′|'')\b"#, with: "$1 double prime", options: .regularExpression)
-        result = result.replacingOccurrences(of: #"([a-zA-Z0-9])(?:′|')\b"#, with: "$1 prime", options: .regularExpression)
+        // Primes: x' -> x prime, x'' -> x double prime (excluding contractions like didn't, couldn't, o'clock, user's)
+        result = result.replacingOccurrences(of: #"([a-zA-Z0-9])(?:′′|'')(?!['a-zA-Z])"#, with: "$1 double prime", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"([a-zA-Z0-9])(?:′|')(?!['a-zA-Z])"#, with: "$1 prime", options: .regularExpression)
         // Star / optimum: x* -> x star, θ* -> theta star
         result = result.replacingOccurrences(of: #"\b([a-zA-Zα-ωΑ-Ω])\*(?!\*)"#, with: "$1 star", options: .regularExpression)
         
@@ -608,6 +617,24 @@ public struct TextNormalizer {
             with: "Number $1",
             options: [.caseInsensitive, .regularExpression]
         )
+        
+        // Honorific titles before capital names (prevents awkward sentence splitting on Dr. Vance, Dr. Alistair)
+        result = result.replacingOccurrences(of: #"\bDr\.\s+(?=[A-Z])"#, with: "Doctor ", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\bProf\.\s+(?=[A-Z])"#, with: "Professor ", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\bInsp\.\s+(?=[A-Z])"#, with: "Inspector ", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\bSgt\.\s+(?=[A-Z])"#, with: "Sergeant ", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\bMr\.\s+(?=[A-Z])"#, with: "Mister ", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\bMrs\.\s+(?=[A-Z])"#, with: "Missus ", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\bMs\.\s+(?=[A-Z])"#, with: "Miz ", options: .regularExpression)
+        
+        // Scholarly Latin & Section markers
+        result = result.replacingOccurrences(of: #"\bibid\.,?\s*"#, with: "in the same place, ", options: [.caseInsensitive, .regularExpression])
+        result = result.replacingOccurrences(of: #"\bop\.\s*cit\.,?\s*"#, with: "in the work cited, ", options: [.caseInsensitive, .regularExpression])
+        result = result.replacingOccurrences(of: #"\bcf\.\s*"#, with: "compare with ", options: [.caseInsensitive, .regularExpression])
+        result = result.replacingOccurrences(of: #"\bviz\.,?\s*"#, with: "namely, ", options: [.caseInsensitive, .regularExpression])
+        result = result.replacingOccurrences(of: #"\bq\.v\.,?\s*"#, with: "which see, ", options: [.caseInsensitive, .regularExpression])
+        result = result.replacingOccurrences(of: #"§\s*([0-9]+(?:\.[0-9]+)*)"#, with: "section $1", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"¶\s*([0-9]+)"#, with: "paragraph $1", options: .regularExpression)
         
         // Clean any resulting consecutive spaces
         result = result.replacingOccurrences(of: "[ ]{2,}", with: " ", options: .regularExpression)

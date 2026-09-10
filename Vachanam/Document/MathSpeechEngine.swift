@@ -453,6 +453,106 @@ public class MathSpeechEngine: @unchecked Sendable {
         return TextNormalizer.shared.normalizeForSpeech(text, mathStyle: style)
     }
     
+    // MARK: - 0. LaTeX Matrices & Linear Algebra Environments
+    
+    public func vocalizeMatrices(_ text: String, style: MathSpeechStyle) -> String {
+        guard text.contains("\\begin{") else { return text }
+        let pattern = #"\\begin\{(matrix|pmatrix|bmatrix|vmatrix|Vmatrix)\}([\s\S]*?)\\end\{\1\}"#
+        guard let regex = regex(for: pattern) else { return text }
+        
+        let nsString = text as NSString
+        let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
+        guard !matches.isEmpty else { return text }
+        
+        let mutable = NSMutableString(string: text)
+        for match in matches.reversed() {
+            let envType = nsString.substring(with: match.range(at: 1))
+            let content = nsString.substring(with: match.range(at: 2))
+            
+            // Split into rows by \\ (ignoring optional dimensions like \\[4pt])
+            let rawRows = content.components(separatedBy: "\\\\")
+            let rows = rawRows.map { row -> [String] in
+                var cleanedRow = row
+                // Strip bracket arguments like [6pt]
+                cleanedRow = cleanedRow.replacingOccurrences(of: #"^\[[^\]]*\]"#, with: "", options: .regularExpression)
+                return cleanedRow.components(separatedBy: "&").map { cell in
+                    var c = cell.trimmingCharacters(in: .whitespacesAndNewlines)
+                    // Normalize intra-cell ellipses
+                    c = c.replacingOccurrences(of: #"\\dots|\\cdots|\\ldots"#, with: "...", options: .regularExpression)
+                    c = c.replacingOccurrences(of: #"\\vdots"#, with: "vertical ellipsis", options: .regularExpression)
+                    c = c.replacingOccurrences(of: #"\\ddots"#, with: "diagonal ellipsis", options: .regularExpression)
+                    return c
+                }.filter { !$0.isEmpty }
+            }.filter { !$0.isEmpty }
+            
+            guard !rows.isEmpty else { continue }
+            let rowCount = rows.count
+            let colCount = rows.first?.count ?? 0
+            
+            let isDeterminant = (envType == "vmatrix")
+            let isVector = (colCount == 1 && rowCount > 1)
+            let isRowVector = (rowCount == 1 && colCount > 1)
+            
+            let spoken: String
+            switch style {
+            case .conversational:
+                if isDeterminant {
+                    var parts: [String] = ["determinant of \(rowCount) by \(colCount) matrix:"]
+                    for (rIdx, r) in rows.enumerated() {
+                        parts.append("row \(rIdx + 1): \(r.joined(separator: ", "))")
+                    }
+                    spoken = parts.joined(separator: "; ")
+                } else if isVector {
+                    let elements = rows.flatMap { $0 }.joined(separator: ", ")
+                    spoken = "column vector with elements: \(elements)"
+                } else if isRowVector {
+                    let elements = rows.first?.joined(separator: ", ") ?? ""
+                    spoken = "row vector with elements: \(elements)"
+                } else {
+                    var parts: [String] = ["\(rowCount) by \(colCount) matrix:"]
+                    for (rIdx, r) in rows.enumerated() {
+                        parts.append("row \(rIdx + 1): \(r.joined(separator: ", "))")
+                    }
+                    spoken = parts.joined(separator: "; ")
+                }
+                
+            case .mathSpeakRigorous:
+                if isDeterminant {
+                    var parts: [String] = ["start determinant, \(rowCount) by \(colCount)"]
+                    for (rIdx, r) in rows.enumerated() {
+                        for (cIdx, cell) in r.enumerated() {
+                            parts.append("row \(rIdx + 1), column \(cIdx + 1), \(cell)")
+                        }
+                    }
+                    parts.append("end determinant")
+                    spoken = parts.joined(separator: ", ")
+                } else if isVector {
+                    var parts: [String] = ["start column vector of dimension \(rowCount)"]
+                    for (rIdx, r) in rows.enumerated() {
+                        if let cell = r.first {
+                            parts.append("row \(rIdx + 1), \(cell)")
+                        }
+                    }
+                    parts.append("end column vector")
+                    spoken = parts.joined(separator: ", ")
+                } else {
+                    var parts: [String] = ["start matrix, \(rowCount) by \(colCount)"]
+                    for (rIdx, r) in rows.enumerated() {
+                        for (cIdx, cell) in r.enumerated() {
+                            parts.append("row \(rIdx + 1), column \(cIdx + 1), \(cell)")
+                        }
+                    }
+                    parts.append("end matrix")
+                    spoken = parts.joined(separator: ", ")
+                }
+            }
+            
+            mutable.replaceCharacters(in: match.range, with: " \(spoken) ")
+        }
+        
+        return mutable as String
+    }
+    
     // MARK: - 1. LaTeX Macros
     
     public func translateLatexMacros(_ text: String, style: MathSpeechStyle) -> String {
@@ -565,6 +665,26 @@ public class MathSpeechEngine: @unchecked Sendable {
     
     public func vocalizeSIUnits(_ text: String) -> String {
         var result = text
+        
+        // 0. LaTeX Math Mode SI Units & Temperatures: e.g. 21.5^\circ\text{C}, \text{ mol}^{-1}, \text{ kPa}
+        result = result.replacingOccurrences(of: #"\^?\\circ\s*\\text\{C\}"#, with: " degrees Celsius", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\^?\\circ\s*\\text\{F\}"#, with: " degrees Fahrenheit", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*mol\s*\}\s*\^\{?-?1\}?|\\text\{\s*mol\s*\^\{?-?1\}?\}"#, with: " per mole", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*m/s\s*\}\s*\^\{?2\}?|\\text\{\s*m/s\s*\^\{?2\}?\}"#, with: " meters per second squared", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*m/s\s*\}"#, with: " meters per second", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*rpm\s*\}"#, with: " revolutions per minute", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*min\s*\}"#, with: " minutes", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*kPa\s*\}"#, with: " kilopascals", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*GHz\s*\}"#, with: " gigahertz", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*mA\s*\}"#, with: " milliamperes", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*mg\s*\}"#, with: " milligrams", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*mL\s*\}"#, with: " milliliters", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*nm\s*\}"#, with: " nanometers", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*ms\s*\}"#, with: " milliseconds", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*dB\s*\}"#, with: " decibels", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*C\s*\}"#, with: " coulombs", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\text\{\s*V\s*\}"#, with: " volts", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\\%"#, with: " percent", options: .regularExpression)
         
         // 1. Compound units (e.g., km/h, m/s, m/s^2, m/s², kW·h, kWh)
         let sortedCompounds = compoundUnits.sorted { $0.symbol.count > $1.symbol.count }

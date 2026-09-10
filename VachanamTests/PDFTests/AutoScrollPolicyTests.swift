@@ -17,11 +17,13 @@ final class AutoScrollPolicyTests: XCTestCase {
         super.setUp()
         UserDefaults.standard.removeObject(forKey: "autoScrollFollowMode")
         UserDefaults.standard.removeObject(forKey: "isAutoScrollEnabled")
+        UserDefaults.standard.removeObject(forKey: "pdfDisplayLayout")
     }
     
     override func tearDown() {
         UserDefaults.standard.removeObject(forKey: "autoScrollFollowMode")
         UserDefaults.standard.removeObject(forKey: "isAutoScrollEnabled")
+        UserDefaults.standard.removeObject(forKey: "pdfDisplayLayout")
         super.tearDown()
     }
     
@@ -120,5 +122,34 @@ final class AutoScrollPolicyTests: XCTestCase {
         XCTAssertFalse(coord.isUserScrolledAway, "Resume action must unpause auto-scroll by resetting isUserScrolledAway")
         
         NotificationCenter.default.removeObserver(token)
+    }
+    
+    func testDefaultDisplayLayoutModeIsContinuous() {
+        let manager = AccessibilityManager()
+        XCTAssertEqual(manager.pdfDisplayLayout, .singlePageContinuous, "Default layout mode should be singlePageContinuous to enable vertical scrolling")
+        XCTAssertFalse(manager.pdfDisplayLayout.usesPageViewController, "Continuous layout should not use page view controller")
+    }
+    
+    func testCoordinatorUserScrollDetection() {
+        let sampleDoc = PDFDocument()
+        let samplePage = PDFPage()
+        sampleDoc.insert(samplePage, at: 0)
+        let data = sampleDoc.dataRepresentation() ?? Data()
+        guard let readerDoc = ReaderDocument(data: data, title: "Test Doc") else {
+            XCTFail("Failed to initialize ReaderDocument from PDF data")
+            return
+        }
+        let reader = PDFReaderView(document: readerDoc, currentPageIndex: .constant(0))
+        let coordinator = reader.makeCoordinator()
+        
+        XCTAssertFalse(coordinator.isUserScrolling, "Initial user scrolling state should be false")
+        
+        // Simulating recent user scroll (e.g. trackpad / mouse wheel delta on Catalyst)
+        coordinator.lastUserScrollTime = Date()
+        XCTAssertTrue(coordinator.isUserScrolling, "Recent lastUserScrollTime must report isUserScrolling = true")
+        
+        // Simulating elapsed time beyond 0.6s threshold
+        coordinator.lastUserScrollTime = Date().addingTimeInterval(-1.0)
+        XCTAssertFalse(coordinator.isUserScrolling, "Expired lastUserScrollTime should return isUserScrolling = false")
     }
 }

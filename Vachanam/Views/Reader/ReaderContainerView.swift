@@ -62,6 +62,7 @@ public struct ReaderContainerView: View {
                                 strokeColor: strokeColor,
                                 strokeWidth: strokeWidth
                             )
+                            .allowsHitTesting(activeAnnotationTool == .shape)
                             
                             CanvasOverlay(
                                 pageIndex: currentPageIndex,
@@ -70,6 +71,7 @@ public struct ReaderContainerView: View {
                                 strokeColor: strokeColor,
                                 strokeWidth: strokeWidth
                             )
+                            .allowsHitTesting(activeAnnotationTool == .pen || activeAnnotationTool == .highlighter || activeAnnotationTool == .eraser)
                             
                             // Sticky Notes for current page
                             ForEach($annotationManager.stickyNotes.filter { $0.wrappedValue.pageIndex == currentPageIndex }) { $note in

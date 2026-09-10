@@ -119,11 +119,26 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
     - Roots: `\sqrt{x}` $\to$ `square root of x`, `\sqrt[3]{8}` $\to$ `the 3rd root of 8`.
     - Sums & Integrals: `\sum_{i=1}^{n}` $\to$ `sum from i=1 to n of`, `\int_{a}^{b}` $\to$ `integral from a to b of`.
     - Typographic delimiters: `\left(`, `\right)`, `\left[`, `\right]`, `\left\{`, `\right\}` normalized cleanly.
+  - **Matrix, Determinant & Vector Vocalization (`MathSpeechEngine.vocalizeMatrices`)**:
+    - **Explicit LaTeX Matrices (`bmatrix`, `pmatrix`, `matrix`)**: Converts multi-dimensional arrays into natural speech describing matrix dimensions and rows:
+      - Conversational: `2 by 2 matrix with rows: row 1, 1, 2; row 2, 3, 4`.
+      - MathSpeak Rigorous: `start 2 by 2 matrix, row 1, column 1, 1, column 2, 2, row 2, column 1, 3, column 2, 4, end matrix`.
+    - **Determinants (`vmatrix`)**: Recognizes absolute vertical bar delimiter matrices as determinants: `determinant of a 2 by 2 matrix with rows: row 1, a, b; row 2, c, d`.
+    - **Column & Row Vectors**: Distinct phrasing for single-column arrays: `column vector with elements x sub 1, x sub 2, x sub 3`.
   - **User-Configurable Speech Styles (`MathSpeechStyle`)**:
     - **Conversational** (Default): Optimized for natural audio flow and audiobook listening (e.g., `1 over 2`, `5 nanometers`, `x squared`).
     - **MathSpeak Rigorous**: Adheres strictly to international academic screen-reader standards for visually impaired mathematicians (e.g., `start fraction, 1, divided by, 2, end fraction`, `capital Delta`, `element of`, `universal quantifier, for all`).
     - Configurable in **Reading Settings** with instant persistence.
   - **Full Pronunciation Override Integration**: Respects user-defined rules in `PronunciationManager` / `FixPronunciationSheet`, allowing personalized phonetic overrides to take precedence over default math vocalizations.
+- **📚 The Ultimate Multi-Discipline TTS Benchmark Document (`The_Ultimate_Multi_Discipline_TTS_Benchmark.pdf`)**:
+  - Bundled directly inside the application bundle (`Vachanam/Resources/Benchmark/The_Ultimate_Multi_Discipline_TTS_Benchmark.pdf`) and automatically ingested into the reader library on launch (`AppState.shared.currentDocument`) for instantaneous testing.
+  - Dedicated **"Benchmark PDF"** button in the Document Library toolbar and empty state.
+  - An exhaustive, 4-page high-fidelity vector PDF specifically crafted to stress-test neural TTS prosody, math vocalization, scientific metrics, and normalization across four distinct disciplines with publication-quality typography (clean mathematical symbols, matrices, determinants, and units without unrendered LaTeX artifacts):
+    - **Section 1: The Novel (Dialogue, Punctuation & Prosody)**: Suspense mystery fiction assessing dialogue cadence, em-dashes (`—`), elliptical pauses (`...`), interjections (`Crash!`), honorific titles (`Dr. Alistair`, `Insp. Clara Vance`), and natural contraction vocalization (`didn't`, `couldn't`).
+    - **Section 2: Pure Mathematics & Formal Notation**: Linear algebra and multivariable calculus formatted with publication-quality mathematical notation: explicit matrices (`[ 3 -1 ; 2 4 ]`), determinants (`det(A) = | 3 -1 ; 2 4 | = 14 ≠ 0`), column vectors (`x⃗ = [x₁, x₂, ⋮, xₙ]ᵀ ∈ ℝⁿ`), Singular Value Decomposition (`A = U Σ Vᵀ = ∑ σᵢ u⃗ᵢ v⃗ᵢᵀ`), Frobenius norms (`‖A‖_F`), tensor Kronecker products (`A ⊗ B`), direct sums (`V ⊕ W`), and Stokes' theorem (`∮ F⃗ · dr⃗ = ∬ (∇ × F⃗) · dS⃗`).
+    - **Section 3: Empirical Science, SI Units & Measurements**: Physical chemistry and experimental physics assessing fundamental constants ($h, \hbar, k_B, \sigma, \varepsilon_0, N_A, e, c, g$), ultracentrifugation protocols ($14,000\text{ rpm}$, $250\text{ mg}$, $15.5\text{ mL}$, $50\text{ \mu L}$, $0.25\text{ M}$, $15\text{ mM}$), cryogenic temperatures ($-196^\circ\text{C}$), and high-frequency microwave electronics ($2.4\text{ GHz}$, $50\text{ \Omega}$, $100\text{ ms}$).
+    - **Section 4: Academic Prose, Citations & Normalization**: Peer-reviewed linguistics and acoustic modeling assessing parenthetical citations (`Vaswani et al., 2017`, `Radford & colleagues, ca. 2022`), Latin scholarly apparatus (`ibid.`, `op. cit.`, `cf.`, `viz.`, `q.v.`), legal section symbols (`§ 2.1`, `¶ 3`), DOIs, arXiv URLs, statistical significance ($p < 0.001$), multi-currency acquisitions (`$4,500`, `€3,200`, `£1,850`, `¥250,000`, `₹75,000`), and fractional portions (`¾`, `⅞`).
+  - **Dynamic Sandbox Cache Invalidation**: `DocumentLibraryView.ensureBenchmarkDocumentExists()` automatically detects bundle/resource size differences and refreshes the sandbox documents directory copy, preventing stale builds from lingering in the user's active document cache.
 - **📑 Paragraph Integrity & Run-In Heading Segmentation (`ParagraphDetector`)**:
   - **Tight LaTeX Indentation Detection**: Academic textbooks formatted with Computer Modern LaTeX often employ `\parindent \approx 10\text{pt}` and `\parskip = 0`. Uses content column left-margin anchoring (`currentLine.minX >= baseMargin + 5.0pt`) combined with short terminal previous lines (`previousLine.maxX < columnMaxX - 25.0pt`) and terminal punctuation (`.`, `?`, `!`, `:`) to reliably segment consecutive paragraphs without collapsing entire pages.
   - **Displayed Math & Equation Continuation Protection**: Displayed equations, indented formula lines, superscripts (`−1`, `T`, `⊤`), and continuation lines (e.g. starting with `+`, `−`, `=`, `,`, `where`, `with`, `and`) are recognized as integral parts of their enclosing sentences. They are protected from premature paragraph breaks despite LaTeX vertical display gaps, preventing mathematical text from shattering into isolated 1-word fragments.
@@ -164,9 +179,14 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
 - **Dual Reading Modes**:
   - **Original PDF Layout**: Native PDFKit rendering with interactive overlays.
   - **Reader View Mode**: Re-rendered typography with custom fonts, line heights, and margins.
+- **Continuous Scroll Architecture & Non-Blocking Interaction (`PDFReaderView` & `ReadingRuler`)**:
+  - **Default Continuous Vertical Layout**: Configured `.singlePageContinuous` as the out-of-the-box layout mode (`AccessibilityManager.pdfDisplayLayout`), providing seamless multi-page vertical scrolling across the entire document without page boundaries locking or snapping.
+  - **Pass-Through Reading Ruler Dimmers**: Top and bottom dimmer backdrops in `ReadingRuler` use `.allowsHitTesting(false)` so they function purely as visual contrast guides without intercepting or swallowing mouse wheel ticks, trackpad gestures, or touch scrolls on the document beneath.
+  - **Mac Catalyst Trackpad & Wheel Scroll Detection**: Tracks high-resolution `lastUserScrollTime` deltas via `UIScrollView.contentOffset` key-value observations, guaranteeing that discrete wheel events on macOS Catalyst accurately register `isUserScrolling = true` (overcoming UIKit Catalyst's limitation where `isDragging` remains false during mouse wheel scrolling), completely preventing unwanted snap-backs.
+  - **Modal Annotation Layer Isolation**: `ShapeToolView` and `CanvasOverlay` strictly isolate touch reception via `.allowsHitTesting(activeAnnotationTool == ...)`, ensuring drawing canvases never block underlying document scrolling when inactive.
 - **Accessibility Suite**:
   - **OpenDyslexic Typography**: Integrated font support with weighted baselines.
-  - **Reading Ruler**: Adjustable tinted guide bar with customizable height and opacity.
+  - **Reading Ruler**: Adjustable tinted guide bar with customizable height, opacity, and drag handle.
   - **Theme Presets**: Cream (`#FBF0D9`), Sepia (`#F4ECD8`), Dark Slate (`#151D2A`), OLED Black (`#000000`), and Pure White.
   - **High Contrast**: WCAG AAA-compliant high-contrast mode.
 - **Full Annotations Engine**:

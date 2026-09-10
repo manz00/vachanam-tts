@@ -63,6 +63,9 @@ def create_project():
     math_maps_uuid = generate_uuid()
     math_maps_b_uuid = generate_uuid()
     
+    benchmark_uuid = generate_uuid()
+    benchmark_b_uuid = generate_uuid()
+    
     spm_pkg_ref_uuid = generate_uuid()
     spm_kokorotts_dep_uuid = generate_uuid()
     spm_kokorotts_build_file_uuid = generate_uuid()
@@ -147,6 +150,7 @@ def create_project():
     pbx.append(f"\t\t{kokoro_models_b_uuid} /* KokoroModels in Resources */ = {{isa = PBXBuildFile; fileRef = {kokoro_models_uuid} /* KokoroModels */; }};")
     pbx.append(f"\t\t{soundscapes_b_uuid} /* Soundscapes in Resources */ = {{isa = PBXBuildFile; fileRef = {soundscapes_uuid} /* Soundscapes */; }};")
     pbx.append(f"\t\t{math_maps_b_uuid} /* MathMaps in Resources */ = {{isa = PBXBuildFile; fileRef = {math_maps_uuid} /* MathMaps */; }};")
+    pbx.append(f"\t\t{benchmark_b_uuid} /* Benchmark in Resources */ = {{isa = PBXBuildFile; fileRef = {benchmark_uuid} /* Benchmark */; }};")
     pbx.append("/* End PBXBuildFile section */")
     pbx.append("")
     
@@ -204,6 +208,7 @@ def create_project():
     pbx.append(f"\t\t{kokoro_models_uuid} /* KokoroModels */ = {{isa = PBXFileReference; lastKnownFileType = folder; path = \"Vachanam/Resources/KokoroModels\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{soundscapes_uuid} /* Soundscapes */ = {{isa = PBXFileReference; lastKnownFileType = folder; path = \"Vachanam/Resources/Soundscapes\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{math_maps_uuid} /* MathMaps */ = {{isa = PBXFileReference; lastKnownFileType = folder; path = \"Vachanam/Resources/MathMaps\"; sourceTree = \"<group>\"; }};")
+    pbx.append(f"\t\t{benchmark_uuid} /* Benchmark */ = {{isa = PBXFileReference; lastKnownFileType = folder; path = \"Vachanam/Resources/Benchmark\"; sourceTree = \"<group>\"; }};")
     pbx.append("/* End PBXFileReference section */")
     pbx.append("")
     
@@ -263,6 +268,7 @@ def create_project():
     pbx.append(f"\t\t\t\t{kokoro_models_uuid} /* KokoroModels */,")
     pbx.append(f"\t\t\t\t{soundscapes_uuid} /* Soundscapes */,")
     pbx.append(f"\t\t\t\t{math_maps_uuid} /* MathMaps */,")
+    pbx.append(f"\t\t\t\t{benchmark_uuid} /* Benchmark */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\tpath = \".\";")
     pbx.append("\t\t\tsourceTree = \"<group>\";")
@@ -443,6 +449,7 @@ def create_project():
     pbx.append(f"\t\t\t\t{kokoro_models_b_uuid} /* KokoroModels in Resources */,")
     pbx.append(f"\t\t\t\t{soundscapes_b_uuid} /* Soundscapes in Resources */,")
     pbx.append(f"\t\t\t\t{math_maps_b_uuid} /* MathMaps in Resources */,")
+    pbx.append(f"\t\t\t\t{benchmark_b_uuid} /* Benchmark in Resources */,")
     pbx.append("\t\t\t);")
     pbx.append("\t\t\trunOnlyForDeploymentPostprocessing = 0;")
     pbx.append("\t\t};")

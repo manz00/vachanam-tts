@@ -1,6 +1,6 @@
 {
   "system": "Academic LaTeX Macro Vocalization",
-  "version": "1.0",
+  "version": "2.0",
   "macro_rules": [
     {
       "pattern": "\\\\frac\\{([^\\{\\}]+)\\}\\{([^\\{\\}]+)\\}",
@@ -48,14 +48,69 @@
       "mathspeak": "integral from $1 to $2 of"
     },
     {
+      "pattern": "\\\\iint_\\{([^\\}]+)\\}",
+      "conversational": "double integral over $1 of",
+      "mathspeak": "double integral over $1 of"
+    },
+    {
+      "pattern": "\\\\iint",
+      "conversational": "double integral of",
+      "mathspeak": "double integral"
+    },
+    {
+      "pattern": "\\\\oint_\\{([^\\}]+)\\}",
+      "conversational": "contour integral along $1 of",
+      "mathspeak": "contour integral along $1 of"
+    },
+    {
+      "pattern": "\\\\oint",
+      "conversational": "contour integral of",
+      "mathspeak": "contour integral"
+    },
+    {
       "pattern": "\\\\prod_\\{([^\\}]+)\\}\\^\\{([^\\}]+)\\}",
       "conversational": "product from $1 to $2 of",
       "mathspeak": "product from $1 to $2 of"
     },
     {
+      "pattern": "\\\\vec\\{([^\\{\\}]+)\\}",
+      "conversational": "vector $1",
+      "mathspeak": "vector $1"
+    },
+    {
+      "pattern": "\\\\hat\\{([^\\{\\}]+)\\}",
+      "conversational": "$1 hat",
+      "mathspeak": "$1 hat"
+    },
+    {
+      "pattern": "\\\\bar\\{([^\\{\\}]+)\\}",
+      "conversational": "$1 bar",
+      "mathspeak": "$1 bar"
+    },
+    {
+      "pattern": "\\\\tilde\\{([^\\{\\}]+)\\}",
+      "conversational": "$1 tilde",
+      "mathspeak": "$1 tilde"
+    },
+    {
       "pattern": "\\\\mathbf\\{([^\\}]+)\\}",
       "conversational": "bold $1",
       "mathspeak": "bold $1"
+    },
+    {
+      "pattern": "\\\\mathbb\\{R\\}\\^\\{([^\\}]+)\\s*(?:\\\\times|[xX×])\\s*([^\\}]+)\\}",
+      "conversational": "R $1 by $2",
+      "mathspeak": "blackboard bold R $1 by $2"
+    },
+    {
+      "pattern": "\\\\mathbb\\{R\\}\\^([a-zA-Z0-9]+)",
+      "conversational": "R $1",
+      "mathspeak": "blackboard bold R to the $1"
+    },
+    {
+      "pattern": "\\\\mathbb\\{R\\}",
+      "conversational": "the real numbers",
+      "mathspeak": "blackboard bold R"
     },
     {
       "pattern": "\\\\mathbb\\{([^\\}]+)\\}",
@@ -66,6 +121,196 @@
       "pattern": "\\\\mathcal\\{([^\\}]+)\\}",
       "conversational": "calligraphic $1",
       "mathspeak": "calligraphic $1"
+    },
+    {
+      "pattern": "\\\\Vert(?:\\{\\})?\\s*([^\\\\\\{\\}]+?)\\s*\\\\Vert(?:\\{\\})?\\_2\\^2",
+      "conversational": "the L 2 norm of $1 squared",
+      "mathspeak": "start L 2 norm, $1, end L 2 norm squared"
+    },
+    {
+      "pattern": "\\\\Vert(?:\\{\\})?\\s*([^\\\\\\{\\}]+?)\\s*\\\\Vert(?:\\{\\})?\\_1",
+      "conversational": "the L 1 norm of $1",
+      "mathspeak": "start L 1 norm, $1, end L 1 norm"
+    },
+    {
+      "pattern": "\\\\Vert(?:\\{\\})?\\s*([^\\\\\\{\\}]+?)\\s*\\\\Vert(?:\\{\\})?\\_F",
+      "conversational": "the Frobenius norm of $1",
+      "mathspeak": "start Frobenius norm, $1, end Frobenius norm"
+    },
+    {
+      "pattern": "\\\\Vert(?:\\{\\})?\\s*([^\\\\\\{\\}]+?)\\s*\\\\Vert(?:\\{\\})?",
+      "conversational": "the norm of $1",
+      "mathspeak": "start norm, $1, end norm"
+    },
+    {
+      "pattern": "\\\\vert(?:\\{\\})?\\s*([^\\\\\\{\\}]+?)\\s*\\\\vert(?:\\{\\})?",
+      "conversational": "the absolute value of $1",
+      "mathspeak": "start absolute value, $1, end absolute value"
+    },
+    {
+      "pattern": "\\\\arg\\\\min_\\{([^\\}]+)\\}",
+      "conversational": "argument minimum over $1 of",
+      "mathspeak": "argument of the minimum over $1 of"
+    },
+    {
+      "pattern": "\\\\arg\\\\min",
+      "conversational": "argument minimum",
+      "mathspeak": "argument of the minimum"
+    },
+    {
+      "pattern": "\\\\arg\\\\max_\\{([^\\}]+)\\}",
+      "conversational": "argument maximum over $1 of",
+      "mathspeak": "argument of the maximum over $1 of"
+    },
+    {
+      "pattern": "\\\\arg\\\\max",
+      "conversational": "argument maximum",
+      "mathspeak": "argument of the maximum"
+    },
+    {
+      "pattern": "\\\\lim_\\{([^\\}]+)\\s*(?:[→⟶]|\\\\to|->|-->)\\s*([^\\}]+)\\}",
+      "conversational": "limit as $1 approaches $2 of ",
+      "mathspeak": "limit as $1 approaches $2 of "
+    },
+    {
+      "pattern": "\\\\otimes",
+      "conversational": "tensor product",
+      "mathspeak": "tensor product"
+    },
+    {
+      "pattern": "\\\\oplus",
+      "conversational": "direct sum",
+      "mathspeak": "direct sum"
+    },
+    {
+      "pattern": "\\\\dots|\\\\cdots|\\\\ldots",
+      "conversational": "and so on",
+      "mathspeak": "ellipsis"
+    },
+    {
+      "pattern": "\\\\vdots",
+      "conversational": "vertical ellipsis",
+      "mathspeak": "vertical ellipsis"
+    },
+    {
+      "pattern": "\\\\ddots",
+      "conversational": "diagonal ellipsis",
+      "mathspeak": "diagonal ellipsis"
+    },
+    {
+      "pattern": "\\\\neq",
+      "conversational": "not equal to",
+      "mathspeak": "not equal to"
+    },
+    {
+      "pattern": "\\\\approx",
+      "conversational": "approximately",
+      "mathspeak": "almost equal to"
+    },
+    {
+      "pattern": "\\\\pm",
+      "conversational": "plus or minus",
+      "mathspeak": "plus or minus"
+    },
+    {
+      "pattern": "\\\\mp",
+      "conversational": "minus or plus",
+      "mathspeak": "minus or plus"
+    },
+    {
+      "pattern": "\\\\implies",
+      "conversational": "implies",
+      "mathspeak": "implies"
+    },
+    {
+      "pattern": "\\\\iff",
+      "conversational": "if and only if",
+      "mathspeak": "if and only if"
+    },
+    {
+      "pattern": "\\\\in\\b",
+      "conversational": "in",
+      "mathspeak": "element of"
+    },
+    {
+      "pattern": "\\\\subseteq",
+      "conversational": "subset of",
+      "mathspeak": "subset of or equal to"
+    },
+    {
+      "pattern": "\\\\subset",
+      "conversational": "subset of",
+      "mathspeak": "proper subset of"
+    },
+    {
+      "pattern": "\\\\cap",
+      "conversational": "intersection",
+      "mathspeak": "set intersection"
+    },
+    {
+      "pattern": "\\\\cup",
+      "conversational": "union",
+      "mathspeak": "set union"
+    },
+    {
+      "pattern": "\\\\times",
+      "conversational": "times",
+      "mathspeak": "cross"
+    },
+    {
+      "pattern": "\\\\cdot",
+      "conversational": "dot",
+      "mathspeak": "center dot"
+    },
+    {
+      "pattern": "\\\\nabla",
+      "conversational": "gradient",
+      "mathspeak": "nabla"
+    },
+    {
+      "pattern": "\\\\partial",
+      "conversational": "partial",
+      "mathspeak": "partial derivative"
+    },
+    {
+      "pattern": "\\\\infty",
+      "conversational": "infinity",
+      "mathspeak": "infinity"
+    },
+    {
+      "pattern": "\\\\lambda",
+      "conversational": "lambda",
+      "mathspeak": "lambda"
+    },
+    {
+      "pattern": "\\\\Sigma",
+      "conversational": "capital Sigma",
+      "mathspeak": "capital Sigma"
+    },
+    {
+      "pattern": "\\\\sigma",
+      "conversational": "sigma",
+      "mathspeak": "sigma"
+    },
+    {
+      "pattern": "\\\\epsilon",
+      "conversational": "epsilon",
+      "mathspeak": "epsilon"
+    },
+    {
+      "pattern": "\\\\delta",
+      "conversational": "delta",
+      "mathspeak": "delta"
+    },
+    {
+      "pattern": "\\\\pi",
+      "conversational": "pi",
+      "mathspeak": "pi"
+    },
+    {
+      "pattern": "\\\\quad|\\\\qquad",
+      "conversational": " ",
+      "mathspeak": " "
     },
     {
       "pattern": "\\\\(?:text|mathrm|textrm)\\{([^\\}]+)\\}",

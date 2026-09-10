@@ -21,9 +21,10 @@ public struct ReadingRuler: View {
                 let targetY = max(min(currentY + dragOffset, geometry.size.height - accessibilityManager.readingRulerHeight), 0)
                 
                 ZStack(alignment: .top) {
-                    // Top Dimmer
+                    // Top Dimmer (visual aid only, never blocks scrolling or touches)
                     Color.black.opacity(0.40)
                         .frame(height: targetY)
+                        .allowsHitTesting(false)
                     
                     // Transparent Ruler Window with Border Guide
                     VStack(spacing: 0) {
@@ -51,12 +52,12 @@ public struct ReadingRuler: View {
                             }
                     )
                     
-                    // Bottom Dimmer
+                    // Bottom Dimmer (visual aid only, never blocks scrolling or touches)
                     Color.black.opacity(0.40)
                         .frame(height: max(geometry.size.height - (targetY + accessibilityManager.readingRulerHeight), 0))
                         .offset(y: targetY + accessibilityManager.readingRulerHeight)
+                        .allowsHitTesting(false)
                 }
-                .allowsHitTesting(true)
             }
         }
     }
