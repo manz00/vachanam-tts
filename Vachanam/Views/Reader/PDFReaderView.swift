@@ -976,7 +976,15 @@ public struct PDFReaderView: UIViewRepresentable {
                let currentWord = word,
                (isTransitioning || visibleIndices.contains(currentWord.pageIndex)),
                let wordPage = parent.document.page(at: currentWord.pageIndex) {
-                wordViewRect = pdfView.convert(currentWord.bounds, from: wordPage)
+                var wRect = pdfView.convert(currentWord.bounds, from: wordPage)
+                // If a matching sentence line rect covers this word, clamp the word height and Y alignment
+                // so word highlights are never taller than the sentence line and never bleed into adjacent lines
+                if let matchingLine = sentenceViewRects.first(where: { abs($0.midY - wRect.midY) < max(wRect.height, $0.height) * 0.6 }) {
+                    if wRect.height > matchingLine.height {
+                        wRect = CGRect(x: wRect.minX, y: matchingLine.minY, width: wRect.width, height: matchingLine.height)
+                    }
+                }
+                wordViewRect = wRect
             }
             
             // Update tracking rects for ruler asynchronously if ruler is enabled

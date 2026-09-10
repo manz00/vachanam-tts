@@ -173,6 +173,9 @@ public final class SentenceSegmenter: @unchecked Sendable {
                         }
                     }
                     let sentenceMaxOffset = min(paraMaxOffset, nextSentenceStart)
+                    let visualLines = visualLinesByPage[pageIndex] ?? []
+                    let lineHeights = visualLines.map { $0.bounds.height }.filter { $0 > 0 }
+                    let pageMedianHeight: CGFloat = lineHeights.isEmpty ? 12.0 : lineHeights.sorted()[lineHeights.count / 2]
                     
                     // Extract words strictly bounded within this sentence's boundaries
                     let (sentenceWords, lineBounds, unionBounds, newOffset) = self.extractWordsForSentence(
@@ -184,7 +187,9 @@ public final class SentenceSegmenter: @unchecked Sendable {
                         startWordID: nextGlobalWordID,
                         sentenceMinOffset: sentenceStartOffset,
                         sentenceMaxOffset: sentenceMaxOffset,
-                        paraBounds: rawPara.bounds
+                        paraBounds: rawPara.bounds,
+                        blockType: rawPara.blockType,
+                        pageMedianLineHeight: pageMedianHeight
                     )
                     
                     currentParaOffset = max(currentParaOffset, max(sentenceStartOffset, newOffset))
@@ -294,7 +299,9 @@ public final class SentenceSegmenter: @unchecked Sendable {
         startWordID: Int,
         sentenceMinOffset: Int,
         sentenceMaxOffset: Int,
-        paraBounds: CGRect
+        paraBounds: CGRect,
+        blockType: BlockType,
+        pageMedianLineHeight: CGFloat
     ) -> ([SemanticWord], [CGRect], CGRect, Int) {
         let wordTokenizer = NLTokenizer(unit: .word)
         wordTokenizer.string = sentenceText
@@ -514,7 +521,27 @@ public final class SentenceSegmenter: @unchecked Sendable {
             }
         }
         
-        // Validate words against sentence Y-bounds to eliminate vertical outliers
+        let maxAllowedLineHeight: CGFloat
+        if blockType == .heading {
+            maxAllowedLineHeight = max(pageMedianLineHeight * 2.2, 28.0)
+        } else {
+            maxAllowedLineHeight = max(pageMedianLineHeight * 1.18, 12.5)
+        }
+        
+        // Sanitize line bounds so math symbols or font descenders never cause highlights to bleed into adjacent lines
+        lineBounds = lineBounds.map { b in
+            if b.height > maxAllowedLineHeight {
+                let clampedH = maxAllowedLineHeight
+                let clampedY = b.maxY - clampedH
+                return CGRect(x: b.minX, y: clampedY, width: b.width, height: clampedH)
+            }
+            return b
+        }
+        if !lineBounds.isEmpty {
+            unionBounds = lineBounds.reduce(lineBounds[0]) { $0.union($1) }
+        }
+        
+        // Validate words against sentence Y-bounds to eliminate vertical outliers and clamp excessive heights
         if !lineBounds.isEmpty {
             let sentenceMinY = (lineBounds.map { $0.minY }.min() ?? 0) - 4
             let sentenceMaxY = (lineBounds.map { $0.maxY }.max() ?? 0) + 4
@@ -522,23 +549,43 @@ public final class SentenceSegmenter: @unchecked Sendable {
             
             for i in 0..<words.count {
                 let w = words[i]
-                if !w.bounds.isEmpty && !validYRange.contains(w.bounds.midY) {
-                    if let nearestLine = lineBounds.min(by: { abs($0.midY - w.bounds.midY) < abs($1.midY - w.bounds.midY) }) {
-                        let clampedY = max(nearestLine.minY, min(nearestLine.maxY - 14, w.bounds.minY))
-                        let adjustedBounds = CGRect(x: w.bounds.minX, y: clampedY, width: w.bounds.width, height: min(w.bounds.height, nearestLine.height))
-                        words[i] = SemanticWord(
-                            globalWordID: w.globalWordID,
-                            text: w.text,
-                            pageIndex: w.pageIndex,
-                            sentenceID: w.sentenceID,
-                            wordIndexInSentence: w.wordIndexInSentence,
-                            bounds: adjustedBounds,
-                            lineBounds: [adjustedBounds],
-                            sentenceRange: w.sentenceRange,
-                            isHyphenatedBreak: w.isHyphenatedBreak
-                        )
+                guard !w.bounds.isEmpty else { continue }
+                
+                var adjustedBounds = w.bounds
+                if !validYRange.contains(adjustedBounds.midY) {
+                    if let nearestLine = lineBounds.min(by: { abs($0.midY - adjustedBounds.midY) < abs($1.midY - adjustedBounds.midY) }) {
+                        let clampedY = max(nearestLine.minY, min(nearestLine.maxY - 14, adjustedBounds.minY))
+                        adjustedBounds = CGRect(x: adjustedBounds.minX, y: clampedY, width: adjustedBounds.width, height: min(adjustedBounds.height, nearestLine.height))
                     }
                 }
+                
+                // Clamp word height so math symbols or font descenders never cause word highlights to bleed into adjacent lines
+                if adjustedBounds.height > maxAllowedLineHeight {
+                    let clampedH = maxAllowedLineHeight
+                    let clampedY = adjustedBounds.maxY - clampedH
+                    adjustedBounds = CGRect(x: adjustedBounds.minX, y: clampedY, width: adjustedBounds.width, height: clampedH)
+                }
+                
+                let adjustedLineBounds = w.lineBounds.map { lb -> CGRect in
+                    if lb.height > maxAllowedLineHeight {
+                        let clampedH = maxAllowedLineHeight
+                        let clampedY = lb.maxY - clampedH
+                        return CGRect(x: lb.minX, y: clampedY, width: lb.width, height: clampedH)
+                    }
+                    return lb
+                }
+                
+                words[i] = SemanticWord(
+                    globalWordID: w.globalWordID,
+                    text: w.text,
+                    pageIndex: w.pageIndex,
+                    sentenceID: w.sentenceID,
+                    wordIndexInSentence: w.wordIndexInSentence,
+                    bounds: adjustedBounds,
+                    lineBounds: adjustedLineBounds.isEmpty ? [adjustedBounds] : adjustedLineBounds,
+                    sentenceRange: w.sentenceRange,
+                    isHyphenatedBreak: w.isHyphenatedBreak
+                )
             }
         }
         

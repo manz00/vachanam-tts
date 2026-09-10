@@ -71,6 +71,10 @@ As documents are narrated, Vachanam synchronizes **word-by-word karaoke highligh
   - **Continuous Spread**: Side-by-side pages with continuous vertical scrolling.
   - **Quick Switcher Menu**: One-tap layout menu in the Reader header bar with instant switching, coordinated layout transitions, and debounced reading progress persistence.
   - **Rock-Solid Continuous & Spread Highlighting**: Synchronized via KVO content offset tracking on PDFView's internal scroll hierarchy with automatic retry, ensuring highlights move smoothly in real-time without disappearing or lagging. Overlay CALayers are kept frontmost above all PDF views.
+  - **Line-Pitch & Math Symbol Highlight Height Sanitization**:
+    - Automatically detects inflated PDFKit glyph bounding boxes (commonly occurring on lines with LaTeX mathematical symbols, set-theoretic operators, and integrals like $\forall, \Phi, \Longrightarrow$) where PDFKit selects tall symbol fonts that inflate line bounds by 70%+ into adjacent lines.
+    - Dynamically clamps sentence line boxes and word highlight rectangles to the document's median line pitch (`maxAllowedLineHeight = max(pageMedianLineHeight * 1.18, 12.5pt)`), preserving the top cap-height/ascender coordinate while raising the bottom edge strictly above following lines.
+    - In `PDFReaderView`, defensive view-coordinate constraints ensure word highlights strictly conform to the active sentence line bounds, eliminating vertical bleed and overlapping highlights on adjacent lines while preserving full proportional scaling for headings and larger display typography.
   - **Multi-Page Sentence Span Highlighting**: Accurately projects sentence bounds across all visible pages in two-page and continuous scrolling modes.
   - **Human-Centered Auto-Scroll & Free Reading Flow (`AutoScrollFollowMode`)**:
     - **Pause-on-Scroll Lifecycle & Zero Snap-Back**: When listening to speech, initiating a manual scroll immediately pauses the built-in auto-scrolling engine. Users are completely free to scroll ahead or back across multiple pages without the viewport being forcefully yanked back to the active highlight. The viewport strictly stays wherever the user scrolls and stops.
@@ -1082,6 +1086,16 @@ A systematic pre-release production audit was conducted across the 17 core dimen
    - **Unconditional Publication Disclaimer Isolation (`ParagraphDetector` & `PageFurnitureDetector`)**: Isolated publication disclaimer detection (`isPublicationDisclaimer`) ahead of sentence continuation checks, ensuring publisher copyrights, preprints, and distribution notices (e.g., Cambridge University Press, arXiv) are unconditionally classified as `.pageFooter` and never merged into narrative body paragraphs even when the preceding line ends with an unpunctuated formula or equals sign.
    - **Line-Break Dehyphenation (`TextNormalizer`)**: Automatically dehyphenates words broken across line breaks (e.g., `exam-\nples` $\to$ `examples`) using `WordReconstructor.resolveHyphenation`, eliminating em-dash pauses and preventing fractured phonemization (e.g. `exam — apples`).
    - **Developer Sandbox Audio Download (WAV)**: Added `AudioPlayer.prepareWavData(from:)` and an instant **Download Audio (WAV)** `ShareLink` button in `VoiceTestingSandboxView` allowing developers to export synthesized audio directly as 16-bit 24kHz PCM WAV files alongside the diagnostic JSON report.
+14. **[AUD-14] Highlight Height Sanitization & Math Symbol Line Bleed Prevention**:
+   - **Root Cause Diagnostic**: On lines containing LaTeX mathematical symbols (e.g. `∀`, `\in`, `\Phi`, `\Longrightarrow`), PDFKit calculates character and line bounding boxes using the font bounding metric of the symbol font rather than the body font. In documents such as *Mathematics for Machine Learning* (e.g. page 54, Definition 2.16), this inflated line and word bounding box heights from the standard ~10.9 pt to **18.93 pt** (a 73% increase), exceeding the actual line pitch (12.98 pt) and causing the bottom of the highlight (`Injective`) to bleed ~6 pt downward into the line below (`Surjective`).
+   - **Line-Pitch Clamping in `SentenceSegmenter`**:
+     - Computes the page's median visual line height (`pageMedianLineHeight`) across all detected visual lines.
+     - Derives `maxAllowedLineHeight` dynamically: for headings, allowing up to `max(pageMedianLineHeight * 2.2, 28.0 pt)` for large typography, and for body/list text, capping at `max(pageMedianLineHeight * 1.18, 12.5 pt)`.
+     - In Quartz 2D PDF coordinates (where origin is bottom-left and `maxY` is the top ascender edge), if a line's height exceeds `maxAllowedLineHeight`, height is clamped and the bottom edge is raised (`minY = b.maxY - clampedH`), strictly protecting adjacent lines below while keeping the top edge aligned to text ascenders.
+     - All word token bounding boxes (`WordToken.bounds`) and their associated `lineBounds` are similarly sanitized.
+   - **Defensive View-Coordinate Clamping in `PDFReaderView`**:
+     - When rendering the active word highlight layer in `PDFReaderView.updateHighlights()`, each word's view-space rectangle is constrained against the matching sentence line box (`sentenceViewRects`), ensuring word highlights never exceed the visual line envelope.
+   - **Regression Testing**: Added `testDefinition216HighlightBounds` in `SentenceBoundsIntegrityTests` verifying that line and word heights on Definition 2.16 remain $\le 14.0\text{ pt}$ and that the bottom of the `Injective` highlight does not bleed into `Surjective`.
 
 ---
 

@@ -177,6 +177,41 @@ final class SentenceBoundsIntegrityTests: XCTestCase {
         XCTAssertNotNil(example216Sentence, "Example 2.16 must be present on page index 50")
         XCTAssertTrue(example216Sentence?.text.contains("2.78") == true, "Example 2.16 must include equation tag 2.78")
     }
+    
+    func testDefinition216HighlightBounds() {
+        let url = URL(fileURLWithPath: "/Users/manjunath/Documents/mml-book.pdf")
+        guard let pdf = PDFDocument(url: url) else { return }
+        
+        let doc = SentenceSegmenter.shared.parseDocument(pdfDocument: pdf, title: "MML Book")
+        if let page = pdf.page(at: 53), let sel = page.selection(for: page.bounds(for: .cropBox)) {
+            for lineSel in sel.selectionsByLine() {
+                let text = lineSel.string ?? ""
+                let b = lineSel.bounds(for: page)
+                if b.minY >= 100 && b.minY <= 220 {
+                    print("VL: '\(text.trimmingCharacters(in: .whitespacesAndNewlines))' bounds: y=\(b.minY), h=\(b.height), maxY=\(b.maxY)")
+                }
+            }
+        }
+        let injectiveSentence = doc.sentences.first { $0.primaryPageIndex == 53 && $0.text.hasPrefix("Injective if") }
+        XCTAssertNotNil(injectiveSentence, "Must find Injective sentence on page 53")
+        if let s = injectiveSentence {
+            // Line bounds must not exceed max allowed line height (14.0 pt)
+            for b in s.lineBounds(for: 53) {
+                XCTAssertLessThanOrEqual(b.height, 14.0, "Sentence line bound height (\(b.height)) must not exceed 14.0pt")
+            }
+            // Word 'Injective' bounds must not exceed 14.0 pt
+            if let injectiveWord = s.words.first(where: { $0.text == "Injective" }) {
+                XCTAssertLessThanOrEqual(injectiveWord.bounds.height, 14.0, "Word 'Injective' height (\(injectiveWord.bounds.height)) must not exceed 14.0pt")
+            }
+        }
+        
+        let surjectiveSentence = doc.sentences.first { $0.primaryPageIndex == 53 && $0.text.hasPrefix("Surjective if") }
+        if let inj = injectiveSentence, let sur = surjectiveSentence {
+            let injMinY = inj.lineBounds(for: 53).map { $0.minY }.min() ?? 0
+            let surMaxY = sur.lineBounds(for: 53).map { $0.maxY }.max() ?? 0
+            XCTAssertGreaterThanOrEqual(injMinY, surMaxY - 1.0, "Injective bottom (\(injMinY)) must not bleed into Surjective top (\(surMaxY))")
+        }
+    }
 }
 
 
