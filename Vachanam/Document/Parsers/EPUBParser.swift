@@ -32,17 +32,25 @@ public struct EPUBParser: DocumentParser {
             throw DocumentParserError.parsingFailed("Missing META-INF/container.xml in EPUB")
         }
         
-        guard let opfPath = extractAttribute(from: containerXML, tag: "rootfile", attribute: "full-path") else {
+        guard let rawOpfPath = extractAttribute(from: containerXML, tag: "rootfile", attribute: "full-path") else {
             throw DocumentParserError.parsingFailed("Could not find OPF package path in container.xml")
         }
         
-        guard let opfXML = archive.string(for: opfPath) else {
-            throw DocumentParserError.parsingFailed("Missing OPF package file at: \(opfPath)")
+        var cleanOpfPath = archive.normalizeEntryPath(rawOpfPath)
+        let opfXML: String
+        if let direct = archive.string(for: cleanOpfPath) ?? archive.string(for: rawOpfPath) {
+            opfXML = direct
+        } else if let found = archive.entries.first(where: { $0.key.lowercased().hasSuffix(".opf") }),
+                  let fallback = archive.string(for: found.key) {
+            cleanOpfPath = found.key
+            opfXML = fallback
+        } else {
+            throw DocumentParserError.parsingFailed("Missing OPF package file at: \(cleanOpfPath)")
         }
         
         // Base folder for relative item paths in OPF
         let opfBaseFolder: String = {
-            let components = opfPath.split(separator: "/")
+            let components = cleanOpfPath.split(separator: "/")
             if components.count > 1 {
                 return components.dropLast().joined(separator: "/") + "/"
             }
@@ -62,18 +70,53 @@ public struct EPUBParser: DocumentParser {
         
         for spineID in spineIDs {
             guard let href = manifest[spineID] else { continue }
-            // Remove URL fragments (e.g. #section1)
-            let cleanHref = href.components(separatedBy: "#").first ?? href
-            let fullPath = opfBaseFolder + cleanHref
+            // Remove URL fragments (e.g. #section1) and percent encoding
+            let cleanHref = (href.components(separatedBy: "#").first ?? href)
+                .removingPercentEncoding ?? href
+            let rawPath = opfBaseFolder + cleanHref
+            let normalizedPath = archive.normalizeEntryPath(rawPath)
             
-            guard let chapterContent = archive.string(for: fullPath) else { continue }
+            guard let chapterContent = archive.string(for: normalizedPath)
+                    ?? archive.string(for: rawPath)
+                    ?? archive.string(for: cleanHref) else {
+                continue
+            }
             let blocks = parseHTMLBlocks(from: chapterContent)
             
             if !blocks.isEmpty {
                 let chapterTitle = extractTagContent(from: chapterContent, tag: "h1")
+                    ?? extractTagContent(from: chapterContent, tag: "h2")
                     ?? extractTagContent(from: chapterContent, tag: "title")
                     ?? "Chapter \(chapters.count + 1)"
                 chapters.append(ParsedChapter(title: chapterTitle, blocks: blocks))
+            }
+        }
+        
+        // Fallback: If spine was missing or empty, parse HTML items in manifest order
+        if chapters.isEmpty {
+            let htmlHrefs = manifest.values.filter {
+                let lower = $0.lowercased()
+                return lower.hasSuffix(".xhtml") || lower.hasSuffix(".html") || lower.hasSuffix(".htm")
+            }.sorted()
+            
+            for href in htmlHrefs {
+                let cleanHref = (href.components(separatedBy: "#").first ?? href)
+                    .removingPercentEncoding ?? href
+                let rawPath = opfBaseFolder + cleanHref
+                let normalizedPath = archive.normalizeEntryPath(rawPath)
+                guard let chapterContent = archive.string(for: normalizedPath)
+                        ?? archive.string(for: rawPath)
+                        ?? archive.string(for: cleanHref) else {
+                    continue
+                }
+                let blocks = parseHTMLBlocks(from: chapterContent)
+                if !blocks.isEmpty {
+                    let chapterTitle = extractTagContent(from: chapterContent, tag: "h1")
+                        ?? extractTagContent(from: chapterContent, tag: "h2")
+                        ?? extractTagContent(from: chapterContent, tag: "title")
+                        ?? "Section \(chapters.count + 1)"
+                    chapters.append(ParsedChapter(title: chapterTitle, blocks: blocks))
+                }
             }
         }
         
@@ -86,46 +129,47 @@ public struct EPUBParser: DocumentParser {
     
     // MARK: - XML / Manifest Parsing Helpers
     
-    private func extractManifest(from opfXML: String) -> [String: String] {
+    public func extractManifest(from opfXML: String) -> [String: String] {
         var manifest: [String: String] = [:]
-        let pattern = #"<item\s+[^>]*id=["']([^"']+)["'][^>]*href=["']([^"']+)["'][^>]*\/?>(?:<\/item>)?"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+        let tagPattern = #"<item\b([^>]+)\/?>"#
+        guard let tagRegex = try? NSRegularExpression(pattern: tagPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
             return manifest
         }
         
+        let idRegex = try? NSRegularExpression(pattern: #"\bid\s*=\s*['"]([^'"]+)['"]"#, options: [.caseInsensitive])
+        let hrefRegex = try? NSRegularExpression(pattern: #"\bhref\s*=\s*['"]([^'"]+)['"]"#, options: [.caseInsensitive])
+        
         let ns = opfXML as NSString
-        let matches = regex.matches(in: opfXML, range: NSRange(location: 0, length: ns.length))
+        let matches = tagRegex.matches(in: opfXML, range: NSRange(location: 0, length: ns.length))
+        
         for match in matches {
-            if match.numberOfRanges >= 3 {
-                let id = ns.substring(with: match.range(at: 1))
-                let href = ns.substring(with: match.range(at: 2))
+            guard match.numberOfRanges >= 2 else { continue }
+            let attrs = ns.substring(with: match.range(at: 1))
+            let attrsNS = attrs as NSString
+            
+            var itemID: String?
+            var itemHref: String?
+            
+            if let idMatch = idRegex?.firstMatch(in: attrs, range: NSRange(location: 0, length: attrsNS.length)), idMatch.numberOfRanges >= 2 {
+                itemID = attrsNS.substring(with: idMatch.range(at: 1))
+            }
+            if let hrefMatch = hrefRegex?.firstMatch(in: attrs, range: NSRange(location: 0, length: attrsNS.length)), hrefMatch.numberOfRanges >= 2 {
+                itemHref = attrsNS.substring(with: hrefMatch.range(at: 1))
+            }
+            
+            if let id = itemID, let href = itemHref {
                 manifest[id] = href
             }
         }
-        
-        // Also check reverse attribute order: href before id
-        let patternAlt = #"<item\s+[^>]*href=["']([^"']+)["'][^>]*id=["']([^"']+)["'][^>]*\/?>(?:<\/item>)?"#
-        if let regexAlt = try? NSRegularExpression(pattern: patternAlt, options: [.caseInsensitive]) {
-            let altMatches = regexAlt.matches(in: opfXML, range: NSRange(location: 0, length: ns.length))
-            for match in altMatches {
-                if match.numberOfRanges >= 3 {
-                    let href = ns.substring(with: match.range(at: 1))
-                    let id = ns.substring(with: match.range(at: 2))
-                    manifest[id] = href
-                }
-            }
-        }
-        
         return manifest
     }
     
-    private func extractSpine(from opfXML: String) -> [String] {
+    public func extractSpine(from opfXML: String) -> [String] {
         var spine: [String] = []
-        let pattern = #"<itemref\s+[^>]*idref=["']([^"']+)["'][^>]*\/?>(?:<\/itemref>)?"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+        let pattern = #"<itemref\b[^>]*?\bidref\s*=\s*['"]([^'"]+)['"][^>]*\/?>"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
             return spine
         }
-        
         let ns = opfXML as NSString
         let matches = regex.matches(in: opfXML, range: NSRange(location: 0, length: ns.length))
         for match in matches {
@@ -137,7 +181,7 @@ public struct EPUBParser: DocumentParser {
         return spine
     }
     
-    private func extractTagContent(from xml: String, tag: String) -> String? {
+    public func extractTagContent(from xml: String, tag: String) -> String? {
         let pattern = "<" + tag + "[^>]*>(.*?)</" + tag + ">"
         guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
             return nil
@@ -150,9 +194,9 @@ public struct EPUBParser: DocumentParser {
         return nil
     }
     
-    private func extractAttribute(from xml: String, tag: String, attribute: String) -> String? {
-        let pattern = "<" + tag + "\\s+[^>]*" + attribute + "=['\"]([^'\"]+)['\"][^>]*\\/?>"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+    public func extractAttribute(from xml: String, tag: String, attribute: String) -> String? {
+        let pattern = #"<\#(tag)\b[^>]*?\b\#(attribute)\s*=\s*['"]([^'"]+)['"][^>]*\/?>"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
             return nil
         }
         let ns = xml as NSString
@@ -168,11 +212,11 @@ public struct EPUBParser: DocumentParser {
         var blocks: [ParsedBlock] = []
         
         // Strip scripts and styles first
-        var sanitized = html.replacingOccurrences(of: "(?s)<script.*?</script>", with: "", options: .regularExpression)
-        sanitized = sanitized.replacingOccurrences(of: "(?s)<style.*?</style>", with: "", options: .regularExpression)
+        var sanitized = html.replacingOccurrences(of: "(?is)<script.*?</script>", with: "", options: .regularExpression)
+        sanitized = sanitized.replacingOccurrences(of: "(?is)<style.*?</style>", with: "", options: .regularExpression)
         
-        // Match headings, paragraphs, list items, blockquotes
-        let blockPattern = #"<(h[1-6]|p|li|blockquote)[^>]*>(.*?)</\1>"#
+        // Match headings, paragraphs, list items, blockquotes, divs, dd/dt
+        let blockPattern = #"<(h[1-6]|p|li|blockquote|div|dt|dd)[^>]*>(.*?)</\1>"#
         guard let regex = try? NSRegularExpression(pattern: blockPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
             return blocks
         }
@@ -214,12 +258,15 @@ public struct EPUBParser: DocumentParser {
         return blocks
     }
     
-    private func cleanHTMLText(_ html: String) -> String {
-        // Strip tags
-        var text = html.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+    public func cleanHTMLText(_ html: String) -> String {
+        // Pre-convert break tags and block boundaries to whitespace/newlines to avoid word gluing
+        var text = html
+            .replacingOccurrences(of: "(?i)<br\\s*/?>", with: "\n", options: .regularExpression)
+            .replacingOccurrences(of: "(?i)</(p|div|h[1-6]|li|blockquote)>", with: "\n\n", options: .regularExpression)
+            .replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
         
-        // Decode common entities
-        let entities = [
+        // Decode common named entities
+        let entities: [String: String] = [
             "&nbsp;": " ",
             "&amp;": "&",
             "&quot;": "\"",
@@ -229,10 +276,46 @@ public struct EPUBParser: DocumentParser {
             "&gt;": ">",
             "&mdash;": "—",
             "&ndash;": "–",
-            "&hellip;": "…"
+            "&hellip;": "…",
+            "&rsquo;": "’",
+            "&lsquo;": "‘",
+            "&rdquo;": "”",
+            "&ldquo;": "“",
+            "&bull;": "•",
+            "&trade;": "™",
+            "&copy;": "©",
+            "&reg;": "®"
         ]
         for (ent, rep) in entities {
             text = text.replacingOccurrences(of: ent, with: rep)
+        }
+        
+        // Decode decimal numeric entities: &#1234;
+        if let decRegex = try? NSRegularExpression(pattern: #"&#(\d+);"#, options: []) {
+            let nsText = text as NSString
+            let matches = decRegex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+            for match in matches.reversed() {
+                if match.numberOfRanges >= 2 {
+                    let numStr = nsText.substring(with: match.range(at: 1))
+                    if let code = UInt32(numStr), let scalar = UnicodeScalar(code) {
+                        text = (text as NSString).replacingCharacters(in: match.range, with: String(Character(scalar)))
+                    }
+                }
+            }
+        }
+        
+        // Decode hexadecimal numeric entities: &#x1f600;
+        if let hexRegex = try? NSRegularExpression(pattern: #"&#x([0-9a-fA-F]+);"#, options: []) {
+            let nsText = text as NSString
+            let matches = hexRegex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+            for match in matches.reversed() {
+                if match.numberOfRanges >= 2 {
+                    let hexStr = nsText.substring(with: match.range(at: 1))
+                    if let code = UInt32(hexStr, radix: 16), let scalar = UnicodeScalar(code) {
+                        text = (text as NSString).replacingCharacters(in: match.range, with: String(Character(scalar)))
+                    }
+                }
+            }
         }
         
         // Collapse excess whitespace

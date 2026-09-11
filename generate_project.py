@@ -42,6 +42,7 @@ def create_project():
         build_files[fpath] = (b_uuid, f_uuid)
     
     plist_uuid = generate_uuid()
+    entitlements_uuid = generate_uuid()
     registry_uuid = generate_uuid()
     registry_b_uuid = generate_uuid()
     
@@ -201,6 +202,7 @@ def create_project():
         pbx.append(f"\t\t{f_uuid} /* {fname} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = \"{fpath}\"; sourceTree = \"<group>\"; }};")
         
     pbx.append(f"\t\t{plist_uuid} /* Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = \"Vachanam/Info.plist\"; sourceTree = \"<group>\"; }};")
+    pbx.append(f"\t\t{entitlements_uuid} /* Vachanam.entitlements */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = \"Vachanam/Vachanam.entitlements\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{registry_uuid} /* model_registry.json */ = {{isa = PBXFileReference; lastKnownFileType = text.json; path = \"Vachanam/Resources/model_registry.json\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{font_reg_uuid} /* OpenDyslexic-Regular.otf */ = {{isa = PBXFileReference; lastKnownFileType = file; path = \"Vachanam/Resources/OpenDyslexic-Regular.otf\"; sourceTree = \"<group>\"; }};")
     pbx.append(f"\t\t{font_bold_uuid} /* OpenDyslexic-Bold.otf */ = {{isa = PBXFileReference; lastKnownFileType = file; path = \"Vachanam/Resources/OpenDyslexic-Bold.otf\"; sourceTree = \"<group>\"; }};")
@@ -261,6 +263,7 @@ def create_project():
         f_uuid, fname = file_refs[fpath]
         pbx.append(f"\t\t\t\t{f_uuid} /* {fname} */,")
     pbx.append(f"\t\t\t\t{plist_uuid} /* Info.plist */,")
+    pbx.append(f"\t\t\t\t{entitlements_uuid} /* Vachanam.entitlements */,")
     pbx.append(f"\t\t\t\t{registry_uuid} /* model_registry.json */,")
     pbx.append(f"\t\t\t\t{font_reg_uuid} /* OpenDyslexic-Regular.otf */,")
     pbx.append(f"\t\t\t\t{font_bold_uuid} /* OpenDyslexic-Bold.otf */,")
@@ -641,6 +644,7 @@ def create_project():
     pbx.append("\t\t\t\tASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;")
     pbx.append("\t\t\t\tASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = YES;")
     pbx.append("\t\t\t\tASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;")
+    pbx.append("\t\t\t\tCODE_SIGN_ENTITLEMENTS = Vachanam/Vachanam.entitlements;")
     pbx.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
     pbx.append("\t\t\t\t\"CODE_SIGN_IDENTITY[sdk=macosx*]\" = \"-\";")
     pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")
@@ -672,6 +676,7 @@ def create_project():
     pbx.append("\t\t\t\tASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;")
     pbx.append("\t\t\t\tASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = YES;")
     pbx.append("\t\t\t\tASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;")
+    pbx.append("\t\t\t\tCODE_SIGN_ENTITLEMENTS = Vachanam/Vachanam.entitlements;")
     pbx.append("\t\t\t\tCODE_SIGN_STYLE = Automatic;")
     pbx.append("\t\t\t\t\"CODE_SIGN_IDENTITY[sdk=macosx*]\" = \"-\";")
     pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")

@@ -368,12 +368,14 @@ public struct AudiobookGeneratorView: View {
     
     private func handleFileImporterResult(_ result: Result<[URL], Error>) {
         if case .success(let urls) = result, let url = urls.first {
-            if url.startAccessingSecurityScopedResource() {
-                defer { url.stopAccessingSecurityScopedResource() }
-                loadDocumentFromURL(url)
-            } else {
-                loadDocumentFromURL(url)
+            let isAccessing = url.startAccessingSecurityScopedResource()
+            defer {
+                if isAccessing {
+                    url.stopAccessingSecurityScopedResource()
+                }
             }
+            let localURL = DocumentLibraryView.copyToLocalDocuments(url: url)
+            loadDocumentFromURL(localURL)
         }
     }
     

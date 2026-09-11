@@ -32,6 +32,32 @@ public class ZipArchive: @unchecked Sendable {
         self.init(data: data)
     }
     
+    // MARK: - Path Normalization
+    
+    public func normalizeEntryPath(_ path: String) -> String {
+        var clean = path.replacingOccurrences(of: "\\", with: "/")
+        clean = clean.removingPercentEncoding ?? clean
+        while clean.hasPrefix("./") {
+            clean = String(clean.dropFirst(2))
+        }
+        while clean.hasPrefix("/") {
+            clean = String(clean.dropFirst(1))
+        }
+        let components = clean.split(separator: "/")
+        var resolved: [Substring] = []
+        for c in components {
+            if c == "." { continue }
+            if c == ".." {
+                if !resolved.isEmpty {
+                    resolved.removeLast()
+                }
+            } else {
+                resolved.append(c)
+            }
+        }
+        return resolved.joined(separator: "/")
+    }
+    
     // MARK: - Central Directory Parsing
     
     private func parseCentralDirectory() -> Bool {
@@ -74,17 +100,21 @@ public class ZipArchive: @unchecked Sendable {
             let nameStart = currentOffset + 46
             guard nameStart + nameLen <= count else { break }
             let nameData = data.subdata(in: nameStart..<(nameStart + nameLen))
-            let name = String(data: nameData, encoding: .utf8) ?? String(data: nameData, encoding: .ascii) ?? ""
+            let rawName = String(data: nameData, encoding: .utf8) ?? String(data: nameData, encoding: .ascii) ?? ""
+            let cleanName = normalizeEntryPath(rawName)
             
-            if !name.isEmpty && !name.hasSuffix("/") {
+            if !cleanName.isEmpty && !cleanName.hasSuffix("/") {
                 let entry = ZipEntry(
-                    name: name,
+                    name: cleanName,
                     compressionMethod: method,
                     compressedSize: compSize,
                     uncompressedSize: uncompSize,
                     offset: localHeaderOffset
                 )
-                entries[name] = entry
+                entries[cleanName] = entry
+                if cleanName != rawName {
+                    entries[rawName] = entry
+                }
             }
             
             currentOffset += 46 + nameLen + extraLen + commentLen
@@ -111,18 +141,22 @@ public class ZipArchive: @unchecked Sendable {
             let nameStart = currentOffset + 30
             guard nameStart + nameLen <= count else { break }
             let nameData = data.subdata(in: nameStart..<(nameStart + nameLen))
-            let name = String(data: nameData, encoding: .utf8) ?? String(data: nameData, encoding: .ascii) ?? ""
+            let rawName = String(data: nameData, encoding: .utf8) ?? String(data: nameData, encoding: .ascii) ?? ""
+            let cleanName = normalizeEntryPath(rawName)
             
             let dataStart = nameStart + nameLen + extraLen
-            if !name.isEmpty && !name.hasSuffix("/") && compSize > 0 {
+            if !cleanName.isEmpty && !cleanName.hasSuffix("/") && compSize > 0 {
                 let entry = ZipEntry(
-                    name: name,
+                    name: cleanName,
                     compressionMethod: method,
                     compressedSize: compSize,
                     uncompressedSize: uncompSize,
                     offset: currentOffset
                 )
-                entries[name] = entry
+                entries[cleanName] = entry
+                if cleanName != rawName {
+                    entries[rawName] = entry
+                }
             }
             
             currentOffset = dataStart + compSize
@@ -134,7 +168,11 @@ public class ZipArchive: @unchecked Sendable {
     // MARK: - Entry Data Extraction
     
     public func data(for entryName: String) -> Data? {
-        guard let entry = entries[entryName] ?? entries.first(where: { $0.key.lowercased() == entryName.lowercased() })?.value else {
+        let normalized = normalizeEntryPath(entryName)
+        guard let entry = entries[normalized]
+                ?? entries[entryName]
+                ?? entries.first(where: { normalizeEntryPath($0.key).lowercased() == normalized.lowercased() })?.value
+                ?? entries.first(where: { $0.key.lowercased() == entryName.lowercased() })?.value else {
             return nil
         }
         
@@ -163,55 +201,82 @@ public class ZipArchive: @unchecked Sendable {
     
     public func string(for entryName: String) -> String? {
         guard let entryData = data(for: entryName) else { return nil }
-        return String(data: entryData, encoding: .utf8) ?? String(data: entryData, encoding: .ascii)
+        if let utf8 = String(data: entryData, encoding: .utf8) {
+            return utf8
+        }
+        if let latin1 = String(data: entryData, encoding: .isoLatin1) {
+            return latin1
+        }
+        if let win1252 = String(data: entryData, encoding: .windowsCP1252) {
+            return win1252
+        }
+        return String(data: entryData, encoding: .ascii)
     }
     
     // MARK: - Raw Deflate Decompression
     
     private func inflateRaw(data: Data, uncompressedSize: Int) -> Data? {
         var stream = z_stream()
-        // -MAX_WBITS signifies raw deflate stream (no zlib or gzip header)
         let initStatus = inflateInit2_(&stream, -MAX_WBITS, ZLIB_VERSION, Int32(MemoryLayout<z_stream>.size))
         guard initStatus == Z_OK else { return nil }
         defer { inflateEnd(&stream) }
         
-        let outputCapacity = max(uncompressedSize, 1024)
-        var outputData = Data(count: outputCapacity)
+        let chunkSize = 32768
+        var decompressed = Data()
+        if uncompressedSize > 0 {
+            decompressed.reserveCapacity(uncompressedSize)
+        }
         
-        let status: Int32 = data.withUnsafeBytes { rawIn in
-            outputData.withUnsafeMutableBytes { rawOut in
-                guard let inPtr = rawIn.bindMemory(to: Bytef.self).baseAddress,
-                      let outPtr = rawOut.bindMemory(to: Bytef.self).baseAddress else {
-                    return Z_DATA_ERROR
+        return data.withUnsafeBytes { rawIn -> Data? in
+            guard let inBase = rawIn.bindMemory(to: Bytef.self).baseAddress else { return nil }
+            stream.next_in = UnsafeMutablePointer<Bytef>(mutating: inBase)
+            stream.avail_in = uInt(data.count)
+            
+            var buffer = [UInt8](repeating: 0, count: chunkSize)
+            
+            while true {
+                let status: Int32 = buffer.withUnsafeMutableBytes { rawOut in
+                    guard let outBase = rawOut.bindMemory(to: Bytef.self).baseAddress else { return Z_MEM_ERROR }
+                    stream.next_out = outBase
+                    stream.avail_out = uInt(chunkSize)
+                    return inflate(&stream, Z_NO_FLUSH)
                 }
-                stream.next_in = UnsafeMutablePointer<Bytef>(mutating: inPtr)
-                stream.avail_in = uInt(data.count)
-                stream.next_out = outPtr
-                stream.avail_out = uInt(outputCapacity)
                 
-                return inflate(&stream, Z_FINISH)
+                let produced = chunkSize - Int(stream.avail_out)
+                if produced > 0 {
+                    decompressed.append(buffer, count: produced)
+                }
+                
+                if status == Z_STREAM_END {
+                    return decompressed
+                }
+                
+                if status != Z_OK {
+                    // If stream completed or buffer ran out
+                    if stream.avail_in == 0 && produced == 0 {
+                        return decompressed.isEmpty ? nil : decompressed
+                    }
+                    return nil
+                }
             }
         }
-        
-        if status == Z_STREAM_END || status == Z_OK {
-            let actualCount = Int(stream.total_out)
-            return outputData.prefix(actualCount)
-        }
-        
-        return nil
     }
     
     // MARK: - Binary Read Helpers
     
     private func readUInt16(at offset: Int) -> UInt16 {
-        data.withUnsafeBytes { raw in
-            raw.load(fromByteOffset: offset, as: UInt16.self).littleEndian
-        }
+        guard offset + 2 <= data.count else { return 0 }
+        let b0 = UInt16(data[offset])
+        let b1 = UInt16(data[offset + 1])
+        return b0 | (b1 << 8)
     }
     
     private func readUInt32(at offset: Int) -> UInt32 {
-        data.withUnsafeBytes { raw in
-            raw.load(fromByteOffset: offset, as: UInt32.self).littleEndian
-        }
+        guard offset + 4 <= data.count else { return 0 }
+        let b0 = UInt32(data[offset])
+        let b1 = UInt32(data[offset + 1])
+        let b2 = UInt32(data[offset + 2])
+        let b3 = UInt32(data[offset + 3])
+        return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)
     }
 }

@@ -97,11 +97,6 @@ public class SemanticDocumentBuilder {
                         wordIndexInSentence += 1
                         wordsOnCurrentVirtualPage += 1
                         
-                        if !hasMultipleChapters && wordsOnCurrentVirtualPage >= targetWordsPerVirtualPage {
-                            virtualPageIndex += 1
-                            wordsOnCurrentVirtualPage = 0
-                        }
-                        
                         return true
                     }
                     
@@ -118,6 +113,12 @@ public class SemanticDocumentBuilder {
                         boundsByPage: [:]
                     )
                     allSentences.append(semanticSentence)
+                    
+                    if !hasMultipleChapters && wordsOnCurrentVirtualPage >= targetWordsPerVirtualPage {
+                        virtualPageIndex += 1
+                        wordsOnCurrentVirtualPage = 0
+                    }
+                    
                     return true
                 }
                 

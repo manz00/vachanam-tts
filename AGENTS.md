@@ -1,8 +1,12 @@
 # Agent Guidelines & Repository Memory for Vachanam
 
-## User Rules
+## User Rules & Documentation Architecture
 - Never open the browser to check or verify.
-- Always update `README.md` whenever changes or additions are made.
+- Maintain 2 synchronized documentation files:
+  - `README.md`: User-facing product documentation (overview, features, UI capabilities, hardware tiers, build & run guides, keyboard shortcuts, troubleshooting).
+  - `TECHNICAL.md`: Technical architecture and core logic (3-layer model, coordinate systems, math normalization engines, parser specifications, audio pipelines, memory management, and technical audit entries `[AUD-XX]`).
+  - When user-facing features or guides change, update `README.md`.
+  - When algorithms, parsers, coordinate math, or technical fixes change, update `TECHNICAL.md`.
 
 ## Xcode Project & Scheme Integrity
 - The files [Vachanam.xcodeproj/project.pbxproj](file:///Users/manjunath/VibeCoder/vachanam-tts/Vachanam.xcodeproj/project.pbxproj) and [Vachanam.xcodeproj/xcshareddata/xcschemes/Vachanam.xcscheme](file:///Users/manjunath/VibeCoder/vachanam-tts/Vachanam.xcodeproj/xcshareddata/xcschemes/Vachanam.xcscheme) are generated via [generate_project.py](file:///Users/manjunath/VibeCoder/vachanam-tts/generate_project.py).

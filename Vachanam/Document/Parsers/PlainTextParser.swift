@@ -10,6 +10,14 @@ import Foundation
 public struct PlainTextParser: DocumentParser {
     public init() {}
     
+    public static func decodeString(from data: Data) -> String {
+        if let str = String(data: data, encoding: .utf8) { return str }
+        if let str = String(data: data, encoding: .isoLatin1) { return str }
+        if let str = String(data: data, encoding: .windowsCP1252) { return str }
+        if let str = String(data: data, encoding: .utf16) { return str }
+        return String(data: data, encoding: .ascii) ?? ""
+    }
+    
     public func parse(from source: DocumentSource) async throws -> ParsedDocument {
         let text: String
         let defaultTitle: String
@@ -19,12 +27,11 @@ public struct PlainTextParser: DocumentParser {
             guard FileManager.default.fileExists(atPath: url.path) else {
                 throw DocumentParserError.fileNotFound(url)
             }
-            do {
-                text = try String(contentsOf: url, encoding: .utf8)
-                defaultTitle = url.deletingPathExtension().lastPathComponent
-            } catch {
-                throw DocumentParserError.parsingFailed("Could not read plain text file: \(error.localizedDescription)")
+            guard let data = try? Data(contentsOf: url) else {
+                throw DocumentParserError.parsingFailed("Could not read plain text file: \(url.lastPathComponent)")
             }
+            text = Self.decodeString(from: data)
+            defaultTitle = url.deletingPathExtension().lastPathComponent
         case .rawText(let rawText, let rawTitle):
             text = rawText
             defaultTitle = rawTitle
@@ -32,12 +39,27 @@ public struct PlainTextParser: DocumentParser {
             throw DocumentParserError.invalidSource("PlainTextParser requires a fileURL or rawText")
         }
         
-        let rawParagraphs = text.components(separatedBy: "\n\n")
+        let normalized = text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
+        var rawParagraphs = normalized.components(separatedBy: "\n\n")
             .map { $0.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
         
-        guard !rawParagraphs.isEmpty else {
+        // Fallback for files with single-newline separation
+        if rawParagraphs.count <= 1 && normalized.contains("\n") {
+            let lines = normalized.components(separatedBy: "\n")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            if lines.count > 1 {
+                rawParagraphs = lines
+            }
+        }
+        
+        let trimmed = normalized.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !rawParagraphs.isEmpty || !trimmed.isEmpty else {
             throw DocumentParserError.parsingFailed("Document is empty")
+        }
+        if rawParagraphs.isEmpty {
+            rawParagraphs = [trimmed]
         }
         
         var title = defaultTitle

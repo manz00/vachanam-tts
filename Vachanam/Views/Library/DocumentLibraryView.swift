@@ -200,20 +200,20 @@ public struct DocumentLibraryView: View {
                 switch result {
                 case .success(let urls):
                     guard let url = urls.first else { return }
-                    if url.startAccessingSecurityScopedResource() {
-                        defer { url.stopAccessingSecurityScopedResource() }
-                        // Copy to app documents for persistent local access
-                        let localDocURL = copyToLocalDocuments(url: url)
-                        if let doc = ReaderDocument(url: localDocURL) {
-                            progressTracker.recordProgress(
-                                documentURL: localDocURL,
-                                title: doc.title,
-                                currentPage: 0,
-                                totalPages: doc.pageCount
-                            )
-                            onSelectDocument(doc)
+                    let isAccessing = url.startAccessingSecurityScopedResource()
+                    defer {
+                        if isAccessing {
+                            url.stopAccessingSecurityScopedResource()
                         }
-                    } else if let doc = ReaderDocument(url: url) {
+                    }
+                    let localDocURL = Self.copyToLocalDocuments(url: url)
+                    if let doc = ReaderDocument(url: localDocURL) {
+                        progressTracker.recordProgress(
+                            documentURL: localDocURL,
+                            title: doc.title,
+                            currentPage: 0,
+                            totalPages: doc.pageCount
+                        )
                         onSelectDocument(doc)
                     }
                 case .failure(let error):
@@ -288,11 +288,20 @@ public struct DocumentLibraryView: View {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory
     }
     
-    private func copyToLocalDocuments(url: URL) -> URL {
-        let docs = Self.documentsDirectory
+    @discardableResult
+    public static func copyToLocalDocuments(url: URL) -> URL {
+        let docs = documentsDirectory
         let dest = docs.appendingPathComponent(url.lastPathComponent)
-        try? FileManager.default.copyItem(at: url, to: dest)
-        return FileManager.default.fileExists(atPath: dest.path) ? dest : url
+        if FileManager.default.fileExists(atPath: dest.path) {
+            try? FileManager.default.removeItem(at: dest)
+        }
+        do {
+            try FileManager.default.copyItem(at: url, to: dest)
+            return dest
+        } catch {
+            print("Failed to copy document to local documents: \(error.localizedDescription)")
+            return FileManager.default.fileExists(atPath: dest.path) ? dest : url
+        }
     }
     
     @discardableResult

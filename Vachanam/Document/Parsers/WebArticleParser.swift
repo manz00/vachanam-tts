@@ -36,10 +36,10 @@ public struct WebArticleParser: DocumentParser {
             defaultTitle = rawTitle
             
         case .fileURL(let url):
-            guard let content = try? String(contentsOf: url, encoding: .utf8) else {
+            guard let data = try? Data(contentsOf: url) else {
                 throw DocumentParserError.fileNotFound(url)
             }
-            html = content
+            html = PlainTextParser.decodeString(from: data)
             defaultTitle = url.deletingPathExtension().lastPathComponent
         }
         
@@ -135,23 +135,6 @@ public struct WebArticleParser: DocumentParser {
     }
     
     private func cleanHTMLText(_ html: String) -> String {
-        var text = html.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
-        let entities = [
-            "&nbsp;": " ",
-            "&amp;": "&",
-            "&quot;": "\"",
-            "&apos;": "'",
-            "&#39;": "'",
-            "&lt;": "<",
-            "&gt;": ">",
-            "&mdash;": "—",
-            "&ndash;": "–"
-        ]
-        for (ent, rep) in entities {
-            text = text.replacingOccurrences(of: ent, with: rep)
-        }
-        text = text.replacingOccurrences(of: "[ \\t]+", with: " ", options: .regularExpression)
-        text = text.replacingOccurrences(of: "\\n{3,}", with: "\n\n", options: .regularExpression)
-        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return EPUBParser().cleanHTMLText(html)
     }
 }

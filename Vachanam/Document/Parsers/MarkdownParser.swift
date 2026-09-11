@@ -19,12 +19,11 @@ public struct MarkdownParser: DocumentParser {
             guard FileManager.default.fileExists(atPath: url.path) else {
                 throw DocumentParserError.fileNotFound(url)
             }
-            do {
-                text = try String(contentsOf: url, encoding: .utf8)
-                title = url.deletingPathExtension().lastPathComponent
-            } catch {
-                throw DocumentParserError.parsingFailed("Could not read Markdown file: \(error.localizedDescription)")
+            guard let data = try? Data(contentsOf: url) else {
+                throw DocumentParserError.parsingFailed("Could not read Markdown file: \(url.lastPathComponent)")
             }
+            text = PlainTextParser.decodeString(from: data)
+            title = url.deletingPathExtension().lastPathComponent
         case .rawText(let rawText, let rawTitle):
             text = rawText
             title = rawTitle
@@ -36,7 +35,8 @@ public struct MarkdownParser: DocumentParser {
     }
     
     public func parseMarkdownText(_ text: String, defaultTitle: String) -> ParsedDocument {
-        let lines = text.components(separatedBy: .newlines)
+        let normalized = text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
+        let lines = normalized.components(separatedBy: "\n")
         var chapters: [ParsedChapter] = []
         var currentChapterTitle: String? = nil
         var currentBlocks: [ParsedBlock] = []
@@ -84,6 +84,23 @@ public struct MarkdownParser: DocumentParser {
             if inCodeBlock {
                 // Keep code content in paragraph buffer
                 paragraphBuffer.append(rawLine)
+                continue
+            }
+            
+            // Setext-style headings (=== or --- under a paragraph line)
+            if !paragraphBuffer.isEmpty && (line.range(of: #"^={3,}\s*$"#, options: .regularExpression) != nil || line.range(of: #"^-{3,}\s*$"#, options: .regularExpression) != nil) {
+                let isLevel1 = line.hasPrefix("=")
+                let headingText = paragraphBuffer.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+                paragraphBuffer.removeAll()
+                let cleanHeading = cleanInlineMarkdown(headingText)
+                if isLevel1 {
+                    if documentTitle == nil { documentTitle = cleanHeading }
+                    flushChapter()
+                    currentChapterTitle = cleanHeading
+                    currentBlocks.append(ParsedBlock(type: .heading, text: cleanHeading, level: 1))
+                } else {
+                    currentBlocks.append(ParsedBlock(type: .heading, text: cleanHeading, level: 2))
+                }
                 continue
             }
             
