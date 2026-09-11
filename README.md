@@ -1,4 +1,4 @@
-# Vachanam (వాచనం)
+# Vachanam (వచనం)
 
 **An accessibility-focused universal reader with on-device Neural TTS, synchronized karaoke highlighting, focus soundscapes, and Apple Pencil annotations for iPad and Mac.**
 
@@ -11,7 +11,7 @@
 
 ## Overview
 
-**Vachanam (వాచనం)** is engineered specifically for readers with dyslexia, visual impairments, ADHD, reading fatigue, or cognitive processing differences. It bridges the gap between complex academic documents and fluid digital reading by pairing native PDF viewing with an extracted, distraction-free **Reader View**, powered by a pluggable on-device **Neural Text-to-Speech (TTS)** engine.
+**Vachanam (వచనం)** is engineered specifically for readers with dyslexia, visual impairments, ADHD, reading fatigue, or cognitive processing differences. It bridges the gap between complex academic documents and fluid digital reading by pairing native PDF viewing with an extracted, distraction-free **Reader View**, powered by a pluggable on-device **Neural Text-to-Speech (TTS)** engine.
 
 As documents are narrated, Vachanam synchronizes **word-by-word karaoke highlighting** alongside **sentence-level background bands**, smooth auto-scrolling, a dyslexia reading ruler guide, ambient focus soundscapes, and an Apple Pencil annotation suite.
 

@@ -1,6 +1,6 @@
 # Vachanam — Core Logic & Technical Architecture
 
-Comprehensive technical specifications, coordinate models, algorithmic engines, parser architectures, memory lifecycles, and audit history for **Vachanam (వాచనం)**.
+Comprehensive technical specifications, coordinate models, algorithmic engines, parser architectures, memory lifecycles, and audit history for **Vachanam (వచనం)**.
 
 ---
 
