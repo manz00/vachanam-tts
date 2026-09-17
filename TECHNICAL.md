@@ -294,17 +294,66 @@ Structured around the principle:
     - Aligned virtual page breaks to sentence boundaries in `SemanticDocumentBuilder`.
     - Added comprehensive unit test suite `EPUBParserTests.swift`.
 
+16. **[AUD-16] EPUB Parser Acceleration & Reader View Virtual Paging**:
+    - Optimized `ZipArchive` with $O(1)$ case-insensitive hash lookup mapping and zero-copy preallocated buffer decompression (`Z_FINISH`), avoiding repeated byte-by-byte copies and multi-cycle array reallocations.
+    - Precompiled all regular expressions statically in `EPUBParser` (`itemTagRegex`, `blockPatternRegex`, `scriptRegex`, `styleRegex`, `htmlTagRegex`, decimal/hex entity regexes), avoiding repetitive regex compilation overhead across thousands of paragraphs.
+    - Implemented fast-path checks (`contains("<")` and `contains("&")`) in `cleanHTMLText` to eliminate redundant tag and entity scan loops.
+    - Reused `NLTokenizer` instances for sentence and word segmentation in `SemanticDocumentBuilder`, removing thousands of framework initialization and teardown cycles per book.
+    - Rewrote `ReaderTextView` to use virtual page windowing (`sentencesForCurrentPage`) with `LazyVStack`, eliminating eager instantiation of 10,000+ views in memory.
+    - Bound `ReaderTextView` to `currentPageIndex` with page navigation footer controls and automatic page flipping during live TTS playback across chapter boundaries.
+    - Isolated word highlighting so non-speaking sentences bypass `AttributedString` generation for instantaneous 120 FPS typography rendering and scrolling.
+
+17. **[AUD-17] Android Platform Port (Kotlin + Jetpack Compose)**:
+    - Designed and implemented full feature-parity native Android application in `VachanamAndroid/` targeting API 31+ (Android 12) with Material 3.
+    - Ported 3-layer semantic document architecture (`SemanticDocument`, `SemanticSentence`, `SemanticWord`, `TTSChunk`, `BoundingBox`).
+    - Implemented universal document parsers in Kotlin: `EPUBParser` (ZIP streaming, OPF manifest/spine parsing, clean entity decoding), `MarkdownParser` (ATX/Setext, lists, quotes, code blocks), `PlainTextParser` (multi-encoding fallback cascade), and `WebArticleParser` (URL fetching and article body extraction).
+    - Integrated PDFBox-Android for spatial word/sentence boundary extraction and `android.graphics.pdf.PdfRenderer` for high-resolution 2x bitmap page rendering.
+    - Built pluggable `TTSModelProtocol` with `AndroidSystemAdapter` utilizing `UtteranceProgressListener.onRangeStart` for real-time word-level karaoke highlighting, and `KokoroOnnxAdapter` for on-device neural synthesis.
+    - Ported acoustic focus player `AmbientSoundscapePlayer` reusing 5 bundled `.m4a` soundscape loops (`res/raw/`) with volume persistence, infinite looping, smooth crossfade, and study mode.
+    - Added distraction-free `ReaderTextView` with virtual pagination, OpenDyslexic font support (`res/font/`), bionic reading mode, draggable `ReadingRulerOverlay`, and 5 reader background themes.
+    - Reused 4-page academic benchmark PDF and full LaTeX/SI Unit/Greek math speech dictionaries in Android assets.
+    - Added unit test suite `VachanamCoreLogicTest.kt` verifying word reconstruction, math speech vocalization, and chunk duration bounds.
+
+18. **[AUD-18] iOS / macOS Platform Specialization & Shared Architecture Reorganization**:
+    - Segmented `Vachanam/` into clean, dedicated architectural domains:
+      - `Vachanam/Shared/`: Multi-platform application core (`App/`, `Document/`, `TTS/`, `Audio/`, `Accessibility/`, `Adapters/`, `PDF/`, and shared `Views/`).
+      - `Vachanam/iOS/`: iPadOS & iOS specialized features (`Annotations/AnnotationManager.swift` and `Views/Annotations/` containing `CanvasOverlay.swift`, `AnnotationToolbar.swift`, `ShapeToolView.swift`, `StickyNoteView.swift`, `TextBoxView.swift`, `AnnotationExportView.swift`).
+      - `Vachanam/macOS/`: Mac Catalyst specialized features (`Studio/` containing batch audiobook generator & manifest export, `Navigation/` containing catalyst menu commands & keyboard shortcuts, `Developer/` diagnostics).
+      - `Vachanam/Tests/` & `Vachanam/UITests/`: Moved test suites from root workspace into `Vachanam/`, establishing a clean 2-app workspace structure (`Vachanam/` + `VachanamAndroid/`).
+    - Upgraded `generate_project.py` with explicit PBXGroup definitions for `Shared`, `iOS (iPadOS & PencilKit)`, `macOS (Mac Catalyst & Studio)`, `Tests`, `UITests`, and `Resources`.
+    - Preserved single unified multi-platform Xcode project scheme `Vachanam` targeting both iOS (iPadOS) and macOS (Mac Catalyst) without duplicated compilation settings or split targets.
+
 ---
 
-## 7. Build, Test & Project Synchronization
+## 7. Multi-Platform Build, Test & Technical Docs
 
+Detailed platform-specific technical specifications and audit histories are maintained in their respective platform directories:
+- **Apple (iPadOS & macOS)**: See [VachanamApple/TECHNICAL.md](VachanamApple/TECHNICAL.md) for Quartz 2D math, CoreML/MLX pipelines, and Apple audit entries (`[AUD-01]`..`[AUD-16]`, `[AUD-18]`).
+- **Android (12+)**: See [VachanamAndroid/TECHNICAL.md](VachanamAndroid/TECHNICAL.md) for PDFBox coordinate mapping, Android TTS integration, and Android audit entry (`[AUD-17]`).
+
+### Build & Test Commands
+
+#### Apple (iPadOS & Mac Catalyst)
 ```bash
-# Synchronize Xcode Project & Schemes (Required when adding/modifying files)
+cd VachanamApple
+
+# Synchronize Xcode Project & Schemes
 python3 generate_project.py
 
 # Run Unit Tests on macOS (Mac Catalyst)
-xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=macOS,variant=Mac Catalyst' -quiet test
+xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=macOS,variant=Mac Catalyst' -only-testing:VachanamTests -quiet test
 
 # Run Unit Tests on iOS Simulator (iPad Air M4)
-xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' -quiet test
+xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' -only-testing:VachanamTests -quiet test
+```
+
+#### Android (Kotlin + Jetpack Compose)
+```bash
+cd VachanamAndroid
+
+# Run JVM Unit Tests
+./gradlew testDebugUnitTest
+
+# Assemble Debug APK
+./gradlew assembleDebug
 ```

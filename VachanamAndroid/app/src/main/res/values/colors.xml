@@ -1,0 +1,9 @@
+<resources>
+    <color name="deep_navy">#0B1320</color>
+    <color name="slate_charcoal">#151D2A</color>
+    <color name="surface_elevated">#1F2A3C</color>
+    <color name="amber_accent">#F59E0B</color>
+    <color name="teal_accent">#14B8A6</color>
+    <color name="text_primary">#E6EDF3</color>
+    <color name="text_secondary">#9DA7B3</color>
+</resources>
