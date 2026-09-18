@@ -73,12 +73,21 @@ enum class ReaderBackgroundTheme(
 }
 
 enum class ReadingLayout(val id: String, val displayName: String) {
-    PAGINATED("Paginated", "Paginated"),
+    PAGINATED("Single Page", "Single Page"),
+    TWO_PAGE("Two Pages", "Two Pages"),
     CONTINUOUS("Continuous Scroll", "Continuous Scroll");
+
+    val isTwoPage: Boolean get() = this == TWO_PAGE
+    val isPaginated: Boolean get() = this == PAGINATED || this == TWO_PAGE
+    val pageStep: Int get() = if (this == TWO_PAGE) 2 else 1
 
     companion object {
         fun fromId(id: String): ReadingLayout {
-            return entries.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: PAGINATED
+            return when (id.lowercase()) {
+                "two_page", "two pages", "twopages", "twopage" -> TWO_PAGE
+                "continuous", "continuous scroll", "scroll" -> CONTINUOUS
+                else -> PAGINATED
+            }
         }
     }
 }

@@ -41,7 +41,10 @@
 - Independent background volume slider with smooth crossfade and sleep timer.
 
 ### 📚 Apple Books Reading Experience & Library Intelligence
-- **Dual-Mode Reading Engine**: Choose between **Paginated** (Apple Books horizontal swipe and edge-tap page flipping with running chapter header and page counter footer) and **Continuous** (vertical smooth scrolling).
+- **3-Mode Universal Reading Engine**: Seamlessly switch between **Single Page** (`.paginated`), **Two Pages** (`.twoPage` side-by-side book spread with center spine divider), and **Continuous** (`.continuous` vertical smooth scrolling) across all document formats (EPUB, PDF, Markdown, Plain Text, Web Articles).
+- **Two-Page Book Spread Mode**: Immersive dual-column spread for iPad in landscape and macOS Mac Catalyst. Features running chapter header, dual-page indicator footer ("Pages X–Y of N"), edge-tap paging (`-2 / +2`), and automatic voice-following spread turns.
+- **Dynamic PDF Theme Background**: Native PDF viewer (`pdfView.backgroundColor`) automatically binds to `themeManager.currentReaderTheme.backgroundColor`, ensuring Quiet, Paper, Charcoal, and Night themes maintain harmonious borders instead of glaring white margins.
+- **Original PDF vs Clean Text Mode**: Toggle between original PDF fixed-layout rendering and reflowed clean text typography with dynamic font size, OpenDyslexic, bionic reading, and full 3-layout pagination.
 - **Immersive Tap-to-Toggle Chrome**: Center tap smoothly fades top navigation bars and bottom TTS scrubbers for pure distraction-free reading; edge taps flip pages.
 - **5 Apple Books Theme Palettes**: `Original` (adaptive system white/black), `Quiet` (warm eggshell), `Paper` (textured sepia), `Charcoal` (deep slate), and `Night` (true OLED black).
 - **Library Shelves & Collections**: Organize books into built-in collections (`All`, `Reading`, `Favorites`, `Finished`) or custom user-defined shelves with horizontal category pills.
@@ -53,7 +56,7 @@
 - **OpenDyslexic Typography**: Bundled OpenDyslexic Regular and Bold fonts.
 - **Bionic Reading Mode**: Fixation character bolding.
 - **Dyslexia Reading Ruler**: Draggable reading guide with adjustable window height.
-- **Reading Layout Selector**: Switch between Paginated and Continuous scroll directly inside the "Aa" Appearance menu.
+- **Reading Layout Selector**: Switch between Single Page, Two Pages, and Continuous scroll directly inside the "Aa" Appearance menu, the reader top navigation bar, or Mac Catalyst keyboard shortcuts.
 
 ---
 

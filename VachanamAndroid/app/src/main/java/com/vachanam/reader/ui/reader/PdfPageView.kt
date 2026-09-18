@@ -2,16 +2,19 @@ package com.vachanam.reader.ui.reader
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
+import com.vachanam.reader.accessibility.ThemeManager
 import com.vachanam.reader.data.model.BoundingBox
 import com.vachanam.reader.data.model.SemanticDocument
 import com.vachanam.reader.pdf.PdfDocumentWrapper
@@ -20,6 +23,77 @@ import com.vachanam.reader.ui.highlight.KaraokeHighlightOverlay
 
 @Composable
 fun PdfPageView(
+    document: SemanticDocument,
+    pageIndex: Int,
+    pdfWrapper: PdfDocumentWrapper?,
+    coordinator: PlaybackCoordinator,
+    themeManager: ThemeManager,
+    modifier: Modifier = Modifier
+) {
+    val theme by themeManager.currentReaderTheme.collectAsState()
+    val readingLayout by themeManager.currentReadingLayout.collectAsState()
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(theme.backgroundColor)
+    ) {
+        if (readingLayout.isTwoPage) {
+            val leftPageIndex = (pageIndex / 2) * 2
+            val rightPageIndex = leftPageIndex + 1
+
+            Row(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Left Page
+                SinglePdfPageBox(
+                    document = document,
+                    pageIndex = leftPageIndex,
+                    pdfWrapper = pdfWrapper,
+                    coordinator = coordinator,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                )
+
+                // Spine Divider
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .padding(vertical = 16.dp)
+                        .background(theme.textColor.copy(alpha = 0.12f))
+                )
+
+                // Right Page
+                if (rightPageIndex < document.pageCount) {
+                    SinglePdfPageBox(
+                        document = document,
+                        pageIndex = rightPageIndex,
+                        pdfWrapper = pdfWrapper,
+                        coordinator = coordinator,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                    )
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        } else {
+            SinglePdfPageBox(
+                document = document,
+                pageIndex = pageIndex,
+                pdfWrapper = pdfWrapper,
+                coordinator = coordinator,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+@Composable
+private fun SinglePdfPageBox(
     document: SemanticDocument,
     pageIndex: Int,
     pdfWrapper: PdfDocumentWrapper?,

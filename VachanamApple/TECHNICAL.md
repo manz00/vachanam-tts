@@ -133,6 +133,12 @@ graph TD
     - **Document Deletion & Sandbox Sanitation**: Deletes the local document file, resets reading progress, removes favorite/finished flags, and strips the document ID across all shelves.
     - **Book Intelligence Preloading (`BookPreparationService.swift`)**: Background async parsing computes total word counts, chapter structures, human reading duration (~225 wpm), and neural TTS audio duration (~150 wpm) cached for instant inspection via `BookStructureSheet.swift`.
     - **Precision Resume Banner**: Displays an animated toast upon book open ("Resume at Page X: [Chapter Title]") with an inline `Play` button to immediately start neural narration.
+19. **[AUD-20] Unified Reading Layouts (Single Page, Two Pages, Continuous Scroll) & Universal Dynamic Theme Synchronization**:
+    - **App-Dependent Architecture**: Decoupled reading layouts and color themes from file formats. `ReadingLayout` and `ReaderBackgroundTheme` are maintained globally in `ThemeManager`, ensuring consistent user preferences across EPUB, PDF, Markdown, Plain Text, and Web Articles.
+    - **Two-Page Book Spread Mode (`PaginatedReaderView.swift`)**: Built universal 2-page spread with center spine divider, running chapter headers, dual-page progress indicators ("Pages X–Y of N"), edge-tap navigation (`-2 / +2` step), and bidirectional voice-following spread turns.
+    - **Dynamic PDF Theme Background**: `PDFReaderView.swift` binds `pdfView.backgroundColor` directly to `themeManager.currentReaderTheme.backgroundColor` on initial load and inside `updateUIView`. Eliminates glaring white page borders in dark or warm themes.
+    - **Native PDF Mode Toggle**: Enabled switching between fixed-layout PDF and clean text extraction mode directly from the reader navigation bar, granting PDFs access to dynamic font size, OpenDyslexic, bionic reading, and full 3-layout pagination.
+    - **Scrubber & Controls Parity**: Updated `ReaderScrubberBar.swift` to format spread ranges ("Pages X–Y of N"), and exposed universal `ReadingLayout` picker in the top navigation bar and appearance settings.
 
 ---
 

@@ -70,7 +70,7 @@ public struct ReaderContainerView: View {
                             PDFReaderView(
                                 document: document,
                                 currentPageIndex: $currentPageIndex,
-                                layoutMode: accessibilityManager.pdfDisplayLayout
+                                layoutMode: themeManager.readingLayout.pdfDisplayLayoutMode
                             )
                             
                             // Annotations (Shapes & Drawings)
@@ -108,8 +108,8 @@ public struct ReaderContainerView: View {
                             }
                         }
                     } else {
-                        if themeManager.readingLayout == .paginated {
-                            EPUBPaginatedReaderView(
+                        if themeManager.readingLayout.isPaginated {
+                            PaginatedReaderView(
                                 sentences: extractedSentences,
                                 currentPageIndex: $currentPageIndex,
                                 pageCount: document.pageCount,
@@ -355,12 +355,26 @@ public struct ReaderContainerView: View {
             
             Spacer()
             
-            if document.format == .pdf {
-                ReadingModeToggle(selectedMode: $readingMode)
-            } else {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        themeManager.readingLayout = (themeManager.readingLayout == .paginated) ? .continuous : .paginated
+            HStack(spacing: 8) {
+                if document.format == .pdf {
+                    ReadingModeToggle(selectedMode: $readingMode)
+                }
+                
+                Menu {
+                    ForEach(ReadingLayout.allCases) { layout in
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                themeManager.readingLayout = layout
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: layout.iconName)
+                                Text(layout.rawValue)
+                                if themeManager.readingLayout == layout {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
                     }
                 } label: {
                     HStack(spacing: 5) {
@@ -370,6 +384,9 @@ public struct ReaderContainerView: View {
                         Text(themeManager.readingLayout.rawValue)
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 9))
+                            .foregroundColor(.white.opacity(0.7))
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
@@ -451,29 +468,6 @@ public struct ReaderContainerView: View {
                         .foregroundColor(.white)
                 }
                 
-                if document.format == .pdf && readingMode == .pdfLayout {
-                    Menu {
-                        ForEach(PDFDisplayLayoutMode.allCases) { mode in
-                            Button {
-                                isLayoutTransitioning = true
-                                accessibilityManager.pdfDisplayLayout = mode
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                    isLayoutTransitioning = false
-                                }
-                            } label: {
-                                HStack {
-                                    Text(mode.rawValue)
-                                    if accessibilityManager.pdfDisplayLayout == mode {
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                        }
-                    } label: {
-                        Image(systemName: accessibilityManager.pdfDisplayLayout.iconName)
-                            .foregroundColor(.white)
-                    }
-                }
                 
                 Button {
                     withAnimation {

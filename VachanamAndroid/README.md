@@ -26,7 +26,10 @@
 - **`TTSController`**: High-level playback coordinator managing play/pause, sentence skipping, and speech rate scaling (0.5x – 2.5x).
 
 ### 📚 Apple Books Reading Experience & Library Intelligence
-- **Dual-Mode Reading Engine**: Choose between **Paginated** (Apple Books `HorizontalPager` with running chapter headers, page count footers, and edge-tap navigation) and **Continuous** (vertical smooth scrolling).
+- **3-Mode Universal Reading Engine**: Seamlessly switch between **Single Page** (`ReadingLayout.PAGINATED`), **Two Pages** (`ReadingLayout.TWO_PAGE` side-by-side book spread with center spine divider), and **Continuous** (`ReadingLayout.CONTINUOUS` vertical smooth scrolling) across all document formats (EPUB, PDF, Markdown, Plain Text, Web Articles).
+- **Two-Page Book Spread Mode**: Immersive dual-column spread for Android tablets and foldables. Features running chapter headers, dual-page indicator footer ("Pages X–Y of N"), edge-tap paging (`-2 / +2`), and automatic voice-following spread turns.
+- **Dynamic PDF Theme Background**: Native PDF canvas background automatically binds to `theme.backgroundColor`, ensuring Quiet, Paper, Charcoal, and Night themes maintain harmonious borders instead of glaring white margins.
+- **Original PDF vs Clean Text Mode**: Toggle between original PDF page rendering and reflowed clean text typography with dynamic font size, OpenDyslexic, bionic reading, and full 3-layout pagination.
 - **Immersive Tap-to-Toggle Chrome**: Center tap smoothly animates top bars and bottom TTS player controls in/out for distraction-free reading; edge taps advance/rewind pages.
 - **5 Apple Books Theme Palettes**: `Original` (system adaptive), `Quiet` (warm eggshell), `Paper` (textured sepia), `Charcoal` (deep slate), and `Night` (true OLED black).
 - **Library Shelves & Collections**: Organize books into built-in collections (`All`, `Reading`, `Favorites`, `Finished`) or custom user-defined shelves with horizontal category pills.
@@ -36,7 +39,7 @@
 
 ### ♿ Accessibility First & Material You
 - **5 Theme Palettes**: Original, Quiet, Paper, Charcoal, and Night with automatic contrast adjustment.
-- **Reading Layout Selector**: Switch between Paginated and Continuous scroll directly inside the top toolbar.
+- **Reading Layout Selector**: Switch between Single Page, Two Pages, and Continuous scroll directly inside the top toolbar or the Settings screen.
 - **OpenDyslexic Typography**: Bundled `opendyslexic_regular.otf` and `opendyslexic_bold.otf` in `res/font/`.
 - **Bionic Reading Mode**: Automatically bolds initial fixation characters of each word to guide the eye.
 - **Dyslexia Reading Ruler**: Draggable horizontal focus guide with customizable window height and dimming mask.

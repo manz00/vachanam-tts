@@ -14,6 +14,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material.icons.filled.ViewHeadline
@@ -62,6 +64,7 @@ fun ReaderContainerView(
     val isReadingRulerEnabled by accessibilityManager.isReadingRulerEnabled.collectAsState()
     val rulerHeight by accessibilityManager.rulerHeight.collectAsState()
     val readingLayout by themeManager.currentReadingLayout.collectAsState()
+    val theme by themeManager.currentReaderTheme.collectAsState()
 
     val currentDoc = document ?: return
 
@@ -125,28 +128,37 @@ fun ReaderContainerView(
                         }
                     },
                     actions = {
-                        // Layout Toggle (Paginated vs Continuous Scroll)
-                        if (!isPdfMode) {
-                            IconButton(
-                                onClick = {
-                                    val nextLayout = if (readingLayout == ReadingLayout.PAGINATED) {
-                                        ReadingLayout.CONTINUOUS
-                                    } else {
-                                        ReadingLayout.PAGINATED
-                                    }
-                                    themeManager.setLayout(nextLayout)
-                                }
-                            ) {
+                        // PDF Mode Toggle (Original PDF vs Clean Text)
+                        if (isPdf) {
+                            IconButton(onClick = { isPdfMode = !isPdfMode }) {
                                 Icon(
-                                    imageVector = if (readingLayout == ReadingLayout.PAGINATED) {
-                                        Icons.Default.ViewCarousel
-                                    } else {
-                                        Icons.Default.ViewHeadline
-                                    },
-                                    contentDescription = "Toggle Reading Mode",
-                                    tint = WarmAmber
+                                    imageVector = if (isPdfMode) Icons.Default.MenuBook else Icons.Default.PictureAsPdf,
+                                    contentDescription = if (isPdfMode) "Switch to Clean Text" else "Switch to Original PDF",
+                                    tint = Color.White
                                 )
                             }
+                        }
+
+                        // Universal Reading Layout Toggle (Single Page -> Two Pages -> Continuous Scroll)
+                        IconButton(
+                            onClick = {
+                                val nextLayout = when (readingLayout) {
+                                    ReadingLayout.PAGINATED -> ReadingLayout.TWO_PAGE
+                                    ReadingLayout.TWO_PAGE -> ReadingLayout.CONTINUOUS
+                                    ReadingLayout.CONTINUOUS -> ReadingLayout.PAGINATED
+                                }
+                                themeManager.setLayout(nextLayout)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = when (readingLayout) {
+                                    ReadingLayout.PAGINATED -> Icons.Default.ViewCarousel
+                                    ReadingLayout.TWO_PAGE -> Icons.Default.MenuBook
+                                    ReadingLayout.CONTINUOUS -> Icons.Default.ViewHeadline
+                                },
+                                contentDescription = "Reading Layout: ${readingLayout.displayName}",
+                                tint = WarmAmber
+                            )
                         }
 
                         // Book Intelligence & Structure
@@ -193,7 +205,7 @@ fun ReaderContainerView(
                 }
             }
         },
-        containerColor = DeepNavy
+        containerColor = theme.backgroundColor
     ) { paddingValues ->
         Box(
             modifier = modifier
@@ -206,11 +218,12 @@ fun ReaderContainerView(
                     pageIndex = visiblePage,
                     pdfWrapper = pdfWrapper,
                     coordinator = coordinator,
+                    themeManager = themeManager,
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
-                if (readingLayout == ReadingLayout.PAGINATED) {
-                    EPUBPaginatedReader(
+                if (readingLayout.isPaginated) {
+                    PaginatedReaderView(
                         document = currentDoc,
                         currentPageIndex = visiblePage,
                         onPageChange = { coordinator.setVisiblePage(it) },

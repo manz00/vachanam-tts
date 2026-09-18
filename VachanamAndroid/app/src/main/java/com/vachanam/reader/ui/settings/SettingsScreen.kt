@@ -36,6 +36,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val currentTheme by themeManager.currentReaderTheme.collectAsState()
+    val currentLayout by themeManager.currentReadingLayout.collectAsState()
     val selectedFont by fontManager.selectedFont.collectAsState()
     val fontSize by fontManager.fontSize.collectAsState()
     val lineSpacing by fontManager.lineSpacingMultiplier.collectAsState()
@@ -110,7 +111,34 @@ fun SettingsScreen(
                 }
             }
 
-            // 2. Typography & Fonts
+            // 2. Reading Layout
+            item {
+                Text(text = "Reading Layout", fontSize = 18.sp, color = WarmAmber)
+                Spacer(modifier = Modifier.height(10.dp))
+                for (layout in ReadingLayout.entries) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { themeManager.setLayout(layout) }
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = currentLayout == layout,
+                            onClick = { themeManager.setLayout(layout) },
+                            colors = RadioButtonDefaults.colors(selectedColor = WarmAmber)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = layout.displayName,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            // 3. Typography & Fonts
             item {
                 Text(text = "Typography", fontSize = 18.sp, color = WarmAmber)
                 Spacer(modifier = Modifier.height(10.dp))

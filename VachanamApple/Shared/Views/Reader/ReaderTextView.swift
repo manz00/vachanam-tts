@@ -131,16 +131,34 @@ public struct ReaderTextView: View {
     }
 }
 
-private struct SentenceFlowView: View {
-    let sentence: SentenceItem
-    let isCurrentSentence: Bool
-    let currentWord: WordRect?
-    let font: Font
-    let textColor: Color
-    let highlightChoice: HighlightColorChoice
-    let highlightMode: HighlightMode
+public struct SentenceFlowView: View {
+    public let sentence: SentenceItem
+    public let isCurrentSentence: Bool
+    public let currentWord: WordRect?
+    public let font: Font
+    public let textColor: Color
+    public let highlightChoice: HighlightColorChoice
+    public let highlightMode: HighlightMode
     
-    var body: some View {
+    public init(
+        sentence: SentenceItem,
+        isCurrentSentence: Bool,
+        currentWord: WordRect?,
+        font: Font,
+        textColor: Color,
+        highlightChoice: HighlightColorChoice,
+        highlightMode: HighlightMode
+    ) {
+        self.sentence = sentence
+        self.isCurrentSentence = isCurrentSentence
+        self.currentWord = currentWord
+        self.font = font
+        self.textColor = textColor
+        self.highlightChoice = highlightChoice
+        self.highlightMode = highlightMode
+    }
+    
+    public var body: some View {
         if isCurrentSentence && (highlightMode == .both || highlightMode == .wordOnly), currentWord != nil {
             Text(buildAttributedString())
                 .font(font)

@@ -45,3 +45,33 @@ public enum PDFDisplayLayoutMode: String, CaseIterable, Identifiable, Codable, S
     }
 }
 
+extension PDFDisplayLayoutMode {
+    public init(readingLayout: ReadingLayout) {
+        switch readingLayout {
+        case .paginated:
+            self = .singlePage
+        case .twoPage:
+            self = .twoUp
+        case .continuous:
+            self = .singlePageContinuous
+        }
+    }
+    
+    public var correspondingReadingLayout: ReadingLayout {
+        switch self {
+        case .singlePage:
+            return .paginated
+        case .twoUp, .twoUpContinuous:
+            return .twoPage
+        case .singlePageContinuous:
+            return .continuous
+        }
+    }
+}
+
+extension ReadingLayout {
+    public var pdfDisplayLayoutMode: PDFDisplayLayoutMode {
+        PDFDisplayLayoutMode(readingLayout: self)
+    }
+}
+

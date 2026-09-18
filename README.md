@@ -10,7 +10,7 @@
 
 ## Overview
 
-**Vachanam (వచనం)** is an accessibility-first reading ecosystem designed for students, researchers, and individuals with dyslexia, ADHD, visual impairments, or reading fatigue. It bridges the gap between dense multi-column academic literature and distraction-free comprehension by coupling an Apple Books-inspired reading UI (edge-tap pagination, dynamic theme palettes, tap-to-hide chrome), library shelf organization, background book preloading/intelligence, and high-fidelity document rendering with on-device neural narration, synchronized word-by-word karaoke highlighting, ambient focus soundscapes, and multi-format ingestion.
+**Vachanam (వచనం)** is an accessibility-first reading ecosystem designed for students, researchers, and individuals with dyslexia, ADHD, visual impairments, or reading fatigue. It bridges the gap between dense multi-column academic literature and distraction-free comprehension by coupling an Apple Books-inspired reading UI (edge-tap pagination, two-page book spreads, continuous scroll, dynamic theme palettes, tap-to-hide chrome), library shelf organization, background book preloading/intelligence, and high-fidelity document rendering with on-device neural narration, synchronized word-by-word karaoke highlighting, ambient focus soundscapes, and multi-format ingestion.
 
 The project is architected as two native, self-contained platform implementations sharing a unified 3-layer semantic document model:
 

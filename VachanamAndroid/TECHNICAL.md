@@ -96,6 +96,12 @@ graph TD
    - **Complete Document Deletion**: Deletes internal files, purges reading progress from `ReadingProgressTracker`, removes favorite/finished flags, and strips IDs across all custom shelves.
    - **Book Intelligence Preloading (`BookPreparationService.kt`)**: Async coroutine worker calculates total word count, chapter breakdown, human reading time (~225 wpm), and neural voice narration time (~150 wpm).
    - **Precision Resume Toast Banner**: Floating bottom banner on document open with chapter context and inline `Play` button to start TTS instantly.
+3. **[AUD-20] Unified Reading Layouts (Single Page, Two Pages, Continuous Scroll) & Universal Dynamic Theme Synchronization**:
+   - **App-Dependent Architecture**: Decoupled reading layouts and color themes from file formats. `ReadingLayout` and `ReaderBackgroundTheme` are maintained globally in `ThemeManager`, ensuring consistent user preferences across EPUB, PDF, Markdown, Plain Text, and Web Articles.
+   - **Two-Page Book Spread Mode (`PaginatedReaderView.kt`)**: Implemented universal 2-page spread with center spine divider, running chapter headers, dual-page progress indicators ("Pages X–Y of N"), edge-tap navigation (`-2 / +2` step), and bidirectional voice-following spread turns.
+   - **Dynamic PDF Theme Background (`PdfPageView.kt`)**: Bound PDF page view canvas background dynamically to `theme.backgroundColor`. Eliminates bright white background bleed in dark or warm themes and supports two-page side-by-side rendering with a center spine divider.
+   - **Original PDF vs Clean Text Mode (`ReaderContainerView.kt`)**: Added toggle allowing any PDF to be read either in its original page bitmap format or reflowed as a clean typographic document with dynamic text sizing, OpenDyslexic, bionic reading, and full 3-layout pagination.
+   - **Settings & Navigation Toolbar Integration**: Added 3-mode layout cycling button in reader top toolbar and layout radio selector in `SettingsScreen.kt`.
 
 ---
 

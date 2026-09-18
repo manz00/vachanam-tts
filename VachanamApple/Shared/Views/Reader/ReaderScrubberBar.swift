@@ -32,6 +32,18 @@ public struct ReaderScrubberBar: View {
         return min(max(currentPageIndex, 0), max(0, totalPages - 1))
     }
     
+    private var pageLabelString: String {
+        if ThemeManager.shared.readingLayout.isTwoPage && totalPages > 1 {
+            let left = (displayedPage / 2) * 2 + 1
+            let right = min(left + 1, totalPages)
+            if left == right {
+                return "\(left)"
+            }
+            return "\(left)–\(right)"
+        }
+        return "\(displayedPage + 1)"
+    }
+    
     public var body: some View {
         HStack(spacing: 10) {
             // First Page Button
@@ -111,7 +123,7 @@ public struct ReaderScrubberBar: View {
                 isJumpPopoverPresented = true
             } label: {
                 HStack(spacing: 4) {
-                    Text("\(displayedPage + 1)")
+                    Text(pageLabelString)
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                         .foregroundColor(Color.amberAccent)
                     Text("/ \(totalPages)")

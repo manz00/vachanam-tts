@@ -109,15 +109,41 @@ public enum ReaderBackgroundTheme: String, CaseIterable, Identifiable, Codable {
 }
 
 public enum ReadingLayout: String, CaseIterable, Identifiable, Codable {
-    case paginated = "Paginated"
+    case paginated = "Single Page"
+    case twoPage = "Two Pages"
     case continuous = "Continuous Scroll"
     
     public var id: String { rawValue }
     
     public var iconName: String {
         switch self {
-        case .paginated: return "book.pages"
+        case .paginated: return "doc.text"
+        case .twoPage: return "book.pages"
         case .continuous: return "scroll"
+        }
+    }
+    
+    public var isTwoPage: Bool {
+        self == .twoPage
+    }
+    
+    public var isPaginated: Bool {
+        self == .paginated || self == .twoPage
+    }
+    
+    public var pageStep: Int {
+        self == .twoPage ? 2 : 1
+    }
+    
+    public static func from(savedString: String) -> ReadingLayout? {
+        if let direct = ReadingLayout(rawValue: savedString) {
+            return direct
+        }
+        switch savedString.lowercased() {
+        case "paginated", "single page", "singlepage": return .paginated
+        case "two pages", "twopages", "two-page spread", "two up", "twoup": return .twoPage
+        case "continuous scroll", "continuous", "scroll": return .continuous
+        default: return nil
         }
     }
 }
@@ -158,7 +184,7 @@ public class ThemeManager: ObservableObject {
             self.currentReaderTheme = theme
         }
         if let savedLayout = UserDefaults.standard.string(forKey: "readingLayout"),
-           let layout = ReadingLayout(rawValue: savedLayout) {
+           let layout = ReadingLayout.from(savedString: savedLayout) {
             self.readingLayout = layout
         }
         self.isHighContrastEnabled = UserDefaults.standard.bool(forKey: "isHighContrastEnabled")

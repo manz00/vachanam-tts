@@ -233,15 +233,16 @@ public struct PDFReaderView: UIViewRepresentable {
     public let document: ReaderDocument
     @Binding public var currentPageIndex: Int
     public var layoutMode: PDFDisplayLayoutMode
+    @ObservedObject var themeManager = ThemeManager.shared
     
     public init(
         document: ReaderDocument,
         currentPageIndex: Binding<Int>,
-        layoutMode: PDFDisplayLayoutMode = AccessibilityManager.shared.pdfDisplayLayout
+        layoutMode: PDFDisplayLayoutMode? = nil
     ) {
         self.document = document
         self._currentPageIndex = currentPageIndex
-        self.layoutMode = layoutMode
+        self.layoutMode = layoutMode ?? ThemeManager.shared.readingLayout.pdfDisplayLayoutMode
     }
     
     public func makeUIView(context: Context) -> PDFView {
@@ -253,7 +254,7 @@ public struct PDFReaderView: UIViewRepresentable {
         pdfView.displayMode = layoutMode.pdfDisplayMode
         pdfView.displayDirection = layoutMode.pdfDisplayDirection
         pdfView.usePageViewController(false)
-        pdfView.backgroundColor = UIColor(Color(red: 0.05, green: 0.08, blue: 0.13))
+        pdfView.backgroundColor = UIColor(themeManager.currentReaderTheme.backgroundColor)
         
         let overlayView = PDFHighlightOverlayView()
         overlayView.backgroundColor = .clear
@@ -326,6 +327,11 @@ public struct PDFReaderView: UIViewRepresentable {
     public func updateUIView(_ uiView: PDFView, context: Context) {
         if context.coordinator.isHandlingPageChange {
             return
+        }
+        
+        let expectedColor = UIColor(themeManager.currentReaderTheme.backgroundColor)
+        if uiView.backgroundColor != expectedColor {
+            uiView.backgroundColor = expectedColor
         }
         
         if uiView.document != document.pdfDocument {
