@@ -81,6 +81,10 @@ class ReadingProgressTracker(context: Context) {
         return list.sortedByDescending { it.lastReadTimestamp }
     }
 
+    fun removeProgress(documentUri: String) {
+        prefs.edit().remove(documentUri).apply()
+    }
+
     companion object {
         @Volatile
         private var instance: ReadingProgressTracker? = null

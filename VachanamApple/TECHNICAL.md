@@ -125,6 +125,14 @@ graph TD
     - Renamed and organized Apple code into `VachanamApple/` with dedicated `Shared/`, `iOS/`, `macOS/`, `Tests/`, and `UITests/`.
     - Made `generate_project.py` self-contained within `VachanamApple/`.
     - Maintained full target parity and clean build for both Mac Catalyst and iPadOS Simulator.
+18. **[AUD-19] Apple Books Reading Experience, Shelf Organization & Book Intelligence**:
+    - **Dual-Mode Reading Layout**: Implemented `.paginated` (Apple Books horizontal edge-tap pagination with chapter headers, page count footers, and Kokoro TTS auto-page flips) and `.continuous` (vertical smooth scroll) switchable via "Aa" Appearance menu and top navigation.
+    - **Apple Books Theme Palettes**: Integrated `Original` (pure white / dark mode system adaptive), `Quiet` (warm eggshell), `Paper` (textured sepia), `Charcoal` (deep slate gray), and `Night` (true OLED black).
+    - **Tap-to-Toggle Immersive Chrome**: Top navigation bars and bottom scrubber bars animate in/out on center tap; edge taps advance/rewind pages.
+    - **Library Organization & Shelves (`BookCollectionManager.swift`)**: Built-in dynamic collections (`All`, `Reading`, `Favorites`, `Finished`) and user-created custom shelves with UserDefaults persistence.
+    - **Document Deletion & Sandbox Sanitation**: Deletes the local document file, resets reading progress, removes favorite/finished flags, and strips the document ID across all shelves.
+    - **Book Intelligence Preloading (`BookPreparationService.swift`)**: Background async parsing computes total word counts, chapter structures, human reading duration (~225 wpm), and neural TTS audio duration (~150 wpm) cached for instant inspection via `BookStructureSheet.swift`.
+    - **Precision Resume Banner**: Displays an animated toast upon book open ("Resume at Page X: [Chapter Title]") with an inline `Play` button to immediately start neural narration.
 
 ---
 

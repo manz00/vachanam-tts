@@ -25,8 +25,18 @@
 - **`PronunciationManager`**: Custom word/phoneme override dictionary with persistent storage.
 - **`TTSController`**: High-level playback coordinator managing play/pause, sentence skipping, and speech rate scaling (0.5x – 2.5x).
 
+### 📚 Apple Books Reading Experience & Library Intelligence
+- **Dual-Mode Reading Engine**: Choose between **Paginated** (Apple Books `HorizontalPager` with running chapter headers, page count footers, and edge-tap navigation) and **Continuous** (vertical smooth scrolling).
+- **Immersive Tap-to-Toggle Chrome**: Center tap smoothly animates top bars and bottom TTS player controls in/out for distraction-free reading; edge taps advance/rewind pages.
+- **5 Apple Books Theme Palettes**: `Original` (system adaptive), `Quiet` (warm eggshell), `Paper` (textured sepia), `Charcoal` (deep slate), and `Night` (true OLED black).
+- **Library Shelves & Collections**: Organize books into built-in collections (`All`, `Reading`, `Favorites`, `Finished`) or custom user-defined shelves with horizontal category pills.
+- **Complete Document Deletion**: Permanently delete documents with one tap, including internal storage files, reading progress, and shelf associations.
+- **Book Intelligence Preloading**: Async background preparation structures chapters, computes exact word counts, and estimates both silent reading duration (~225 wpm) and neural TTS narration duration (~150 wpm).
+- **Precision Resume Banner**: Floating toast upon opening a document with chapter context and an inline `Play` button to resume neural narration instantly.
+
 ### ♿ Accessibility First & Material You
-- **5 Theme Palettes**: Cream, Sepia, Dark Slate (default), OLED Black, and Paper White with automatic contrast adjustment.
+- **5 Theme Palettes**: Original, Quiet, Paper, Charcoal, and Night with automatic contrast adjustment.
+- **Reading Layout Selector**: Switch between Paginated and Continuous scroll directly inside the top toolbar.
 - **OpenDyslexic Typography**: Bundled `opendyslexic_regular.otf` and `opendyslexic_bold.otf` in `res/font/`.
 - **Bionic Reading Mode**: Automatically bolds initial fixation characters of each word to guide the eye.
 - **Dyslexia Reading Ruler**: Draggable horizontal focus guide with customizable window height and dimming mask.

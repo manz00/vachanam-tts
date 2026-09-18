@@ -17,6 +17,7 @@ public struct ReaderContainerView: View {
     @ObservedObject var accessibilityManager = AccessibilityManager.shared
     @ObservedObject var playbackCoordinator = PlaybackCoordinator.shared
     @ObservedObject var developerModeManager = DeveloperModeManager.shared
+    @ObservedObject var themeManager = ThemeManager.shared
     @Environment(\.scenePhase) private var scenePhase
     
     @State private var currentPageIndex: Int
@@ -25,8 +26,13 @@ public struct ReaderContainerView: View {
     @State private var strokeColor: Color = Color.amberAccent
     @State private var strokeWidth: CGFloat = 3.0
     
+    @State private var isChromeVisible: Bool = true
+    @State private var showResumeToast: Bool = false
+    @State private var resumeToastMessage: String = ""
+    
     @State private var isTOCPresented: Bool = false
     @State private var isThumbnailsPresented: Bool = false
+    @State private var isStructurePresented: Bool = false
     @State private var isSettingsPresented: Bool = false
     @State private var isExportPresented: Bool = false
     @State private var isShortcutsPresented: Bool = false
@@ -45,14 +51,17 @@ public struct ReaderContainerView: View {
     }
     
     public var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack(alignment: .top) {
             // Main Content Area
             VStack(spacing: 0) {
                 // Top Navigation Bar
-                readerHeader
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color(red: 0.08, green: 0.11, blue: 0.16))
+                if isChromeVisible {
+                    readerHeader
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color(red: 0.08, green: 0.11, blue: 0.16))
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
                 
                 // Document Display (PDF or Reader View)
                 ZStack {
@@ -63,8 +72,6 @@ public struct ReaderContainerView: View {
                                 currentPageIndex: $currentPageIndex,
                                 layoutMode: accessibilityManager.pdfDisplayLayout
                             )
-                            
-
                             
                             // Annotations (Shapes & Drawings)
                             ShapeToolView(
@@ -101,11 +108,33 @@ public struct ReaderContainerView: View {
                             }
                         }
                     } else {
-                        ReaderTextView(
-                            sentences: extractedSentences,
-                            currentPageIndex: $currentPageIndex,
-                            pageCount: document.pageCount
-                        )
+                        if themeManager.readingLayout == .paginated {
+                            EPUBPaginatedReaderView(
+                                sentences: extractedSentences,
+                                currentPageIndex: $currentPageIndex,
+                                pageCount: document.pageCount,
+                                documentTitle: document.title,
+                                chapterTitleForPage: { pIndex in
+                                    document.tocItems.last(where: { $0.pageIndex <= pIndex })?.title
+                                },
+                                onToggleChrome: {
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                        isChromeVisible.toggle()
+                                    }
+                                }
+                            )
+                        } else {
+                            ReaderTextView(
+                                sentences: extractedSentences,
+                                currentPageIndex: $currentPageIndex,
+                                pageCount: document.pageCount,
+                                onToggleChrome: {
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                        isChromeVisible.toggle()
+                                    }
+                                }
+                            )
+                        }
                     }
                     
                     // Dyslexia Reading Ruler Guide
@@ -114,39 +143,53 @@ public struct ReaderContainerView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             
+            // Resume Toast Banner
+            if showResumeToast {
+                resumeToastView
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(10)
+            }
+            
             // Floating Overlays: Annotation Toolbar, Prompt Pill, Scrubber & TTS Controls
-            VStack(spacing: 8) {
-                if activeAnnotationTool != .none {
-                    AnnotationToolbar(
-                        activeTool: $activeAnnotationTool,
-                        strokeColor: $strokeColor,
-                        strokeWidth: $strokeWidth
-                    )
+            VStack {
+                Spacer()
+                if isChromeVisible {
+                    VStack(spacing: 8) {
+                        if activeAnnotationTool != .none {
+                            AnnotationToolbar(
+                                activeTool: $activeAnnotationTool,
+                                strokeColor: $strokeColor,
+                                strokeWidth: $strokeWidth
+                            )
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+                        
+                        if playbackCoordinator.isPlaying && playbackCoordinator.isUserScrolledAway {
+                            jumpToSpokenSentencePill
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                                    removal: .move(edge: .bottom).combined(with: .opacity)
+                                ))
+                        }
+                        
+                        // Page Scrubber & Scroll Navigation Toolbar
+                        ReaderScrubberBar(
+                            currentPageIndex: $currentPageIndex,
+                            totalPages: document.pageCount,
+                            isPDF: document.format == .pdf
+                        )
+                        .padding(.horizontal, 20)
+                        
+                        TTSControlBar(documentTitle: document.title)
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 12)
+                    }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-                
-                if playbackCoordinator.isPlaying && playbackCoordinator.isUserScrolledAway {
-                    jumpToSpokenSentencePill
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .bottom).combined(with: .opacity),
-                            removal: .move(edge: .bottom).combined(with: .opacity)
-                        ))
-                }
-                
-                // Page Scrubber & Scroll Navigation Toolbar
-                ReaderScrubberBar(
-                    currentPageIndex: $currentPageIndex,
-                    totalPages: document.pageCount,
-                    isPDF: document.format == .pdf
-                )
-                .padding(.horizontal, 20)
-                
-                TTSControlBar(documentTitle: document.title)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 12)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .background(Color(red: 0.05, green: 0.08, blue: 0.13))
+        .background(themeManager.currentReaderTheme.backgroundColor)
         .navigationBarHidden(true)
         .onAppear {
             initializeDocument()
@@ -173,6 +216,9 @@ public struct ReaderContainerView: View {
         }
         .sheet(isPresented: $isThumbnailsPresented) {
             PageThumbnailGrid(document: document, currentPageIndex: $currentPageIndex)
+        }
+        .sheet(isPresented: $isStructurePresented) {
+            BookStructureSheet(document: document)
         }
         .sheet(isPresented: $isSettingsPresented) {
             HighlightSettingsView()
@@ -312,24 +358,66 @@ public struct ReaderContainerView: View {
             if document.format == .pdf {
                 ReadingModeToggle(selectedMode: $readingMode)
             } else {
-                HStack(spacing: 6) {
-                    Image(systemName: document.format.systemImage)
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.amberAccent)
-                    Text(document.format.badgeText)
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        themeManager.readingLayout = (themeManager.readingLayout == .paginated) ? .continuous : .paginated
+                    }
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: themeManager.readingLayout.iconName)
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.amberAccent)
+                        Text(themeManager.readingLayout.rawValue)
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.white.opacity(0.12))
+                    .cornerRadius(12)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(Color.white.opacity(0.12))
-                .cornerRadius(12)
             }
             
             Spacer()
             
             // Header Action Buttons
             HStack(spacing: 12) {
+                // Apple Books-style Appearance & Theme Menu
+                Menu {
+                    Section(header: Text("Theme")) {
+                        ForEach(ReaderBackgroundTheme.allCases) { theme in
+                            Button {
+                                themeManager.currentReaderTheme = theme
+                            } label: {
+                                HStack {
+                                    Text(theme.rawValue)
+                                    if themeManager.currentReaderTheme == theme {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    Section(header: Text("Layout")) {
+                        ForEach(ReadingLayout.allCases) { layout in
+                            Button {
+                                themeManager.readingLayout = layout
+                            } label: {
+                                HStack {
+                                    Text(layout.rawValue)
+                                    if themeManager.readingLayout == layout {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "textformat.size")
+                        .foregroundColor(.white)
+                }
+                
                 Button {
                     bookmarkManager.toggleBookmark(
                         documentURL: document.fileURL,
@@ -347,6 +435,14 @@ public struct ReaderContainerView: View {
                     Image(systemName: "list.bullet")
                         .foregroundColor(.white)
                 }
+                
+                Button {
+                    isStructurePresented = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .foregroundColor(.white)
+                }
+                .help("Book Intelligence & Structure")
                 
                 Button {
                     isThumbnailsPresented = true
@@ -498,6 +594,25 @@ public struct ReaderContainerView: View {
                 
                 ttsController.loadDocument(semDoc, initialSentenceID: initialSentenceID, initialWordID: initialWordID)
                 extractedSentences = semDoc.sentences.map { SentenceItem(from: $0) }
+                
+                // Show precision resume toast if continuing past the very beginning
+                if let rec = savedRecord, (rec.currentPage > 0 || rec.lastSentenceID != nil) {
+                    let chapterName = targetDoc.tocItems.last(where: { $0.pageIndex <= currentPageIndex })?.title
+                    if let ch = chapterName, !ch.isEmpty {
+                        resumeToastMessage = "Resumed at \(ch) • Page \(currentPageIndex + 1)"
+                    } else {
+                        resumeToastMessage = "Resumed at Page \(currentPageIndex + 1)"
+                    }
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        showResumeToast = true
+                    }
+                    Task {
+                        try? await Task.sleep(nanoseconds: 4_500_000_000)
+                        await MainActor.run {
+                            withAnimation { showResumeToast = false }
+                        }
+                    }
+                }
             }
         }
     }
@@ -565,5 +680,60 @@ public struct ReaderContainerView: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var resumeToastView: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "bookmark.fill")
+                .font(.system(size: 13))
+                .foregroundColor(Color.amberAccent)
+            
+            Text(resumeToastMessage)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white)
+                .lineLimit(1)
+            
+            Spacer()
+            
+            Button {
+                ttsController.play()
+                withAnimation { showResumeToast = false }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 10))
+                    Text("Play")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Color.amberAccent)
+                .foregroundColor(.black)
+                .cornerRadius(10)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            Button {
+                withAnimation { showResumeToast = false }
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(
+            Capsule()
+                .fill(Color(red: 0.10, green: 0.14, blue: 0.22).opacity(0.96))
+                .shadow(color: Color.black.opacity(0.4), radius: 8, x: 0, y: 3)
+                .overlay(
+                    Capsule()
+                        .stroke(Color.amberAccent.opacity(0.4), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 20)
+        .padding(.top, isChromeVisible ? 54 : 16)
     }
 }

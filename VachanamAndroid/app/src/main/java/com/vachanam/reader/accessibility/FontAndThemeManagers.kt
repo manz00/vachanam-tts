@@ -3,6 +3,7 @@ package com.vachanam.reader.accessibility
 import android.content.Context
 import com.vachanam.reader.ui.theme.ReaderBackgroundTheme
 import com.vachanam.reader.ui.theme.ReaderFontFamily
+import com.vachanam.reader.ui.theme.ReadingLayout
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,16 +14,28 @@ class ThemeManager(context: Context) {
     private val _currentReaderTheme = MutableStateFlow(ReaderBackgroundTheme.DARK_SLATE)
     val currentReaderTheme: StateFlow<ReaderBackgroundTheme> = _currentReaderTheme.asStateFlow()
 
+    private val _currentReadingLayout = MutableStateFlow(ReadingLayout.PAGINATED)
+    val currentReadingLayout: StateFlow<ReadingLayout> = _currentReadingLayout.asStateFlow()
+
     init {
         val saved = prefs.getString("reader_theme", null)
         if (saved != null) {
             _currentReaderTheme.value = ReaderBackgroundTheme.fromId(saved)
+        }
+        val savedLayout = prefs.getString("reading_layout", null)
+        if (savedLayout != null) {
+            _currentReadingLayout.value = ReadingLayout.fromId(savedLayout)
         }
     }
 
     fun setTheme(theme: ReaderBackgroundTheme) {
         _currentReaderTheme.value = theme
         prefs.edit().putString("reader_theme", theme.id).apply()
+    }
+
+    fun setLayout(layout: ReadingLayout) {
+        _currentReadingLayout.value = layout
+        prefs.edit().putString("reading_layout", layout.id).apply()
     }
 
     companion object {

@@ -10,50 +10,75 @@ enum class ReaderBackgroundTheme(
     val secondaryTextColor: Color,
     val isDark: Boolean
 ) {
-    CREAM(
-        id = "Cream",
-        displayName = "Warm Cream",
-        backgroundColor = Color(0xFFFAF0D9),
-        textColor = Color(0xFF2A241F),
-        secondaryTextColor = Color(0xFF2A241F).copy(alpha = 0.7f),
-        isDark = false
-    ),
-    SEPIA(
-        id = "Sepia",
-        displayName = "Sepia Parchment",
-        backgroundColor = Color(0xFFF4ECE7),
-        textColor = Color(0xFF3A2E1D),
-        secondaryTextColor = Color(0xFF3A2E1D).copy(alpha = 0.7f),
-        isDark = false
-    ),
-    DARK_SLATE(
-        id = "Dark Slate",
-        displayName = "Slate Dark (Default)",
-        backgroundColor = Color(0xFF151D2A),
-        textColor = Color(0xFFE6EDF3),
-        secondaryTextColor = Color(0xFF9DA7B3),
-        isDark = true
-    ),
-    OLED_BLACK(
-        id = "OLED Black",
-        displayName = "Pure OLED Black",
-        backgroundColor = Color(0xFF000000),
-        textColor = Color(0xFFF8FAFC),
-        secondaryTextColor = Color(0xFF94A3B8),
-        isDark = true
-    ),
-    PURE_WHITE(
-        id = "Pure White",
-        displayName = "Paper White",
+    ORIGINAL(
+        id = "Original",
+        displayName = "Original (White)",
         backgroundColor = Color(0xFFFFFFFF),
-        textColor = Color(0xFF0F172A),
-        secondaryTextColor = Color(0xFF64748B),
+        textColor = Color(0xFF1A1A1A),
+        secondaryTextColor = Color(0xFF1A1A1A).copy(alpha = 0.65f),
         isDark = false
+    ),
+    QUIET(
+        id = "Quiet",
+        displayName = "Quiet (Warm Cream)",
+        backgroundColor = Color(0xFFFBF0D9),
+        textColor = Color(0xFF3B2E2A),
+        secondaryTextColor = Color(0xFF3B2E2A).copy(alpha = 0.65f),
+        isDark = false
+    ),
+    PAPER(
+        id = "Paper",
+        displayName = "Paper (Sepia)",
+        backgroundColor = Color(0xFFEFE6D5),
+        textColor = Color(0xFF2C2621),
+        secondaryTextColor = Color(0xFF2C2621).copy(alpha = 0.65f),
+        isDark = false
+    ),
+    CHARCOAL(
+        id = "Charcoal",
+        displayName = "Charcoal (Dark Slate)",
+        backgroundColor = Color(0xFF2C2C2E),
+        textColor = Color(0xFFE5E5EA),
+        secondaryTextColor = Color(0xFFE5E5EA).copy(alpha = 0.60f),
+        isDark = true
+    ),
+    NIGHT(
+        id = "Night",
+        displayName = "Night (Pitch Black)",
+        backgroundColor = Color(0xFF000000),
+        textColor = Color(0xFFD1D1D6),
+        secondaryTextColor = Color(0xFFD1D1D6).copy(alpha = 0.60f),
+        isDark = true
     );
 
     companion object {
+        // Aliases for backward compatibility
+        val CREAM get() = QUIET
+        val SEPIA get() = PAPER
+        val DARK_SLATE get() = CHARCOAL
+        val OLED_BLACK get() = NIGHT
+        val PURE_WHITE get() = ORIGINAL
+
         fun fromId(id: String): ReaderBackgroundTheme {
-            return entries.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: DARK_SLATE
+            return when (id.lowercase()) {
+                "cream", "quiet" -> QUIET
+                "sepia", "paper" -> PAPER
+                "dark slate", "darkslate", "charcoal" -> CHARCOAL
+                "oled black", "oledblack", "night" -> NIGHT
+                "pure white", "purewhite", "original" -> ORIGINAL
+                else -> entries.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: CHARCOAL
+            }
+        }
+    }
+}
+
+enum class ReadingLayout(val id: String, val displayName: String) {
+    PAGINATED("Paginated", "Paginated"),
+    CONTINUOUS("Continuous Scroll", "Continuous Scroll");
+
+    companion object {
+        fun fromId(id: String): ReadingLayout {
+            return entries.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: PAGINATED
         }
     }
 }

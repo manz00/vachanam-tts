@@ -46,8 +46,11 @@ public struct TOCView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .padding()
                     } else {
-                        List(document.tocItems) { item in
-                            TOCItemRow(item: item) { targetPage in
+                        let prepRecord = BookPreparationService.shared.record(for: document.fileURL.path)
+                        List(document.tocItems.indices, id: \.self) { idx in
+                            let item = document.tocItems[idx]
+                            let dur = prepRecord?.chapterSummaries.first(where: { $0.chapterIndex == idx || $0.title == item.title })?.estimatedAudioMinutes
+                            TOCItemRow(item: item, durationMinutes: dur) { targetPage in
                                 currentPageIndex = targetPage
                                 dismiss()
                             }
@@ -108,17 +111,35 @@ public struct TOCView: View {
 
 private struct TOCItemRow: View {
     let item: TOCItem
+    var durationMinutes: Int? = nil
     let onSelect: (Int) -> Void
     
     var body: some View {
         Button {
             onSelect(item.pageIndex)
         } label: {
-            HStack {
+            HStack(spacing: 8) {
                 Text(item.title)
                     .foregroundColor(.white)
                     .font(.body)
+                    .lineLimit(1)
+                
                 Spacer()
+                
+                if let dur = durationMinutes {
+                    HStack(spacing: 3) {
+                        Image(systemName: "headphones")
+                            .font(.system(size: 9))
+                        Text("~\(dur)m")
+                            .font(.system(size: 10, weight: .semibold))
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.tealAccent.opacity(0.18))
+                    .foregroundColor(Color.tealAccent)
+                    .cornerRadius(4)
+                }
+                
                 Text("p. \(item.pageIndex + 1)")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -128,7 +149,7 @@ private struct TOCItemRow: View {
         
         if !item.children.isEmpty {
             ForEach(item.children) { child in
-                TOCItemRow(item: child, onSelect: onSelect)
+                TOCItemRow(item: child, durationMinutes: nil, onSelect: onSelect)
                     .padding(.leading, 16)
             }
         }

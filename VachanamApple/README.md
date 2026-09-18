@@ -40,11 +40,20 @@
 - 5 bundled acoustic focus loops: **Brown Noise**, **Pink Noise**, **40Hz Binaural Beats**, **Soft Rain**, and **Library & Café**.
 - Independent background volume slider with smooth crossfade and sleep timer.
 
+### 📚 Apple Books Reading Experience & Library Intelligence
+- **Dual-Mode Reading Engine**: Choose between **Paginated** (Apple Books horizontal swipe and edge-tap page flipping with running chapter header and page counter footer) and **Continuous** (vertical smooth scrolling).
+- **Immersive Tap-to-Toggle Chrome**: Center tap smoothly fades top navigation bars and bottom TTS scrubbers for pure distraction-free reading; edge taps flip pages.
+- **5 Apple Books Theme Palettes**: `Original` (adaptive system white/black), `Quiet` (warm eggshell), `Paper` (textured sepia), `Charcoal` (deep slate), and `Night` (true OLED black).
+- **Library Shelves & Collections**: Organize books into built-in collections (`All`, `Reading`, `Favorites`, `Finished`) or custom user-defined shelves with horizontal category pills.
+- **Complete Document Deletion**: Permanently delete documents with one tap, including local sandbox files, reading progress, and shelf associations.
+- **Book Intelligence Preloading**: Async background preparation structures chapters, computes exact word counts, and estimates both silent reading duration (~225 wpm) and Kokoro TTS narration duration (~150 wpm).
+- **Precision Resume Banner**: Instant toast upon reopening a book with one-tap inline `Play` to resume neural narration exactly where you stopped.
+
 ### ♿ Accessibility First
 - **OpenDyslexic Typography**: Bundled OpenDyslexic Regular and Bold fonts.
 - **Bionic Reading Mode**: Fixation character bolding.
 - **Dyslexia Reading Ruler**: Draggable reading guide with adjustable window height.
-- **5 Theme Palettes**: Cream, Sepia, Dark Slate, OLED Black, and Paper White.
+- **Reading Layout Selector**: Switch between Paginated and Continuous scroll directly inside the "Aa" Appearance menu.
 
 ---
 

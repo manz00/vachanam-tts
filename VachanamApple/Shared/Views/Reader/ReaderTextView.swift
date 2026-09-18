@@ -18,15 +18,18 @@ public struct ReaderTextView: View {
     @ObservedObject var accessibilityManager = AccessibilityManager.shared
     
     private let firstSentenceIDsOnPages: Set<Int>
+    public let onToggleChrome: () -> Void
     
     public init(
         sentences: [SentenceItem],
         currentPageIndex: Binding<Int> = .constant(0),
-        pageCount: Int = 1
+        pageCount: Int = 1,
+        onToggleChrome: @escaping () -> Void = {}
     ) {
         self.sentences = sentences
         self._currentPageIndex = currentPageIndex
         self.pageCount = pageCount
+        self.onToggleChrome = onToggleChrome
         
         var seenPages = Set<Int>()
         var firstIDs = Set<Int>()

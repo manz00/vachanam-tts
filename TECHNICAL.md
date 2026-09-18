@@ -322,6 +322,13 @@ Structured around the principle:
       - `Vachanam/Tests/` & `Vachanam/UITests/`: Moved test suites from root workspace into `Vachanam/`, establishing a clean 2-app workspace structure (`Vachanam/` + `VachanamAndroid/`).
     - Upgraded `generate_project.py` with explicit PBXGroup definitions for `Shared`, `iOS (iPadOS & PencilKit)`, `macOS (Mac Catalyst & Studio)`, `Tests`, `UITests`, and `Resources`.
     - Preserved single unified multi-platform Xcode project scheme `Vachanam` targeting both iOS (iPadOS) and macOS (Mac Catalyst) without duplicated compilation settings or split targets.
+18. **[AUD-19] Apple Books Reading Experience, Shelf Organization & Book Intelligence (Apple & Android)**:
+    - **Dual-Mode Reading Layout**: Built synchronized Apple Books-inspired paginated reading mode (`.paginated` using SwiftUI `TabView` on Apple and Jetpack Compose `HorizontalPager` on Android) with running chapter header, footer page count, edge-tap navigation, center-tap animated chrome hide/show, and bidirectional TTS page turns. Kept `.continuous` vertical scroll mode selectable via Appearance settings.
+    - **Apple Books Theme Palettes**: Synchronized 5-theme color palettes (`Original`, `Quiet`, `Paper`, `Charcoal`, `Night`) across SwiftUI and Jetpack Compose.
+    - **Library Organization & Shelves (`BookCollectionManager`)**: Built-in collections (`All`, `Reading`, `Favorites`, `Finished`) and user-created custom shelves with persistent storage and horizontal category filter pills.
+    - **Document Deletion & Sandbox Sanitation**: Complete purge of local files, reading progress records, favorite/finished states, and shelf associations.
+    - **Book Intelligence Preloading (`BookPreparationService`)**: Async background task analyzes book chapters, computes exact word counts, and predicts human reading time (~225 wpm) and neural audio narration time (~150 wpm).
+    - **Precision Resume Toast Banner**: Floating toast on opening a document displaying current chapter position and an inline `Play` button to start TTS immediately.
 
 ---
 

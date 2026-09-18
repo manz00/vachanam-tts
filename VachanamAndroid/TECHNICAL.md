@@ -87,6 +87,15 @@ graph TD
    - Built pluggable `TTSModelProtocol` with `AndroidSystemAdapter` and `KokoroOnnxAdapter`.
    - Integrated `AmbientSoundscapePlayer` with 5 bundled `.m4a` focus soundscape loops (`res/raw/`).
    - Added unit test suite `VachanamCoreLogicTest.kt` verifying word reconstruction, math speech vocalization, and chunk duration bounds.
+2. **[AUD-19] Jetpack Compose Apple Books Reading Engine, Shelf Organization & Preparation Pipeline**:
+   - **Horizontal Pager Architecture (`EPUBPaginatedReader.kt`)**: Built Jetpack Compose `HorizontalPager`-based paginated reader with running chapter header, footer page indicators, edge-tap navigation, and TTS auto-scroll page flip synchronization.
+   - **Dual-Mode Layout (`ReadingLayout.PAGINATED` / `ReadingLayout.CONTINUOUS`)**: Seamlessly switchable via top toolbar toggle and persisted in `SharedPreferences`.
+   - **Apple Books Theme Palettes (`ReaderTheme.kt`)**: Aligned color tokens for `ORIGINAL`, `QUIET`, `PAPER`, `CHARCOAL`, and `NIGHT` across Compose UI components.
+   - **Tap-to-Toggle Animated Chrome**: Top navigation bars and bottom TTS control bars animate vertically via `slideInVertically()` / `slideOutVertically()` and `fadeIn()` / `fadeOut()` upon center-screen taps.
+   - **Library Organization & Shelves (`BookCollectionManager.kt`)**: SharedPreferences JSON-persisted custom shelves, favorites, and finished books with horizontal scrollable filter pills.
+   - **Complete Document Deletion**: Deletes internal files, purges reading progress from `ReadingProgressTracker`, removes favorite/finished flags, and strips IDs across all custom shelves.
+   - **Book Intelligence Preloading (`BookPreparationService.kt`)**: Async coroutine worker calculates total word count, chapter breakdown, human reading time (~225 wpm), and neural voice narration time (~150 wpm).
+   - **Precision Resume Toast Banner**: Floating bottom banner on document open with chapter context and inline `Play` button to start TTS instantly.
 
 ---
 

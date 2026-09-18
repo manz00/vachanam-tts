@@ -45,6 +45,32 @@ public struct AppearanceSettingsView: View {
                     }
                 }
             }
+            
+            Section(header: Text("Reading Layout")) {
+                ForEach(ReadingLayout.allCases) { layout in
+                    Button {
+                        themeManager.readingLayout = layout
+                    } label: {
+                        HStack {
+                            Image(systemName: layout.iconName)
+                                .foregroundColor(Color.amberAccent)
+                                .frame(width: 24)
+                            
+                            Text(layout.rawValue)
+                                .foregroundColor(.white)
+                                .padding(.leading, 8)
+                            
+                            Spacer()
+                            
+                            if themeManager.readingLayout == layout {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(Color.amberAccent)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
         }
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)
