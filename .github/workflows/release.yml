@@ -89,12 +89,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-
 
-      - name: Build Mac Catalyst App (Release)
+      - name: Build Mac Catalyst App
         run: |
           set -e -o pipefail
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
-            -configuration Release \
             -destination 'platform=macOS,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData \
             -skipPackagePluginValidation \
@@ -103,7 +102,6 @@ jobs:
             -packageFingerprintPolicy warn \
             -packageSigningEntityPolicy warn \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            ENABLE_HARDENED_RUNTIME=NO \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
             build 2>&1 | tee /tmp/xcodebuild_release.log
 
