@@ -32,15 +32,23 @@ jobs:
           cd VachanamApple
           python3 generate_project.py
 
+      - name: Configure Xcode Defaults for Headless CI
+        run: |
+          defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidation -bool YES
+          defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
       - name: Build Mac Catalyst
         run: |
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -destination 'platform=macOS,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData \
+            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
-            build
+            build 2>&1 | tee /tmp/xcodebuild_ci.log || { echo "=== XCODEBUILD FAILED ==="; tail -n 120 /tmp/xcodebuild_ci.log; exit 1; }
 
       - name: Run Unit Tests (iOS Simulator)
         run: |
