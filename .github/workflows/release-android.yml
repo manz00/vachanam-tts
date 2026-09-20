@@ -37,7 +37,17 @@ jobs:
       - name: Build Android Release APK
         run: |
           cd VachanamAndroid
-          ./gradlew assembleRelease --stacktrace
+          if ! ./gradlew assembleRelease --stacktrace --no-daemon 2>&1 | tee ../build.log; then
+            echo "::error title=Gradle Build Failed::$(grep -E -A 4 -B 1 'e: |FAILURE:|ERROR:|Caused by:' ../build.log | head -n 12 | tr '\n' ' ')"
+            exit 1
+          fi
+
+      - name: Upload Build Log on Failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: gradle-build-log
+          path: build.log
 
       - name: Prepare APK Artifact & Compute SHA-256
         id: checksum

@@ -58,4 +58,7 @@ jobs:
       - name: Run Android Unit Tests
         run: |
           cd VachanamAndroid
-          ./gradlew testDebugUnitTest --continue
+          if ! ./gradlew testDebugUnitTest --continue --no-daemon 2>&1 | tee ../unit_tests.log; then
+            echo "::error title=Unit Tests Failed::$(grep -E -A 4 -B 1 'e: |FAILURE:|ERROR:|FAILED' ../unit_tests.log | head -n 12 | tr '\n' ' ')"
+            exit 1
+          fi

@@ -30,13 +30,16 @@ jobs:
 
       - name: Build Mac Catalyst App (Release)
         run: |
-          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
+          if ! xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -configuration Release \
             -destination 'platform=macOS,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            build
+            build 2>&1 | tee build_apple.log; then
+            echo "::error title=Xcode Build Failed::$(grep -E -A 3 'error:' build_apple.log | head -n 10 | tr '\n' ' ')"
+            exit 1
+          fi
 
       - name: Package Mac Catalyst Application & Compute SHA-256
         id: checksum
