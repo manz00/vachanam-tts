@@ -1,8 +1,12 @@
 import os
 import uuid
 
-def generate_uuid():
-    return uuid.uuid4().hex[:24].upper()
+# Fixed deterministic namespace for reproducible project UUID generation
+_NAMESPACE = uuid.UUID("96b997c4-58a3-4874-bf83-097561f5b042")
+
+def generate_uuid(name: str) -> str:
+    """Generate a deterministic 24-character hexadecimal UUID for PBX objects."""
+    return uuid.uuid5(_NAMESPACE, name).hex[:24].upper()
 
 def create_project():
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +22,7 @@ def create_project():
                 if f.endswith(".swift"):
                     full_path = os.path.join(root, f)
                     vachanam_files.append((f, full_path))
+    vachanam_files.sort(key=lambda x: x[1])
     
     test_files = []
     for root, _, files in os.walk("Tests"):
@@ -25,6 +30,7 @@ def create_project():
             if f.endswith(".swift"):
                 full_path = os.path.join(root, f)
                 test_files.append((f, full_path))
+    test_files.sort(key=lambda x: x[1])
                 
     uitest_files = []
     for root, _, files in os.walk("UITests"):
@@ -32,95 +38,96 @@ def create_project():
             if f.endswith(".swift"):
                 full_path = os.path.join(root, f)
                 uitest_files.append((f, full_path))
+    uitest_files.sort(key=lambda x: x[1])
 
     file_refs = {}
     build_files = {}
     
     for fname, fpath in vachanam_files + test_files + uitest_files:
-        f_uuid = generate_uuid()
-        b_uuid = generate_uuid()
+        f_uuid = generate_uuid(f"fileref:{fpath}")
+        b_uuid = generate_uuid(f"buildfile:{fpath}")
         file_refs[fpath] = (f_uuid, fname)
         build_files[fpath] = (b_uuid, f_uuid)
     
-    plist_uuid = generate_uuid()
-    entitlements_uuid = generate_uuid()
-    registry_uuid = generate_uuid()
-    registry_b_uuid = generate_uuid()
+    plist_uuid = generate_uuid("plist")
+    entitlements_uuid = generate_uuid("entitlements")
+    registry_uuid = generate_uuid("registry_ref")
+    registry_b_uuid = generate_uuid("registry_build")
     
-    assets_uuid = generate_uuid()
-    assets_b_uuid = generate_uuid()
+    assets_uuid = generate_uuid("assets_ref")
+    assets_b_uuid = generate_uuid("assets_build")
     
-    font_reg_uuid = generate_uuid()
-    font_reg_b_uuid = generate_uuid()
+    font_reg_uuid = generate_uuid("font_reg_ref")
+    font_reg_b_uuid = generate_uuid("font_reg_build")
     
-    font_bold_uuid = generate_uuid()
-    font_bold_b_uuid = generate_uuid()
+    font_bold_uuid = generate_uuid("font_bold_ref")
+    font_bold_b_uuid = generate_uuid("font_bold_build")
     
-    kokoro_models_uuid = generate_uuid()
-    kokoro_models_b_uuid = generate_uuid()
+    kokoro_models_uuid = generate_uuid("kokoro_models_ref")
+    kokoro_models_b_uuid = generate_uuid("kokoro_models_build")
     
-    soundscapes_uuid = generate_uuid()
-    soundscapes_b_uuid = generate_uuid()
+    soundscapes_uuid = generate_uuid("soundscapes_ref")
+    soundscapes_b_uuid = generate_uuid("soundscapes_build")
     
-    math_maps_uuid = generate_uuid()
-    math_maps_b_uuid = generate_uuid()
+    math_maps_uuid = generate_uuid("math_maps_ref")
+    math_maps_b_uuid = generate_uuid("math_maps_build")
     
-    benchmark_uuid = generate_uuid()
-    benchmark_b_uuid = generate_uuid()
+    benchmark_uuid = generate_uuid("benchmark_ref")
+    benchmark_b_uuid = generate_uuid("benchmark_build")
     
-    spm_pkg_ref_uuid = generate_uuid()
-    spm_kokorotts_dep_uuid = generate_uuid()
-    spm_kokorotts_build_file_uuid = generate_uuid()
-    spm_kokorotts_test_build_file_uuid = generate_uuid()
+    spm_pkg_ref_uuid = generate_uuid("spm_pkg_ref:swift-tts")
+    spm_kokorotts_dep_uuid = generate_uuid("spm_kokorotts_dep")
+    spm_kokorotts_build_file_uuid = generate_uuid("spm_kokorotts_build_file")
+    spm_kokorotts_test_build_file_uuid = generate_uuid("spm_kokorotts_test_build_file")
     
-    proj_uuid = generate_uuid()
-    main_group_uuid = generate_uuid()
-    app_group_uuid = generate_uuid()
-    shared_group_uuid = generate_uuid()
-    ios_group_uuid = generate_uuid()
-    macos_group_uuid = generate_uuid()
-    resources_group_uuid = generate_uuid()
-    tests_group_uuid = generate_uuid()
-    uitests_group_uuid = generate_uuid()
-    products_group_uuid = generate_uuid()
+    proj_uuid = generate_uuid("proj")
+    main_group_uuid = generate_uuid("main_group")
+    app_group_uuid = generate_uuid("app_group")
+    shared_group_uuid = generate_uuid("shared_group")
+    ios_group_uuid = generate_uuid("ios_group")
+    macos_group_uuid = generate_uuid("macos_group")
+    resources_group_uuid = generate_uuid("resources_group")
+    tests_group_uuid = generate_uuid("tests_group")
+    uitests_group_uuid = generate_uuid("uitests_group")
+    products_group_uuid = generate_uuid("products_group")
     
-    app_target_uuid = generate_uuid()
-    tests_target_uuid = generate_uuid()
-    uitests_target_uuid = generate_uuid()
+    app_target_uuid = generate_uuid("app_target")
+    tests_target_uuid = generate_uuid("tests_target")
+    uitests_target_uuid = generate_uuid("uitests_target")
     
-    app_proxy_uuid = generate_uuid()
-    app_dep_uuid = generate_uuid()
+    app_proxy_uuid = generate_uuid("app_proxy")
+    app_dep_uuid = generate_uuid("app_dep")
     
-    uitest_proxy_uuid = generate_uuid()
-    uitest_dep_uuid = generate_uuid()
+    uitest_proxy_uuid = generate_uuid("uitest_proxy")
+    uitest_dep_uuid = generate_uuid("uitest_dep")
     
-    app_sources_phase = generate_uuid()
-    app_resources_phase = generate_uuid()
-    app_frameworks_phase = generate_uuid()
+    app_sources_phase = generate_uuid("app_sources_phase")
+    app_resources_phase = generate_uuid("app_resources_phase")
+    app_frameworks_phase = generate_uuid("app_frameworks_phase")
     
-    tests_sources_phase = generate_uuid()
-    tests_frameworks_phase = generate_uuid()
+    tests_sources_phase = generate_uuid("tests_sources_phase")
+    tests_frameworks_phase = generate_uuid("tests_frameworks_phase")
     
-    uitests_sources_phase = generate_uuid()
-    uitests_frameworks_phase = generate_uuid()
+    uitests_sources_phase = generate_uuid("uitests_sources_phase")
+    uitests_frameworks_phase = generate_uuid("uitests_frameworks_phase")
     
-    app_product_uuid = generate_uuid()
-    tests_product_uuid = generate_uuid()
-    uitests_product_uuid = generate_uuid()
+    app_product_uuid = generate_uuid("app_product")
+    tests_product_uuid = generate_uuid("tests_product")
+    uitests_product_uuid = generate_uuid("uitests_product")
     
-    config_list_proj = generate_uuid()
-    config_list_app = generate_uuid()
-    config_list_tests = generate_uuid()
-    config_list_uitests = generate_uuid()
+    config_list_proj = generate_uuid("config_list_proj")
+    config_list_app = generate_uuid("config_list_app")
+    config_list_tests = generate_uuid("config_list_tests")
+    config_list_uitests = generate_uuid("config_list_uitests")
     
-    conf_debug_proj = generate_uuid()
-    conf_release_proj = generate_uuid()
-    conf_debug_app = generate_uuid()
-    conf_release_app = generate_uuid()
-    conf_debug_tests = generate_uuid()
-    conf_release_tests = generate_uuid()
-    conf_debug_uitests = generate_uuid()
-    conf_release_uitests = generate_uuid()
+    conf_debug_proj = generate_uuid("conf_debug_proj")
+    conf_release_proj = generate_uuid("conf_release_proj")
+    conf_debug_app = generate_uuid("conf_debug_app")
+    conf_release_app = generate_uuid("conf_release_app")
+    conf_debug_tests = generate_uuid("conf_debug_tests")
+    conf_release_tests = generate_uuid("conf_release_tests")
+    conf_debug_uitests = generate_uuid("conf_debug_uitests")
+    conf_release_uitests = generate_uuid("conf_release_uitests")
 
     pbx = [
         "// !$*UTF8*$!",

@@ -7,6 +7,9 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "ci(deps)"
+    ignore:
+      - dependency-name: "actions/*"
+        update-types: ["version-update:semver-major"]
 
   # Maintain dependencies for Android Gradle
   - package-ecosystem: "gradle"

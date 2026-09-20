@@ -417,6 +417,18 @@ Structured around the principle:
       - Replaced non-existent `Waveform` icon with `Icons.Default.Waves` for pink noise in `SoundscapePickerSheet.kt`.
     - **CI Diagnostic Annotations**: Configured line-by-line compiler error annotations in `release-android.yml` for real-time failure triage.
 
+  - **`[AUD-29]` Deterministic Apple Project Generator & Headless CI/CD Pipeline Hardening**:
+    - **Deterministic UUID Generation**: Replaced nondeterministic `uuid.uuid4()` generation in `generate_project.py` with name-based `uuid.uuid5` hashing against a fixed project namespace. Files, build items, packages, configurations, and target schemes now generate identical byte-for-byte outputs on successive runs, preventing spurious git churn and SPM fingerprint cache invalidation.
+    - **Headless SPM & Package Validation Flags**: Replaced redundant `defaults write` GUI commands in CI workflows with canonical CLI flags:
+      - `-skipPackagePluginValidation`
+      - `-skipMacroValidation`
+      - `-skipPackageSignatureValidation`
+      - `-packageFingerprintPolicy warn`
+      - `-packageSigningEntityPolicy warn`
+    - **Swift Package Manager Caching**: Added GitHub Actions SPM caching for `DerivedData/SourcePackages` keyed on `Package.swift` hashes.
+    - **Dual-Mode Unit Testing**: Configured native Mac Catalyst execution for zero-latency test execution on macOS runners, with dynamic simulator fallback (`xcrun simctl list devices available`) avoiding rigid hardcoded device name failures.
+    - **Dependabot Semver-Major Guards**: Configured `dependabot.yml` to ignore breaking semver-major updates to prevent inadvertent breakage of pinned GitHub Action checksums.
+
 ---
 
 ## 7. Multi-Platform Build, Test & Technical Docs
