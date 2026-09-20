@@ -435,6 +435,16 @@ Structured around the principle:
     - **Resource Bundle Restructuring**: Positioned dictionary data under `Sources/MisakiSwift/MisakiData` and declared `resources: [.copy("MisakiData")]`, generating SPM `Bundle.module` accessor cleanly without duplicate assets or access conflicts.
     - **Headless Build Signing**: Configured `CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES` for headless Mac Catalyst artifact builds, ensuring entitlements-bearing binaries sign cleanly on ARM64 macOS runners.
 
+  - **`[AUD-31]` CI Test Suite Optimization & Simulator Destination Specifier Fix**:
+    - **Mac Catalyst Direct Unit Testing**: Integrated native Mac Catalyst unit testing (`-destination 'platform=macOS,variant=Mac Catalyst'`) into CI pipeline, reusing the warm `./DerivedData/MacCatalyst` cache from the build step for 35-second test execution.
+    - **Exit Code 70 Resolution**: Fixed simulator destination string from bare `id=$DEVICE_ID` to `platform=iOS Simulator,id=$DEVICE_ID` with fallback to `name=iPad Air 11-inch (M4)`, resolving Xcode's failure to match headless CoreSimulator instances.
+    - **Isolated Diagnostics**: Separated build, Mac Catalyst test, and iOS simulator test logging paths with `set -o pipefail` and GitHub Actions `::error` annotations.
+
+  - **`[AUD-32]` URL Path Normalization & XCTest Singleton State Isolation**:
+    - **URL Path Standardization**: Standardized all URL path evaluations in `ReadingProgressTracker` using `url.standardizedFileURL.path` to eliminate dictionary key divergence from `/var/` vs `/private/var/` symlinks in sandboxed CI runner environments.
+    - **Coordinator Reset (`unloadDocument`)**: Implemented `PlaybackCoordinator.unloadDocument()` to explicitly clear `activeSemanticDocument`, `activeDocumentURL`, and cursor positions upon teardown.
+    - **Test Lifecycle Isolation**: Enforced complete cleanup of `ReadingProgressTracker` history and UserDefaults in `setUp` and `tearDown` across `AppStateLifecycleTests`.
+
 ---
 
 ## 7. Multi-Platform Build, Test & Technical Docs

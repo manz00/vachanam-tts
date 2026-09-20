@@ -218,6 +218,11 @@ graph TD
     - **Mac Catalyst Direct Unit Testing**: Integrated native Mac Catalyst unit testing (`-destination 'platform=macOS,variant=Mac Catalyst'`) into CI pipeline, reusing the warm `./DerivedData/MacCatalyst` cache from the build step for 35-second test execution.
     - **Exit Code 70 Resolution (Destination Specifier)**: Fixed simulator destination string from bare `id=$DEVICE_ID` to `platform=iOS Simulator,id=$DEVICE_ID` with fallback to `name=iPad Air 11-inch (M4)`, resolving Xcode's failure to match headless CoreSimulator instances.
     - **Isolated Log Captures**: Separated build, Mac Catalyst test, and iOS simulator test logging paths (`/tmp/xcodebuild_build.log`, `/tmp/xcodebuild_test.log`, `/tmp/xcodebuild_sim_test.log`) with `set -o pipefail` and GitHub Actions `::error` annotations for instant diagnostic visibility.
+28. **[AUD-32] URL Path Normalization & XCTest Singleton State Isolation**:
+    - **Root Cause & Symlink Inconsistency**: On Mac Catalyst CI environments, temporary filesystem directories often resolve via `/var/` or `/private/var/` symlink variations. Storing and querying reading history using raw `url.path` caused lookup misses where identical files mapped to disparate dictionary keys.
+    - **URL Path Standardization**: Standardized all URL path evaluations in `ReadingProgressTracker` using `url.standardizedFileURL.path` for robust deduplication, lookup, and persistence across sandboxed container environments.
+    - **Coordinator Reset (`unloadDocument`)**: Implemented `PlaybackCoordinator.unloadDocument()` to explicitly clear `activeSemanticDocument`, `activeDocumentURL`, and cursor positions, preventing stale document references from leaking into subsequent `saveCurrentProgress()` invocations across test methods.
+    - **Test Lifecycle Isolation**: Enforced complete cleanup of `ReadingProgressTracker` history and UserDefaults in `setUp` and `tearDown` across `AppStateLifecycleTests`, eliminating cross-test pollution.
 
 ---
 
