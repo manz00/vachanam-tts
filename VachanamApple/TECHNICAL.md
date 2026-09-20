@@ -139,6 +139,63 @@ graph TD
     - **Dynamic PDF Theme Background**: `PDFReaderView.swift` binds `pdfView.backgroundColor` directly to `themeManager.currentReaderTheme.backgroundColor` on initial load and inside `updateUIView`. Eliminates glaring white page borders in dark or warm themes.
     - **Native PDF Mode Toggle**: Enabled switching between fixed-layout PDF and clean text extraction mode directly from the reader navigation bar, granting PDFs access to dynamic font size, OpenDyslexic, bionic reading, and full 3-layout pagination.
     - **Scrubber & Controls Parity**: Updated `ReaderScrubberBar.swift` to format spread ranges ("Pages X–Y of N"), and exposed universal `ReadingLayout` picker in the top navigation bar and appearance settings.
+20. **[AUD-21] In-Flow Multi-Format Image Ingestion, Apple Books Page Bounds & Keyboard Navigation Suite**:
+    - **In-Flow Image Extraction & Semantic Pipeline (`EPUBParser.swift`, `MarkdownParser.swift`)**:
+      - `EPUBParser`: Added regex extraction for HTML `<img>` and SVG `<image xlink:href>` tags, resolving relative paths against chapter directories and manifest tables to load raw binary data (`Data`) from ZIP archives.
+      - `MarkdownParser`: Extracted `![alt](url_or_path)` into discrete `ParsedBlock` items with alt captions and resolved URLs.
+      - **Data Model & TTS Bridging**: Added `BlockType.image`, `imageData: Data?`, and `imageURL: URL?` to `ParsedBlock`, `SemanticSentence`, and `SentenceItem`. Added `.image` case to `TTSChunker` pause duration (0.4s).
+      - **UI Rendering (`ReaderTextView.swift`)**: Added `renderImageView()` in `SentenceFlowView` supporting both in-memory `imageData` and remote `imageURL` with aspect-ratio preservation, rounded corners, subtle shadows, and italic captions.
+    - **Apple Books Page Bounds & Two-Page Spine Depth (`PaginatedReaderView.swift`)**:
+      - Implemented symmetrical outer vs inner spine padding (32pt outer, 20pt inner).
+      - Added center spine depth gradient (`LinearGradient` with subtle black/translucent overlay) to evoke physical book curvature.
+      - Added 16pt `pageBreakMargins` in `PDFReaderView.swift`.
+      - Updated `ReaderScrubberBar.swift` to format spread ranges ("Pages X–Y of N").
+    - **Universal Keyboard Controls & Accessibility Suite (`ReaderContainerView.swift`, `KeyboardShortcutsSheet.swift`)**:
+      - Added keyboard shortcuts:
+        - Page navigation: `←`/`→`, `↑`/`↓`, `Space`/`⇧ Space`, `Page Up`/`Page Down`, `⌘←`/`⌘→` (Home/End), `⌘J`.
+        - Single-key shortcuts: `c` (cycle layout), `t` (cycle theme), `p` (play/pause TTS), `[`/`]` (previous/next chapter), `?` (help cheatsheet), `Esc` (return to library).
+      - Enforced spread-aligned stepping (`pageStep = 2`) in two-page mode to prevent asymmetric spread splits.
+21. **[AUD-22] Two-Page Spread Geometry & Virtual Page Budget Calibration**:
+    - **Spread Width Math Parity (`PaginatedReaderView.swift`)**: Fixed two-page column width computation to `(size.width - spineWidth) / 2` with `spineWidth = 14`, ensuring that the left page, center spine, and right page sum precisely to `size.width` without horizontal bleed.
+    - **Floating Chrome Insets & Occlusion Prevention**: Added dynamic bottom padding buffer (`isChromeVisible ? 80 : 12` on `ScrollView`, `isChromeVisible ? 70 : 6` on footer) so that page text and bottom footers are never occluded by the floating scrubber and TTS playback controls.
+    - **Reflowable Virtual Page Budget Calibration (`SemanticDocumentBuilder.swift`)**: Calibrated `targetWordsPerVirtualPage` from 350 to **100 words** with an optional override parameter. In Two Pages mode, a spread consists of 200 words (~100 words per leaf), matching physical book page density and eliminating vertical page scrolling.
+    - **Responsive Two-Page Typography**: Applied `0.80x` body font scaling (`max(fontSize * 0.80, 13)`), tightened `lineSpacing` to 3pt in `SentenceFlowView`, and compacted margins (20pt outer / 12pt inner) and sentence gaps (3pt) so all lines fit cleanly within screen bounds.
+22. **[AUD-23] Apple Hardened Runtime & Automated Delivery Pipeline**:
+    - **Release Hardened Runtime (`generate_project.py`)**: Enabled `ENABLE_HARDENED_RUNTIME = YES;` in the Release configuration (`conf_release_app`). Guarantees macOS Gatekeeper compliance, code notarization compatibility, and runtime memory integrity protection against dynamic library injection.
+    - **GitHub Actions Auto-Release & TestFlight Workflow (`release-apple.yml`)**:
+      - Automated CI job on `macos-14` running Xcode 16 to validate both Mac Catalyst and iOS simulator builds.
+      - Automated packaging of `Vachanam.app` into `Vachanam-MacCatalyst.zip` attached to GitHub Releases for direct desktop distribution.
+      - Integrated TestFlight upload workflow configuration utilizing App Store Connect API keys for hands-free OTA updates on iPad and iPhone.
+23. **[AUD-24] Apple Platform Security Hardening & Adversarial Defenses**:
+    - **URL Security Validation & SSRF Defense (`WebArticleParser.swift`)**:
+      - Implemented `URLSecurityValidator` enforcing HTTPS scheme, resolving destination IPs, and blocking loopback, link-local, private IP spaces, CGNAT, and cloud metadata (`169.254.169.254`).
+      - Implemented `SecureWebFetchDelegate` capping redirects at 3, prohibiting HTTPS downgrade, and applying a hard 5 MB streaming response limit.
+    - **Adversarial ZipArchive & EPUB Ingestion Safety (`ZipArchive.swift`)**:
+      - Sanitized entry paths against null bytes (`\0`) and resolved directory traversal (`..`) sequences.
+      - Enforced 100 MB per-entry decompression maximum and 500 MB total archive expansion cap.
+      - Guarded against zip bombs by rejecting entries exceeding a 1000:1 compression ratio.
+    - **Production Privacy & Logging Audit**:
+      - Gated 19 console `print()` invocations behind `#if DEBUG` across `AppState`, `ReadingProgressTracker`, `PlaybackCoordinator`, `TTSController`, `DocumentLibraryView`, `AmbientSoundscapePlayer`, and `AudioPlayer`.
+    - **Automated Security Verification**:
+      - Added `SecurityHardeningTests.swift` covering scheme rejection, SSRF blocking, IPv4/IPv6 address classification, ZipArchive normalization, and HTML tag sanitization. All tests passing on Mac Catalyst and iPad Air simulator.
+24. **[AUD-25] Reader UI/UX Layout Boundary & Adversarial Regression Suite**:
+    - **Layout Boundary Edge Cases (`LayoutBoundaryEdgeCaseTests.swift`)**:
+      - **Empty Document (0 Blocks)**: Verified graceful 1-page blank rendering without crashes.
+      - **1-Page / 1-Sentence Documents**: Verified across reading layouts.
+      - **Odd Page Count in Two-Page Mode**: Verified spread alignment ensuring the trailing page renders as a left leaf without phantom spreads or crashes.
+      - **Empty Chapters**: Verified empty chapters interspersed in documents are skipped cleanly during pagination without index out of range.
+      - **10,000+ Word Monolithic Chapters**: Verified virtual page chunking without memory runaway.
+      - **Image-Only Documents & Phantom Chunk Defense**: Verified captionless images generate zero spoken words and `TTSChunker` cleanly skips them without emitting phantom audio chunks. Alt-text captions are spoken when provided for accessibility.
+      - **TTS Cursor Invariants**: Word 0 and document-tail word boundaries verified for exact index alignment.
+    - **Adversarial EPUB & Large-Token Suite (`AdversarialParserTests.swift`)**:
+      - Verified structured error throwing for missing `container.xml` and missing OPF packages.
+      - Verified manifest fallback rescue when spines contain invalid or circular itemrefs.
+      - Verified parsing safety against 1000-level nested HTML tags and SVG malicious scheme injection (`file://`, `javascript://`, `data://`).
+      - Verified robust sentence and TTS chunking on 100,000-character single paragraphs and 50,000-character unbroken tokens.
+    - **Sandbox Temp File Lifecycle & iCloud Backup Exclusion**:
+      - `ReaderDocument`: Added `isTemporaryFile` lifecycle tracking and automatic filesystem deletion on `deinit`.
+      - `VoiceTestingSandboxView`: Added automatic purging of old temporary report JSON and synthesized WAV files upon re-execution and `.onDisappear`.
+      - `TTSAudioCache`: Set `URLResourceValues.isExcludedFromBackup = true` on the disk cache directory to prevent transient neural audio artifacts from consuming user iCloud backup storage quotas.
 
 ---
 

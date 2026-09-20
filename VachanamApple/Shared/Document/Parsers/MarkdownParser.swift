@@ -14,6 +14,7 @@ public struct MarkdownParser: DocumentParser {
         let text: String
         let title: String
         
+        var baseURL: URL?
         switch source {
         case .fileURL(let url):
             guard FileManager.default.fileExists(atPath: url.path) else {
@@ -24,6 +25,7 @@ public struct MarkdownParser: DocumentParser {
             }
             text = PlainTextParser.decodeString(from: data)
             title = url.deletingPathExtension().lastPathComponent
+            baseURL = url
         case .rawText(let rawText, let rawTitle):
             text = rawText
             title = rawTitle
@@ -31,10 +33,10 @@ public struct MarkdownParser: DocumentParser {
             throw DocumentParserError.invalidSource("MarkdownParser requires a fileURL or rawText")
         }
         
-        return parseMarkdownText(text, defaultTitle: title)
+        return parseMarkdownText(text, defaultTitle: title, baseURL: baseURL)
     }
     
-    public func parseMarkdownText(_ text: String, defaultTitle: String) -> ParsedDocument {
+    public func parseMarkdownText(_ text: String, defaultTitle: String, baseURL: URL? = nil) -> ParsedDocument {
         let normalized = text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
         var chapters: [ParsedChapter] = []
@@ -156,6 +158,28 @@ public struct MarkdownParser: DocumentParser {
                 continue
             }
             
+            // Markdown Images: ![alt](path/or/url)
+            if let regex = try? NSRegularExpression(pattern: #"^!\[(.*?)\]\((.*?)\)$"#),
+               let match = regex.firstMatch(in: line, range: NSRange(location: 0, length: (line as NSString).length)),
+               match.numberOfRanges >= 3 {
+                flushParagraph()
+                let nsLine = line as NSString
+                let alt = nsLine.substring(with: match.range(at: 1))
+                let pathOrURL = nsLine.substring(with: match.range(at: 2))
+                var imgData: Data?
+                var imgURL: URL?
+                
+                if pathOrURL.lowercased().hasPrefix("http://") || pathOrURL.lowercased().hasPrefix("https://") {
+                    imgURL = URL(string: pathOrURL)
+                } else if let base = baseURL {
+                    let fileURL = base.deletingLastPathComponent().appendingPathComponent(pathOrURL)
+                    imgData = try? Data(contentsOf: fileURL)
+                }
+                
+                currentBlocks.append(ParsedBlock(type: .image, text: alt, imageData: imgData, imageURL: imgURL))
+                continue
+            }
+            
             // Normal paragraph line
             paragraphBuffer.append(line)
         }
@@ -178,6 +202,8 @@ public struct MarkdownParser: DocumentParser {
     
     private func cleanInlineMarkdown(_ md: String) -> String {
         var text = md
+        // Clean markdown images: ![alt](url) -> alt
+        text = text.replacingOccurrences(of: "!\\[([^\\]]*)\\]\\([^\\)]+\\)", with: "$1", options: .regularExpression)
         // Remove bold/italic markers (**word**, *word*, __word__, _word_)
         text = text.replacingOccurrences(of: "\\*\\*(.*?)\\*\\*", with: "$1", options: .regularExpression)
         text = text.replacingOccurrences(of: "__(.*?)__", with: "$1", options: .regularExpression)

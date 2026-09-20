@@ -91,10 +91,12 @@ public class ReadingProgressTracker: ObservableObject {
             return
         }
         
+        #if DEBUG
         var logDetail = "page \(currentPage)"
         if let w = resolvedWordID { logDetail += ", word \(w)" }
         if let s = resolvedSentenceID { logDetail += ", sentence \(s)" }
         print("[PROGRESS] saving \(logDetail) for \(documentURL.lastPathComponent)")
+        #endif
         
         let record = ReadingRecord(
             documentPath: path,

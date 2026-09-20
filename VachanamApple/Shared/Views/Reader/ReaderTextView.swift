@@ -139,6 +139,7 @@ public struct SentenceFlowView: View {
     public let textColor: Color
     public let highlightChoice: HighlightColorChoice
     public let highlightMode: HighlightMode
+    public let lineSpacing: CGFloat
     
     public init(
         sentence: SentenceItem,
@@ -147,7 +148,8 @@ public struct SentenceFlowView: View {
         font: Font,
         textColor: Color,
         highlightChoice: HighlightColorChoice,
-        highlightMode: HighlightMode
+        highlightMode: HighlightMode,
+        lineSpacing: CGFloat = 6
     ) {
         self.sentence = sentence
         self.isCurrentSentence = isCurrentSentence
@@ -156,19 +158,77 @@ public struct SentenceFlowView: View {
         self.textColor = textColor
         self.highlightChoice = highlightChoice
         self.highlightMode = highlightMode
+        self.lineSpacing = lineSpacing
     }
     
     public var body: some View {
-        if isCurrentSentence && (highlightMode == .both || highlightMode == .wordOnly), currentWord != nil {
+        if sentence.isImage {
+            renderImageView()
+        } else if isCurrentSentence && (highlightMode == .both || highlightMode == .wordOnly), currentWord != nil {
             Text(buildAttributedString())
                 .font(font)
-                .lineSpacing(8)
+                .lineSpacing(lineSpacing)
         } else {
             Text(sentence.text)
                 .font(font)
                 .foregroundColor(textColor)
-                .lineSpacing(8)
+                .lineSpacing(lineSpacing)
         }
+    }
+    
+    @ViewBuilder
+    private func renderImageView() -> some View {
+        VStack(spacing: 8) {
+            if let data = sentence.imageData {
+                #if os(macOS) && !targetEnvironment(macCatalyst)
+                if let nsImage = NSImage(data: data) {
+                    Image(nsImage: nsImage)
+                        .resizable()
+                        .scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                }
+                #else
+                if let uiImage = UIImage(data: data) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                }
+                #endif
+            } else if let url = sentence.imageURL {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFit()
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                    case .failure:
+                        EmptyView()
+                    case .empty:
+                        ProgressView()
+                            .padding(.vertical, 20)
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
+            }
+            
+            if !sentence.text.isEmpty {
+                Text(sentence.text)
+                    .font(.system(size: 13, weight: .medium, design: .serif))
+                    .foregroundColor(textColor.opacity(0.70))
+                    .italic()
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, 12)
     }
     
     private func buildAttributedString() -> AttributedString {

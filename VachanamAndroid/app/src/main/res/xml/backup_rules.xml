@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include user preferences and reading state -->
+    <include domain="sharedpref" path="." />
+    <include domain="database" path="." />
+    <!-- Exclude cache and external model downloads -->
+    <exclude domain="cache" path="." />
+    <exclude domain="external" path="." />
+</full-backup-content>

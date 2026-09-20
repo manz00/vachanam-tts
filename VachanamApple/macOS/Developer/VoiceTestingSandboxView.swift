@@ -147,6 +147,10 @@ public struct VoiceTestingSandboxView: View {
             .padding()
         }
         .background(Color(red: 0.05, green: 0.08, blue: 0.13))
+        .onDisappear {
+            if let share = shareURL { try? FileManager.default.removeItem(at: share) }
+            if let audio = audioFileURL { try? FileManager.default.removeItem(at: audio) }
+        }
     }
     
     private var pipelineResultsSection: some View {
@@ -452,6 +456,8 @@ public struct VoiceTestingSandboxView: View {
         )
         let jsonStr = PageStructureExporter.exportJSONString(from: report)
         let timestamp = Int(Date().timeIntervalSince1970)
+        if let oldShare = self.shareURL { try? FileManager.default.removeItem(at: oldShare) }
+        if let oldAudio = self.audioFileURL { try? FileManager.default.removeItem(at: oldAudio) }
         self.shareURL = PageStructureExporter.writeTemporaryJSONFile(
             filename: "voice_test_report_\(timestamp).json",
             jsonString: jsonStr

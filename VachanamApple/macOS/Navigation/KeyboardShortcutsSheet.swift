@@ -36,6 +36,8 @@ public struct KeyboardShortcutsSheet: View {
                 ShortcutItem(keys: ["Page Up"], description: "Previous page"),
                 ShortcutItem(keys: ["⌘", "←", "or", "Home"], description: "First page"),
                 ShortcutItem(keys: ["⌘", "→", "or", "End"], description: "Last page"),
+                ShortcutItem(keys: ["[", "or", "⌘", "["], description: "Previous chapter / section"),
+                ShortcutItem(keys: ["]", "or", "⌘", "]"], description: "Next chapter / section"),
                 ShortcutItem(keys: ["⌘", "J"], description: "Jump to page number")
             ]
         ),
@@ -54,6 +56,8 @@ public struct KeyboardShortcutsSheet: View {
             title: "Zoom & Display Modes",
             icon: "magnifyingglass",
             items: [
+                ShortcutItem(keys: ["c"], description: "Cycle layout (Single / Two-Page / Continuous)"),
+                ShortcutItem(keys: ["t"], description: "Cycle theme (E-Paper / Sepia / Dark / etc.)"),
                 ShortcutItem(keys: ["⌘", "+"], description: "Zoom in"),
                 ShortcutItem(keys: ["⌘", "-"], description: "Zoom out"),
                 ShortcutItem(keys: ["⌘", "0"], description: "Fit page to screen"),
@@ -67,9 +71,9 @@ public struct KeyboardShortcutsSheet: View {
             title: "Speech & Audio Playback",
             icon: "speaker.wave.3.fill",
             items: [
-                ShortcutItem(keys: ["⌥", "Space"], description: "Play / Pause TTS"),
-                ShortcutItem(keys: ["⌥", "→", "or", "⌘", "]"], description: "Next spoken sentence"),
-                ShortcutItem(keys: ["⌥", "←", "or", "⌘", "["], description: "Previous spoken sentence")
+                ShortcutItem(keys: ["p", "or", "⌥", "Space"], description: "Play / Pause TTS"),
+                ShortcutItem(keys: ["⌥", "→"], description: "Next spoken sentence"),
+                ShortcutItem(keys: ["⌥", "←"], description: "Previous spoken sentence")
             ]
         ),
         ShortcutSection(

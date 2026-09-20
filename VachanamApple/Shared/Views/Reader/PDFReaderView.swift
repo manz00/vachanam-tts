@@ -254,6 +254,7 @@ public struct PDFReaderView: UIViewRepresentable {
         pdfView.displayMode = layoutMode.pdfDisplayMode
         pdfView.displayDirection = layoutMode.pdfDisplayDirection
         pdfView.usePageViewController(false)
+        pdfView.pageBreakMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
         pdfView.backgroundColor = UIColor(themeManager.currentReaderTheme.backgroundColor)
         
         let overlayView = PDFHighlightOverlayView()

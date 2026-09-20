@@ -17,9 +17,15 @@ public struct ZipEntry: Sendable {
 }
 
 public class ZipArchive: @unchecked Sendable {
+    // MARK: - Security Limits
+    public static let maxEntryDecompressedBytes: Int = 100 * 1024 * 1024 // 100 MB per entry
+    public static let maxTotalDecompressedBytes: Int = 500 * 1024 * 1024 // 500 MB total per archive
+    public static let maxCompressionRatio: Double = 1000.0 // Zip bomb threshold
+    
     private let data: Data
     public private(set) var entries: [String: ZipEntry] = [:]
     private var lookupMap: [String: ZipEntry] = [:]
+    public private(set) var totalDecompressedBytes: Int = 0
     
     public init?(data: Data) {
         self.data = data
@@ -36,7 +42,7 @@ public class ZipArchive: @unchecked Sendable {
     // MARK: - Path Normalization
     
     public func normalizeEntryPath(_ path: String) -> String {
-        var clean = path.replacingOccurrences(of: "\\", with: "/")
+        var clean = path.replacingOccurrences(of: "\0", with: "").replacingOccurrences(of: "\\", with: "/")
         clean = clean.removingPercentEncoding ?? clean
         while clean.hasPrefix("./") {
             clean = String(clean.dropFirst(2))
@@ -182,6 +188,17 @@ public class ZipArchive: @unchecked Sendable {
             return nil
         }
         
+        // Security checks: Single entry cap, total expansion cap, and zip-bomb ratio cap
+        guard entry.uncompressedSize <= Self.maxEntryDecompressedBytes else {
+            return nil
+        }
+        guard totalDecompressedBytes + entry.uncompressedSize <= Self.maxTotalDecompressedBytes else {
+            return nil
+        }
+        if entry.compressedSize > 1024 && Double(entry.uncompressedSize) / Double(entry.compressedSize) > Self.maxCompressionRatio {
+            return nil
+        }
+        
         let localOffset = entry.offset
         guard localOffset + 30 <= data.count else { return nil }
         guard readUInt32(at: localOffset) == 0x04034b50 else { return nil }
@@ -194,15 +211,19 @@ public class ZipArchive: @unchecked Sendable {
         guard dataEnd <= data.count else { return nil }
         let compressedData = data.subdata(in: dataStart..<dataEnd)
         
+        var resultData: Data?
         if entry.compressionMethod == 0 {
             // Stored (no compression)
-            return compressedData
+            resultData = compressedData
         } else if entry.compressionMethod == 8 {
             // Deflate
-            return inflateRaw(data: compressedData, uncompressedSize: entry.uncompressedSize)
+            resultData = inflateRaw(data: compressedData, uncompressedSize: entry.uncompressedSize)
         }
         
-        return nil
+        if let result = resultData {
+            totalDecompressedBytes += result.count
+        }
+        return resultData
     }
     
     public func string(for entryName: String) -> String? {
@@ -222,6 +243,8 @@ public class ZipArchive: @unchecked Sendable {
     // MARK: - Raw Deflate Decompression
     
     private func inflateRaw(data: Data, uncompressedSize: Int) -> Data? {
+        guard uncompressedSize <= Self.maxEntryDecompressedBytes else { return nil }
+        
         var stream = z_stream()
         let initStatus = inflateInit2_(&stream, -MAX_WBITS, ZLIB_VERSION, Int32(MemoryLayout<z_stream>.size))
         guard initStatus == Z_OK else { return nil }
@@ -253,7 +276,7 @@ public class ZipArchive: @unchecked Sendable {
         let chunkSize = 65536
         var decompressed = Data()
         if uncompressedSize > 0 {
-            decompressed.reserveCapacity(uncompressedSize)
+            decompressed.reserveCapacity(min(uncompressedSize, Self.maxEntryDecompressedBytes))
         }
         
         return data.withUnsafeBytes { rawIn -> Data? in
@@ -273,6 +296,9 @@ public class ZipArchive: @unchecked Sendable {
                 
                 let produced = chunkSize - Int(stream.avail_out)
                 if produced > 0 {
+                    if decompressed.count + produced > Self.maxEntryDecompressedBytes {
+                        return nil
+                    }
                     decompressed.append(buffer, count: produced)
                 }
                 

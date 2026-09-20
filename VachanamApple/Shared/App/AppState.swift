@@ -20,19 +20,25 @@ public class AppState: ObservableObject {
     public init() {
         let hasLaunchedBefore = UserDefaults.standard.bool(forKey: hasLaunchedBeforeKey)
         let savedPath = UserDefaults.standard.string(forKey: lastOpenedDocKey)
+        #if DEBUG
         print("[RESTORE] hasLaunchedBefore = \(hasLaunchedBefore)")
         print("[RESTORE] savedPath = \(savedPath ?? "nil")")
         print("[RESTORE] fileExists = \(FileManager.default.fileExists(atPath: savedPath ?? ""))")
+        #endif
         
         if let path = savedPath {
             let url = URL(fileURLWithPath: path)
             if let progress = ReadingProgressTracker.shared.progress(for: url) {
+                #if DEBUG
                 var detail = "page = \(progress.currentPage), total = \(progress.totalPages)"
                 if let w = progress.lastWordID { detail += ", word = \(w)" }
                 if let s = progress.lastSentenceID { detail += ", sentence = \(s)" }
                 print("[RESTORE] tracker \(detail)")
+                #endif
             } else {
+                #if DEBUG
                 print("[RESTORE] NO progress found in tracker")
+                #endif
             }
         }
         

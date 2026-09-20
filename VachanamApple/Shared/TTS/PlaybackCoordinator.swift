@@ -160,9 +160,11 @@ public class PlaybackCoordinator: ObservableObject {
             self.visiblePageIndex = 0
         }
         
+        #if DEBUG
         if let c = self.cursor {
             print("[TTS] loadDocument – starting cursor at page \(c.pageIndex), word \(c.globalWordID)")
         }
+        #endif
         
         // Auto-detect pre-generated audiobook bundle
         if let manifest = AudiobookBundleLoader.shared.loadBundle(for: document) {
@@ -484,7 +486,9 @@ public class PlaybackCoordinator: ObservableObject {
                 self.startAudioPlayback(result: result, chunk: chunk, startWordID: targetWordID, requestID: requestID)
             } catch {
                 guard self.currentRequestID == requestID else { return }
+                #if DEBUG
                 print("Neural synthesis failed, falling back: \(error.localizedDescription)")
+                #endif
                 self.isGenerating = false
                 self.speakWithAppleTTS(
                     text: profile.cleanedText,

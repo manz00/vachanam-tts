@@ -408,7 +408,9 @@ public struct AudiobookGeneratorView: View {
                     let parsed = try await DocumentParserResolver.shared.parse(source: .fileURL(url), format: format)
                     semDoc = SemanticDocumentBuilder.shared.build(from: parsed, documentID: docID)
                 } catch {
+                    #if DEBUG
                     print("Failed to load document for generator: \(error.localizedDescription)")
+                    #endif
                     semDoc = nil
                 }
             }
@@ -432,7 +434,9 @@ public struct AudiobookGeneratorView: View {
                 self.generatedManifest = manifest
             }
         } catch {
+            #if DEBUG
             print("Audiobook generation error: \(error.localizedDescription)")
+            #endif
         }
     }
     

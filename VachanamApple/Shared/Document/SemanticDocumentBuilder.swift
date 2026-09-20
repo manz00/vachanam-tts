@@ -16,14 +16,27 @@ public class SemanticDocumentBuilder {
     public init() {}
     
     /// Converts a ParsedDocument into a fully indexed SemanticDocument.
-    public func build(from parsed: ParsedDocument, documentID: UUID = UUID()) -> SemanticDocument {
-        return buildWithMetadata(from: parsed, documentID: documentID).document
+    public func build(
+        from parsed: ParsedDocument,
+        documentID: UUID = UUID(),
+        targetWordsPerVirtualPage: Int = 100
+    ) -> SemanticDocument {
+        return buildWithMetadata(
+            from: parsed,
+            documentID: documentID,
+            targetWordsPerVirtualPage: targetWordsPerVirtualPage
+        ).document
     }
     
     /// Converts a ParsedDocument into a fully indexed SemanticDocument and returns the starting page of each chapter.
+    /// - Parameters:
+    ///   - targetWordsPerVirtualPage: Number of words per virtual page. Defaults to 100 words so
+    ///     that virtual pages fit cleanly on a single screen in both Single Page and Two Pages reading layouts
+    ///     without requiring vertical scrolling.
     public func buildWithMetadata(
         from parsed: ParsedDocument,
-        documentID: UUID = UUID()
+        documentID: UUID = UUID(),
+        targetWordsPerVirtualPage: Int = 100
     ) -> (document: SemanticDocument, chapterStartPages: [Int]) {
         var allBlocks: [SemanticBlock] = []
         var allParagraphs: [SemanticParagraph] = []
@@ -37,7 +50,6 @@ public class SemanticDocumentBuilder {
         
         var virtualPageIndex = 0
         var wordsOnCurrentVirtualPage = 0
-        let targetWordsPerVirtualPage = 350
         var chapterStartPages: [Int] = []
         
         let sentenceTokenizer = NLTokenizer(unit: .sentence)
@@ -51,6 +63,84 @@ public class SemanticDocumentBuilder {
             chapterStartPages.append(virtualPageIndex)
             
             for parsedBlock in chapter.blocks {
+                if parsedBlock.type == .image {
+                    let currentBlockID = nextBlockID
+                    nextBlockID += 1
+                    let currentParagraphID = nextParagraphID
+                    nextParagraphID += 1
+                    let currentSentenceID = nextSentenceID
+                    nextSentenceID += 1
+                    
+                    let captionText = parsedBlock.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    var sentenceWords: [SemanticWord] = []
+                    
+                    if !captionText.isEmpty {
+                        wordTokenizer.string = captionText
+                        let sFullRange = captionText.startIndex..<captionText.endIndex
+                        var wordIndexInSentence = 0
+                        wordTokenizer.enumerateTokens(in: sFullRange) { wRange, _ in
+                            let wordString = String(captionText[wRange])
+                            guard !wordString.isEmpty else { return true }
+                            let nsRange = NSRange(wRange, in: captionText)
+                            let wordID = nextGlobalWordID
+                            nextGlobalWordID += 1
+                            let word = SemanticWord(
+                                globalWordID: wordID,
+                                text: wordString,
+                                originalText: wordString,
+                                spokenText: wordString,
+                                pageIndex: virtualPageIndex,
+                                sentenceID: currentSentenceID,
+                                wordIndexInSentence: wordIndexInSentence,
+                                bounds: .zero,
+                                lineBounds: [],
+                                sentenceRange: nsRange
+                            )
+                            sentenceWords.append(word)
+                            allWords.append(word)
+                            wordIndexInSentence += 1
+                            wordsOnCurrentVirtualPage += 1
+                            return true
+                        }
+                    }
+                    
+                    let imageSentence = SemanticSentence(
+                        sentenceID: currentSentenceID,
+                        paragraphID: currentParagraphID,
+                        blockID: currentBlockID,
+                        blockType: .image,
+                        primaryPageIndex: virtualPageIndex,
+                        pageSpans: [virtualPageIndex],
+                        text: captionText,
+                        words: sentenceWords,
+                        lineBoundsByPage: [:],
+                        boundsByPage: [:],
+                        imageData: parsedBlock.imageData,
+                        imageURL: parsedBlock.imageURL
+                    )
+                    allSentences.append(imageSentence)
+                    
+                    let semanticParagraph = SemanticParagraph(
+                        paragraphID: currentParagraphID,
+                        pageIndex: virtualPageIndex,
+                        sentenceIDs: [currentSentenceID]
+                    )
+                    allParagraphs.append(semanticParagraph)
+                    
+                    let semanticBlock = SemanticBlock(
+                        blockID: currentBlockID,
+                        type: .image,
+                        level: 1,
+                        marker: nil,
+                        pageIndex: virtualPageIndex,
+                        sentenceIDs: [currentSentenceID],
+                        bounds: .zero
+                    )
+                    allBlocks.append(semanticBlock)
+                    
+                    continue
+                }
+                
                 let blockText = parsedBlock.text.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !blockText.isEmpty else { continue }
                 

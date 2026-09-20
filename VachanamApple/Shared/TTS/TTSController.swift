@@ -178,7 +178,9 @@ public class TTSController: ObservableObject {
             isModelLoaded = activeAdapter.isLoaded
             ModelManager.shared.loadedModelId = modelId
         } catch {
+            #if DEBUG
             print("Failed to load model \(modelId): \(error.localizedDescription)")
+            #endif
             isModelLoaded = false
         }
         isModelLoading = false

@@ -16,6 +16,9 @@ class EPUBParser : DocumentParser {
     private val titleRegex = Pattern.compile("<dc:title[^>]*>(.*?)</dc:title>", Pattern.CASE_INSENSITIVE or Pattern.DOTALL)
     private val creatorRegex = Pattern.compile("<dc:creator[^>]*>(.*?)</dc:creator>", Pattern.CASE_INSENSITIVE or Pattern.DOTALL)
     private val rootfileRegex = Pattern.compile("<rootfile\\s+[^>]*full-path=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE)
+    private val imgTagRegex = Pattern.compile("<(?:img|image)[^>]*>", Pattern.CASE_INSENSITIVE)
+    private val srcAttrRegex = Pattern.compile("(?:src|xlink:href)=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE)
+    private val altAttrRegex = Pattern.compile("alt=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE)
 
     override suspend fun parse(source: DocumentSource): ParsedDocument = withContext(Dispatchers.IO) {
         val file = when (source) {
@@ -86,7 +89,7 @@ class EPUBParser : DocumentParser {
                 val entry = zip.getEntry(href) ?: zip.getEntry(href.removePrefix("/"))
                 if (entry != null) {
                     val htmlContent = zip.getInputStream(entry).bufferedReader().use { it.readText() }
-                    val parsedBlocks = parseHtmlBlocks(htmlContent)
+                    val parsedBlocks = parseHtmlBlocks(htmlContent, href, zip, manifest)
                     if (parsedBlocks.isNotEmpty()) {
                         val chapterTitle = parsedBlocks.firstOrNull { it.type == BlockType.HEADING }?.text
                             ?: "Chapter $chapterIndex"
@@ -111,36 +114,115 @@ class EPUBParser : DocumentParser {
         }
     }
 
-    private fun parseHtmlBlocks(html: String): List<ParsedBlock> {
+    private fun resolveImageData(
+        src: String,
+        chapterHref: String,
+        zip: ZipFile,
+        manifest: Map<String, String>
+    ): ByteArray? {
+        val cleanSrc = src.trim()
+        if (cleanSrc.isEmpty()) return null
+
+        val chapterDir = File(chapterHref).parent?.replace("\\", "/") ?: ""
+        val combined = if (chapterDir.isNotEmpty()) "$chapterDir/$cleanSrc" else cleanSrc
+        val normalized = normalizePath(combined)
+
+        // 1. Direct entry lookup
+        val direct = zip.getEntry(normalized) ?: zip.getEntry(normalized.removePrefix("/"))
+        if (direct != null) {
+            return zip.getInputStream(direct).use { it.readBytes() }
+        }
+
+        // 2. Decode percent-encoded paths
+        val decoded = try { java.net.URLDecoder.decode(normalized, "UTF-8") } catch (_: Exception) { normalized }
+        val decodedEntry = zip.getEntry(decoded) ?: zip.getEntry(decoded.removePrefix("/"))
+        if (decodedEntry != null) {
+            return zip.getInputStream(decodedEntry).use { it.readBytes() }
+        }
+
+        // 3. Fallback: match by filename against manifest
+        val filename = File(normalized).name
+        for ((_, manifestPath) in manifest) {
+            if (manifestPath.endsWith(filename)) {
+                val mEntry = zip.getEntry(manifestPath) ?: zip.getEntry(manifestPath.removePrefix("/"))
+                if (mEntry != null) {
+                    return zip.getInputStream(mEntry).use { it.readBytes() }
+                }
+            }
+        }
+        return null
+    }
+
+    private fun parseHtmlBlocks(
+        html: String,
+        chapterHref: String,
+        zip: ZipFile,
+        manifest: Map<String, String>
+    ): List<ParsedBlock> {
         val blocks = mutableListOf<ParsedBlock>()
 
+        // Replace image tags with custom delimiter to preserve in-flow position
+        val imageTokens = mutableListOf<ParsedBlock>()
+        var tokenCounter = 0
+        val imgMatcher = imgTagRegex.matcher(html)
+        val sb = StringBuffer()
+        while (imgMatcher.find()) {
+            val tag = imgMatcher.group()
+            val srcMatch = srcAttrRegex.matcher(tag)
+            val altMatch = altAttrRegex.matcher(tag)
+            val src = if (srcMatch.find()) srcMatch.group(1) else null
+            val alt = if (altMatch.find()) altMatch.group(1) else "Image"
+
+            val tokenKey = "___VACHANAM_IMG_${tokenCounter}___"
+            tokenCounter++
+
+            val imgData = src?.let { resolveImageData(it, chapterHref, zip, manifest) }
+            val imgBlock = ParsedBlock(
+                type = BlockType.IMAGE,
+                text = alt ?: "Image",
+                imageData = imgData,
+                imageUrl = src
+            )
+            imageTokens.add(imgBlock)
+            imgMatcher.appendReplacement(sb, "\n\n$tokenKey\n\n")
+        }
+        imgMatcher.appendTail(sb)
+        val htmlWithTokens = sb.toString()
+
         // Replace block tags with boundary markers to avoid word-gluing
-        var processed = html
+        val processed = htmlWithTokens
             .replace(Regex("(?i)<script[\\s\\S]*?</script>"), " ")
             .replace(Regex("(?i)<style[\\s\\S]*?</style>"), " ")
             .replace(Regex("(?i)<br\\s*/?>"), "\n")
             .replace(Regex("(?i)</?(?:p|div|section|article|blockquote|li)[^>]*>"), "\n\n")
 
-        // Heading tags
-        val hPattern = Pattern.compile("<(h[1-6])[^>]*>(.*?)</\\1>", Pattern.CASE_INSENSITIVE or Pattern.DOTALL)
-        val hMatcher = hPattern.matcher(html)
-        while (hMatcher.find()) {
-            val tag = hMatcher.group(1) ?: "h1"
-            val text = cleanHtml(hMatcher.group(2) ?: "")
-            if (text.isNotEmpty()) {
-                val level = tag.substring(1).toIntOrNull() ?: 1
-                blocks.add(ParsedBlock(type = BlockType.HEADING, text = text, level = level))
-            }
-        }
-
-        val rawParagraphs = processed.split("\n\n")
-            .map { cleanHtml(it) }
+        val rawChunks = processed.split("\n\n")
+            .map { it.trim() }
             .filter { it.isNotEmpty() }
 
-        for (p in rawParagraphs) {
-            // Avoid duplicate headings already captured
-            if (blocks.none { it.text == p }) {
-                blocks.add(ParsedBlock(type = BlockType.PARAGRAPH, text = p))
+        var tokenIndex = 0
+        for (chunk in rawChunks) {
+            if (chunk.startsWith("___VACHANAM_IMG_") && chunk.endsWith("___")) {
+                if (tokenIndex < imageTokens.size) {
+                    blocks.add(imageTokens[tokenIndex++])
+                }
+                continue
+            }
+
+            // Check if chunk is a heading
+            val hMatcher = Pattern.compile("^<h([1-6])[^>]*>(.*?)</h\\1>$", Pattern.CASE_INSENSITIVE or Pattern.DOTALL).matcher(chunk)
+            if (hMatcher.find()) {
+                val level = hMatcher.group(1).toIntOrNull() ?: 1
+                val hText = cleanHtml(hMatcher.group(2) ?: "")
+                if (hText.isNotEmpty()) {
+                    blocks.add(ParsedBlock(type = BlockType.HEADING, text = hText, level = level))
+                    continue
+                }
+            }
+
+            val cleaned = cleanHtml(chunk)
+            if (cleaned.isNotEmpty()) {
+                blocks.add(ParsedBlock(type = BlockType.PARAGRAPH, text = cleaned))
             }
         }
 

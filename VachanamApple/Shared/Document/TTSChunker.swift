@@ -54,7 +54,7 @@ public class TTSChunker {
                 return 0.4
             case .quote:
                 return 0.5
-            case .caption, .footnote, .sidenote:
+            case .caption, .footnote, .sidenote, .image:
                 return 0.4
             case .paragraph:
                 return isLastChunkOfBlock ? 0.5 : 0.1
@@ -72,6 +72,16 @@ public class TTSChunker {
             var combinedText = cleanTexts.joined(separator: " ")
             combinedText = combinedText.replacingOccurrences(of: "[ ]{2,}", with: " ", options: .regularExpression)
                 .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !combinedText.isEmpty else {
+                currentSentenceIDs.removeAll()
+                currentWordIDs.removeAll()
+                currentTexts.removeAll()
+                currentPageSpans.removeAll()
+                currentWordCount = 0
+                currentBlockID = nil
+                currentBlockType = .paragraph
+                return
+            }
             let estimatedDuration = Double(currentWordCount) / 2.8 // ~168 words per minute
             let pause = pauseDuration(for: currentBlockType, isLastChunkOfBlock: isLastChunkOfBlock)
             
@@ -101,6 +111,11 @@ public class TTSChunker {
         for (index, sentence) in sentences.enumerated() {
             // Skip non-narrative furniture based on preferences
             if skippedBlockTypes.contains(sentence.blockType) {
+                continue
+            }
+            
+            // Skip sentences without spoken words or text (e.g. captionless images)
+            if sentence.words.isEmpty && sentence.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 continue
             }
             

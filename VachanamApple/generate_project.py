@@ -737,6 +737,7 @@ def create_project():
     pbx.append("\t\t\t\t\"CODE_SIGN_IDENTITY[sdk=macosx*]\" = \"-\";")
     pbx.append("\t\t\t\tCOPY_PHASE_STRIP = NO;")
     pbx.append("\t\t\t\tCURRENT_PROJECT_VERSION = 1;")
+    pbx.append("\t\t\t\tENABLE_HARDENED_RUNTIME = YES;")
     pbx.append("\t\t\t\tENABLE_TESTABILITY = YES;")
     pbx.append("\t\t\t\tENABLE_USER_SCRIPT_SANDBOXING = YES;")
     pbx.append("\t\t\t\tGENERATE_INFOPLIST_FILE = NO;")

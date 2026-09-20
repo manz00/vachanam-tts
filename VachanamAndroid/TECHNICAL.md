@@ -102,6 +102,48 @@ graph TD
    - **Dynamic PDF Theme Background (`PdfPageView.kt`)**: Bound PDF page view canvas background dynamically to `theme.backgroundColor`. Eliminates bright white background bleed in dark or warm themes and supports two-page side-by-side rendering with a center spine divider.
    - **Original PDF vs Clean Text Mode (`ReaderContainerView.kt`)**: Added toggle allowing any PDF to be read either in its original page bitmap format or reflowed as a clean typographic document with dynamic text sizing, OpenDyslexic, bionic reading, and full 3-layout pagination.
    - **Settings & Navigation Toolbar Integration**: Added 3-mode layout cycling button in reader top toolbar and layout radio selector in `SettingsScreen.kt`.
+4. **[AUD-21] In-Flow Multi-Format Image Ingestion & Keyboard Controls Parity**:
+   - **In-Flow Image Extraction (`EPUBParser.kt`, `MarkdownParser.kt`)**:
+     - `EPUBParser`: Extracted inline `<img>` and SVG `<image xlink:href>` tags, resolving relative paths against chapter directory and manifest tables to load raw `ByteArray` from ZIP archives. Preserved reading order with placeholder tokens.
+     - `MarkdownParser`: Extracted `![alt](url)` patterns into `ParsedBlock` items with `BlockType.IMAGE`.
+     - **Semantic Elements**: Added `IMAGE` to `BlockType`, `imageData: ByteArray?`, and `imageUrl: String?` to `ParsedBlock` and `SemanticSentence`.
+     - **TTS Chunker**: Gracefully routed `BlockType.IMAGE` in `TTSChunker.kt` with default 0.35s pause duration.
+5. **[AUD-22] Reflowable Virtual Page Budget Calibration**:
+   - Calibrated `targetWordsPerVirtualPage` from 350 to **100 words** in `SemanticDocumentBuilder.kt`, matching Apple architecture and preventing excessive line count inflation and awkward vertical scrolling in multi-column / two-page layouts.
+6. **[AUD-23] Android Security Hardening & Automated OTA Auto-Update Delivery**:
+   - **Data Extraction & Cloud Backup Rules (`res/xml/data_extraction_rules.xml`, `res/xml/backup_rules.xml`)**:
+     - Configured Android 12+ (API 31+) compliant XML backup rules replacing vulnerable `@null` declaration.
+     - Secured user preferences and reading databases while excluding transient audio caches and large offline neural voice models from unencrypted ADB backup.
+   - **Network & Manifest Security**:
+     - Enforced `android:usesCleartextTraffic="false"` in `AndroidManifest.xml` to prevent any unencrypted HTTP egress.
+     - Enabled `android:enableOnBackInvokedCallback="true"` for modern predictive back navigation gesture protection.
+   - **ProGuard / R8 Hardening (`proguard-rules.pro`)**:
+     - Added release keep rules for `androidx.media3` and `kotlinx.coroutines`.
+   - **Automated Over-The-Air GitHub Release Pipeline (`release-android.yml`)**:
+     - Pushing commits to `main` automatically triggers GitHub Actions to build `Vachanam-Android.apk` and publish a GitHub Release.
+     - Integrated with **Obtainium** for zero-configuration, silent background over-the-air auto-updates on Android devices without Google Play Console overhead.
+7. **[AUD-24] Android Security Hardening, SSRF Defense & Release Minification**:
+   - **WebArticleParser SSRF Mitigation (`WebArticleParser.kt`)**:
+     - Strict HTTPS-only protocol validation; immediate rejection of `http`, `file`, `ftp`, `data`, and `javascript` schemes.
+     - DNS hostname resolution with IP classification blocking loopback (`127.0.0.0/8`, `::1`), private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), link-local/cloud metadata (`169.254.169.254`), and multicast.
+     - Manual redirect resolution capping redirections at 3 with anti-downgrade checks.
+     - Streaming response body reader enforcing a hard 5 MB size cap (`readStreamWithLimit`).
+   - **R8 Minification & Release Shrinking (`build.gradle.kts`)**:
+     - Enabled `isMinifyEnabled = true` and `isShrinkResources = true` in the release build type to strip unused classes, obfuscate code, and reduce APK footprint.
+     - Configured debug keystore fallback signing on release builds for seamless testing and immediate Obtainium sideloading.
+   - **Release Checksum Verification & Supply-Chain Hardening**:
+     - Pinned all workflow actions to immutable commit SHAs.
+     - Added automated SHA-256 calculation and attached `Vachanam-Android.apk.sha256` to every release.
+     - Integrated `.github/dependabot.yml` for automated dependency vulnerability monitoring.
+8. **[AUD-25] Android SSRF Validation Tests & Core Logic Parity**:
+   - **Automated URL Security Unit Tests (`VachanamCoreLogicTest.kt`)**:
+     - Added test cases validating `WebArticleParser.validateUrl`:
+       - `testWebArticleParser_blocksInsecureHttpScheme`: Verifies cleartext HTTP URLs throw `SecurityException`.
+       - `testWebArticleParser_blocksLocalhostAndLoopback`: Rejects `localhost`, `.localhost` subdomains, and `127.0.0.1`.
+       - `testWebArticleParser_blocksPrivateSubnetsAndMetadata`: Rejects `169.254.169.254` (cloud metadata), `10.0.0.1`, and `192.168.1.1`.
+       - `testWebArticleParser_allowsValidHttpsUrl`: Validates standard public HTTPS URLs.
+   - **TTS & Layout Alignment**:
+     - Synchronized 100 words/virtual page budget and image alt-text handling parity with Apple implementation.
 
 ---
 

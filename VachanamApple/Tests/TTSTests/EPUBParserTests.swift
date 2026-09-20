@@ -96,17 +96,43 @@ final class EPUBParserTests: XCTestCase {
         return buildZipArchive(files: files, useWindowsSeparators: useWindowsBackslashesInZip)
     }
     
+    private struct ZipEntry {
+        let name: String
+        let data: Data
+        let compress: Bool
+        
+        init(name: String, stringContent: String, compress: Bool) {
+            self.name = name
+            self.data = Data(stringContent.utf8)
+            self.compress = compress
+        }
+        
+        init(name: String, data: Data, compress: Bool) {
+            self.name = name
+            self.data = data
+            self.compress = compress
+        }
+    }
+    
     private func buildZipArchive(
         files: [(name: String, content: String, compress: Bool)],
+        useWindowsSeparators: Bool = false
+    ) -> Data {
+        let entries = files.map { ZipEntry(name: $0.name, stringContent: $0.content, compress: $0.compress) }
+        return buildZipArchive(entries: entries, useWindowsSeparators: useWindowsSeparators)
+    }
+    
+    private func buildZipArchive(
+        entries: [ZipEntry],
         useWindowsSeparators: Bool = false
     ) -> Data {
         var zipData = Data()
         var centralDirectory = Data()
         var cdCount: UInt16 = 0
         
-        for file in files {
-            let entryName = useWindowsSeparators ? file.name.replacingOccurrences(of: "/", with: "\\") : file.name
-            let rawContent = Data(file.content.utf8)
+        for entry in entries {
+            let entryName = useWindowsSeparators ? entry.name.replacingOccurrences(of: "/", with: "\\") : entry.name
+            let rawContent = entry.data
             let uncompressedSize = UInt32(rawContent.count)
             let crc = UInt32(crc32(0, [UInt8](rawContent), uInt(rawContent.count)))
             
@@ -116,7 +142,7 @@ final class EPUBParserTests: XCTestCase {
             
             let method: UInt16
             let payload: Data
-            if file.compress {
+            if entry.compress {
                 method = 8
                 payload = compressDeflate(rawContent)
             } else {
@@ -258,8 +284,6 @@ final class EPUBParserTests: XCTestCase {
     
     func testZipArchiveChunkedDecompression() {
         let largeString = String(repeating: "Vachanam universal text-to-speech engine. ", count: 5000)
-        let largeData = Data(largeString.utf8)
-        let compressed = compressDeflate(largeData)
         
         let files = [("large.txt", largeString, true)]
         let zipData = buildZipArchive(files: files)
@@ -333,6 +357,130 @@ final class EPUBParserTests: XCTestCase {
         XCTAssertEqual(headings[1].text, "Sub Section Header")
         XCTAssertEqual(headings[1].level, 2)
     }
+    
+    func testEPUBImageExtraction() async throws {
+        var entries: [ZipEntry] = []
+        entries.append(ZipEntry(name: "mimetype", stringContent: "application/epub+zip", compress: false))
+        
+        let containerXML = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+            <rootfiles>
+                <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+            </rootfiles>
+        </container>
+        """
+        entries.append(ZipEntry(name: "META-INF/container.xml", stringContent: containerXML, compress: true))
+        
+        let opfXML = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="pub-id">
+            <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+                <dc:title>Illustrated Novel</dc:title>
+                <dc:creator>Test Artist</dc:creator>
+                <dc:language>en</dc:language>
+            </metadata>
+            <manifest>
+                <item id="ch1" href="Text/ch1.xhtml" media-type="application/xhtml+xml"/>
+                <item id="img1" href="Images/diagram.png" media-type="image/png"/>
+            </manifest>
+            <spine>
+                <itemref idref="ch1" />
+            </spine>
+        </package>
+        """
+        entries.append(ZipEntry(name: "OEBPS/content.opf", stringContent: opfXML, compress: true))
+        
+        let ch1HTML = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE html>
+        <html xmlns="http://www.w3.org/1999/xhtml">
+        <head><title>Chapter 1</title></head>
+        <body>
+            <h1>Visual Architecture</h1>
+            <p>The following diagram outlines the pipeline:</p>
+            <img src="../Images/diagram.png" alt="Pipeline Diagram" />
+            <p>As illustrated above, data streams steadily.</p>
+        </body>
+        </html>
+        """
+        entries.append(ZipEntry(name: "OEBPS/Text/ch1.xhtml", stringContent: ch1HTML, compress: true))
+        
+        // Dummy 64-byte binary image data
+        let dummyImageData = Data((0..<64).map { UInt8($0) })
+        entries.append(ZipEntry(name: "OEBPS/Images/diagram.png", data: dummyImageData, compress: true))
+        
+        let epubData = buildZipArchive(entries: entries)
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).epub")
+        try epubData.write(to: tempURL)
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+        
+        let parser = EPUBParser()
+        let parsed = try await parser.parse(from: .fileURL(tempURL))
+        
+        XCTAssertEqual(parsed.chapters.count, 1)
+        let ch = parsed.chapters[0]
+        
+        let imageBlocks = ch.blocks.filter { $0.type == .image }
+        XCTAssertEqual(imageBlocks.count, 1, "Should have extracted one image block")
+        
+        if let imgBlock = imageBlocks.first {
+            XCTAssertEqual(imgBlock.text, "Pipeline Diagram")
+            XCTAssertNotNil(imgBlock.imageData)
+            XCTAssertEqual(imgBlock.imageData?.count, 64)
+        }
+        
+        // Test semantic document bridging
+        let semDoc = SemanticDocumentBuilder().build(from: parsed)
+        let imageSentences = semDoc.sentences.filter { $0.blockType == .image }
+        XCTAssertEqual(imageSentences.count, 1)
+        XCTAssertEqual(imageSentences.first?.imageData?.count, 64)
+        XCTAssertEqual(imageSentences.first?.text, "Pipeline Diagram")
+    }
+    
+    func testMarkdownImageExtraction() async throws {
+        let md = """
+        # Audio Pipeline
+        
+        Below is the signal flow:
+        
+        ![Signal Graph](https://example.com/audio/graph.png)
+        
+        The graph illustrates 16kHz sampling.
+        """
+        let parser = MarkdownParser()
+        let parsed = try await parser.parse(from: .rawText(md, title: "Markdown Spec"))
+        
+        let imageBlocks = parsed.allBlocks.filter { $0.type == .image }
+        XCTAssertEqual(imageBlocks.count, 1)
+        
+        if let img = imageBlocks.first {
+            XCTAssertEqual(img.text, "Signal Graph")
+            XCTAssertEqual(img.imageURL?.absoluteString, "https://example.com/audio/graph.png")
+        }
+        
+        let semDoc = SemanticDocumentBuilder().build(from: parsed)
+        let imgSentences = semDoc.sentences.filter { $0.blockType == .image }
+        XCTAssertEqual(imgSentences.count, 1)
+        XCTAssertEqual(imgSentences.first?.imageURL?.absoluteString, "https://example.com/audio/graph.png")
+    }
+    
+    func testReadingLayoutPageStepAndSpreadMath() {
+        let single = ReadingLayout.paginated
+        XCTAssertEqual(single.pageStep, 1)
+        XCTAssertFalse(single.isTwoPage)
+        XCTAssertTrue(single.isPaginated)
+        
+        let twoPage = ReadingLayout.twoPage
+        XCTAssertEqual(twoPage.pageStep, 2)
+        XCTAssertTrue(twoPage.isTwoPage)
+        XCTAssertTrue(twoPage.isPaginated)
+        
+        let contScroll = ReadingLayout.continuous
+        XCTAssertEqual(contScroll.pageStep, 1)
+        XCTAssertFalse(contScroll.isTwoPage)
+        XCTAssertFalse(contScroll.isPaginated)
+    }
 }
 
 // MARK: - Binary Helper Extensions
@@ -340,11 +488,11 @@ final class EPUBParserTests: XCTestCase {
 private extension Data {
     mutating func appendUInt16(_ value: UInt16) {
         var v = value.littleEndian
-        append(UnsafeBufferPointer(start: &v, count: 1))
+        Swift.withUnsafeBytes(of: &v) { append(contentsOf: $0) }
     }
     
     mutating func appendUInt32(_ value: UInt32) {
         var v = value.littleEndian
-        append(UnsafeBufferPointer(start: &v, count: 1))
+        Swift.withUnsafeBytes(of: &v) { append(contentsOf: $0) }
     }
 }

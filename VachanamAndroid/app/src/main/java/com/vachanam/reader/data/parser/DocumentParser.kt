@@ -16,7 +16,9 @@ data class ParsedBlock(
     val type: BlockType,
     val text: String,
     val level: Int = 1,
-    val marker: String? = null
+    val marker: String? = null,
+    val imageData: ByteArray? = null,
+    val imageUrl: String? = null
 )
 
 data class ParsedChapter(

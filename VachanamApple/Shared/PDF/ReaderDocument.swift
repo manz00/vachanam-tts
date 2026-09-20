@@ -33,6 +33,13 @@ public class ReaderDocument: Identifiable, ObservableObject {
     public var semanticDocument: SemanticDocument?
     
     @Published public var tocItems: [TOCItem] = []
+    private let isTemporaryFile: Bool
+    
+    deinit {
+        if isTemporaryFile {
+            try? FileManager.default.removeItem(at: fileURL)
+        }
+    }
     
     public func updateParsedContent(
         parsed: ParsedDocument,
@@ -59,9 +66,10 @@ public class ReaderDocument: Identifiable, ObservableObject {
         self.format = detected
         self.fileURL = url
         self.title = url.deletingPathExtension().lastPathComponent
+        self.isTemporaryFile = false
         
         if detected == .pdf {
-            guard let doc = PDFDocument(url: url) else { return nil }
+            guard let doc = PDFDocument(url: url), doc.pageCount > 0 else { return nil }
             self.pdfDocument = doc
             self.pageCount = doc.pageCount
             self.tocItems = extractTOC(from: doc.outlineRoot)
@@ -81,6 +89,7 @@ public class ReaderDocument: Identifiable, ObservableObject {
         self.format = parsedDocument.format
         self.title = parsedDocument.title
         self.fileURL = fileURL
+        self.isTemporaryFile = false
         self.pdfDocument = PDFDocument()
         self.pageCount = semanticDocument.pageCount
         self.parsedDocument = parsedDocument
@@ -98,11 +107,12 @@ public class ReaderDocument: Identifiable, ObservableObject {
     }
     
     public init?(data: Data, title: String = "Untitled Document") {
-        guard let doc = PDFDocument(data: data) else { return nil }
+        guard let doc = PDFDocument(data: data), doc.pageCount > 0 else { return nil }
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).pdf")
         try? data.write(to: tempURL)
         self.format = .pdf
         self.fileURL = tempURL
+        self.isTemporaryFile = true
         self.pdfDocument = doc
         self.title = title
         self.pageCount = doc.pageCount

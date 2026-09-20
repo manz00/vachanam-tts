@@ -335,6 +335,76 @@ Structured around the principle:
     - **Dynamic PDF Theme Background Binding**: Bound native PDF viewports (`pdfView.backgroundColor` in Quartz 2D / PDFKit on Apple, and container canvas on Android) directly to `currentReaderTheme.backgroundColor`. Eliminates jarring bright white borders around PDF pages when reading under Quiet, Paper, Charcoal, or Night themes. Native PDFs also map `ReadingLayout` directly to PDF display modes (`.singlePage`, `.twoUp`, and `.singlePageContinuous`).
     - **Universal Paginated Reader View**: Replaced format-specific reader views (`EPUBPaginatedReaderView` / `EPUBPaginatedReader`) with universal `PaginatedReaderView` supporting any `SemanticDocument`. Added clean text extraction toggle to PDF reader views, enabling any academic PDF to be read either in original fixed-layout or in reflowed clean typography with font resizing, OpenDyslexic, bionic reading, and full 3-layout pagination.
     - **Scrubber & Controls Parity**: Updated `ReaderScrubberBar` and top navigation bars across iOS, macOS, and Android to support 3-layout cycling, dual-page progress labeling, and seamless PDF mode switching.
+20. **[AUD-21] In-Flow Multi-Format Image Ingestion, Apple Books Page Bounds & Keyboard Navigation Suite (Apple & Android)**:
+    - **In-Flow Image Extraction & Semantic Pipeline**:
+      - `EPUBParser`: Implemented full archive binary extraction for `<img>` and SVG `<image xlink:href>` tags. Resolved paths relative to chapter directories and manifest tables, extracting image data and preserving in-flow reading order.
+      - `MarkdownParser`: Extracted `![alt](url_or_path)` into discrete `ParsedBlock` items with alt captions and resolved URLs.
+      - **Semantic Document Bridging**: Added `BlockType.image` / `IMAGE`, `imageData`, and `imageURL` / `imageUrl` across `ParsedBlock`, `SemanticSentence`, and `SentenceItem`.
+      - **UI Rendering**: Integrated responsive image rendering in `ReaderTextView` (SwiftUI) and `ReaderTextView` (Compose) with aspect-ratio preservation, rounded corners, subtle shadows, and italic captions.
+    - **Apple Books Page Bounds & Two-Page Spine Depth**:
+      - Added symmetrical page margins (outer reading edge vs. inner spine edge) and center spine depth gradient in `PaginatedReaderView`.
+      - Added `pageBreakMargins` (16pt) in `PDFReaderView` for clear visual separation of adjacent pages.
+      - Formatted dual-page range strings ("Pages X–Y of Z") and chapter progress indicators in `ReaderScrubberBar`.
+    - **Universal Keyboard Controls & Accessibility Suite**:
+      - Wired comprehensive `.onKeyPress` listeners and NotificationCenter publishers for all reading layouts: Left/Right arrows, Up/Down arrows, Page Up/Down, Space/Shift-Space, Home/End, Command-J.
+      - Added single-key shortcuts: `c` (cycle reading layout), `t` (cycle theme), `p` (play/pause TTS), `[` and `]` (previous/next chapter), `?` (shortcuts cheatsheet), `Esc` (return to library).
+      - Enforced spread-aligned stepping (`pageStep = 2`) in two-page mode to prevent asymmetric spread splits.
+21. **[AUD-22] Two-Page Spread Geometry & Virtual Page Budget Calibration (Apple & Android)**:
+    - **Two-Page Spread Column Width Math**: Fixed two-page column width computation to `pageWidth = (size.width - spineWidth) / 2` with `spineWidth = 14`, ensuring exact viewport fit without horizontal clipping or bleed.
+    - **Floating Chrome Insets**: Added dynamic bottom safe insets in `PaginatedReaderView` so text and footers remain unobscured when the scrubber and playback bars are visible.
+    - **Reflowable Virtual Page Calibration**: Calibrated `targetWordsPerVirtualPage` from 350 to **100 words** across `SemanticDocumentBuilder.swift` and `SemanticDocumentBuilder.kt`, preventing excessive 50–60 line overflows in two-page mode and eliminating awkward vertical scrolling.
+    - **Responsive Two-Page Typography**: Applied `0.80x` body font scaling and tightened line spacing (3pt) in `PaginatedReaderView` to ensure all lines fit comfortably within screen bounds.
+22. **[AUD-23] Automated Push-to-Deploy CI/CD Pipelines & Security Hardening (Apple & Android)**:
+    - **Automated Continuous Delivery Workflows**:
+      - Added `.github/workflows/ci.yml`: Runs Mac Catalyst XCTest suite and Android unit tests on all PRs and pushes.
+      - Added `.github/workflows/release-android.yml`: Automatically builds signed APK on push to `main` and publishes a GitHub Release tagged with build numbers for instant over-the-air auto-updates via Obtainium or direct APK download.
+      - Added `.github/workflows/release-apple.yml`: Archives Mac Catalyst release binaries as `.zip` artifacts on GitHub Releases and configures automated TestFlight delivery for background iPad updates.
+    - **Apple Security Hardening**:
+      - Enabled `ENABLE_HARDENED_RUNTIME = YES;` in `conf_release_app` in `generate_project.py`, ensuring macOS Gatekeeper notarization compliance and runtime code injection protections.
+    - **Android Security Hardening**:
+      - Configured `data_extraction_rules.xml` and `backup_rules.xml` under `res/xml/` to prevent unauthorized ADB data extraction of user credentials and reading documents while allowing encrypted cloud migration.
+      - Enforced `android:usesCleartextTraffic="false"` and `android:enableOnBackInvokedCallback="true"` in `AndroidManifest.xml`.
+      - Added ProGuard / R8 keep rules for `androidx.media3` and `kotlinx.coroutines`.
+
+24. **[AUD-24] Supply-Chain, SSRF, Adversarial Decompression & Privacy Hardening**:
+    - **CI/CD Supply-Chain Pinning & Checksum Integrity (`ci.yml`, `release-android.yml`, `release-apple.yml`)**:
+      - Pinned all GitHub Actions dependencies to immutable full commit SHAs (`actions/checkout@11bd7190...`, `actions/setup-java@3a504288...`, `gradle/actions/setup-gradle@017a9eff...`, `actions/upload-artifact@65462800...`, `softprops/action-gh-release@c9541483...`).
+      - Restricted workflow permissions to `permissions: {}` top-level, scoping `contents: read` for test CI and `contents: write` strictly to release jobs.
+      - Automated SHA-256 checksum generation (`sha256sum`) for both `Vachanam-Android.apk` and `Vachanam-MacCatalyst.zip`, embedding verified cryptographic hashes directly into release notes and uploading `.sha256` verification files.
+      - Added `.github/dependabot.yml` for automated weekly vulnerability scanning and dependency updates across GitHub Actions and Gradle.
+    - **WebArticleParser SSRF & Network Hardening (`WebArticleParser.swift`, `WebArticleParser.kt`)**:
+      - **HTTPS Scheme Validation**: Strictly enforces `https` URL protocol, rejecting insecure `http`, `file`, `ftp`, `data`, and `javascript` schemes.
+      - **SSRF & Cloud Metadata Mitigation**: Resolves destination hostnames and rejects loopback (`127.0.0.0/8`, `::1`), private networks (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `fc00::/7`), link-local (`169.254.0.0/16`, `fe80::/10`), CGNAT (`100.64.0.0/10`), and cloud metadata (`169.254.169.254`).
+      - **Redirect Governance**: Caps HTTP redirects to max 3, preventing infinite redirect attacks and rejecting any redirection that downgrades HTTPS to HTTP or routes to private endpoints.
+      - **Streaming Response Size Cap**: Caps live web article downloads to 5 MB maximum, terminating oversized streams before memory allocation.
+    - **ZipArchive Adversarial Input Hardening (`ZipArchive.swift`)**:
+      - **Path Traversal & Null Byte Sanitization**: Enhanced `normalizeEntryPath` to strip null bytes (`\0`) and resolve relative path sequences (`..`) and Windows backslashes (`\`).
+      - **Decompression Caps**: Enforced single-entry decompressed limit (100 MB max) and cumulative archive expansion limit (500 MB max).
+      - **Zip Bomb Defense**: Rejects compressed entries where the decompression expansion ratio exceeds 1000:1.
+    - **Sensitive Data & Console Logging Gating**:
+      - Gated all 19 diagnostic `print()` statements across Apple production code (`AppState`, `ReadingProgressTracker`, `PlaybackCoordinator`, `TTSController`, `DocumentLibraryView`, etc.) behind `#if DEBUG`, preventing document paths, reading progress, and word text from emitting to system logs.
+      - Verified zero logging leaks in Android production source.
+    - **Android R8 Release Minification (`build.gradle.kts`)**:
+      - Enabled `isMinifyEnabled = true` and `isShrinkResources = true` in the release build type with debug key fallback signing for immediate sideloading and OTA updates.
+
+  - **`[AUD-25]` Reader UI/UX Layout Boundary & Adversarial Regression Suite**:
+    - **Layout Boundary Edge-Case Suite (`LayoutBoundaryEdgeCaseTests.swift`)**:
+      - **Empty Documents (0 Blocks)**: Handled gracefully by `SemanticDocumentBuilder`, emitting 1 blank virtual page with 0 sentences and 0 words rather than throwing index out of bounds.
+      - **Single Sentence Documents**: Verified across layouts with correct 1-page bounds.
+      - **Odd Page Count in Two-Page Mode**: Verified spread alignment with `lastSpreadIndex % 2 == 0` ensuring the final spread renders the trailing page cleanly as a left leaf.
+      - **Empty Chapters**: Verified that empty chapters interspersed between non-empty chapters are handled without halting pagination.
+      - **10,000+ Word Monolithic Chapters**: Verified virtual page chunking generates ~100 virtual pages smoothly with stable memory consumption.
+      - **Image-Only Documents & Phantom Chunk Defense**: Verified captionless images generate zero spoken words and `TTSChunker` cleanly skips them without creating phantom zero-duration audio chunks. Alt-text/captions remain spoken when provided for accessibility.
+      - **TTS Cursor Boundary Invariants**: Word 0 and document-tail word IDs verified for exact indexing.
+    - **Adversarial EPUB & Large-Token Suite (`AdversarialParserTests.swift`)**:
+      - Verified graceful handling and structured error reporting for missing `container.xml` and missing OPF packages.
+      - Verified manifest fallback rescue when spines contain invalid or circular itemrefs.
+      - Verified parsing safety against 1000-level nested HTML tags and SVG malicious scheme injection (`file://`, `javascript://`, `data://`).
+      - Verified robust sentence and TTS chunking on 100,000-character single paragraphs and 50,000-character unbroken tokens.
+    - **Sandbox Temp File Lifecycle & iCloud Backup Exclusion**:
+      - `ReaderDocument`: Added `isTemporaryFile` lifecycle flag and automated filesystem removal on `deinit`.
+      - `VoiceTestingSandboxView`: Added automatic purging of old temporary report JSON and synthesized WAV files upon re-execution and `.onDisappear`.
+      - `TTSAudioCache`: Set `URLResourceValues.isExcludedFromBackup = true` on the disk cache directory to prevent transient neural audio artifacts from consuming user iCloud backup storage quotas.
 
 ---
 

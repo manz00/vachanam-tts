@@ -14,11 +14,19 @@ class SemanticDocumentBuilder(
         val chapterStartPages: List<Int>
     )
 
-    fun build(parsed: ParsedDocument, documentID: String = UUID.randomUUID().toString()): SemanticDocument {
-        return buildWithMetadata(parsed, documentID).document
+    fun build(
+        parsed: ParsedDocument,
+        documentID: String = UUID.randomUUID().toString(),
+        targetWordsPerVirtualPage: Int = 100
+    ): SemanticDocument {
+        return buildWithMetadata(parsed, documentID, targetWordsPerVirtualPage).document
     }
 
-    fun buildWithMetadata(parsed: ParsedDocument, documentID: String = UUID.randomUUID().toString()): BuildResult {
+    fun buildWithMetadata(
+        parsed: ParsedDocument,
+        documentID: String = UUID.randomUUID().toString(),
+        targetWordsPerVirtualPage: Int = 100
+    ): BuildResult {
         val allBlocks = mutableListOf<SemanticBlock>()
         val allParagraphs = mutableListOf<SemanticParagraph>()
         val allSentences = mutableListOf<SemanticSentence>()
@@ -31,7 +39,6 @@ class SemanticDocumentBuilder(
 
         var virtualPageIndex = 0
         var wordsOnCurrentVirtualPage = 0
-        val targetWordsPerVirtualPage = 350
         val chapterStartPages = mutableListOf<Int>()
 
         for ((chapterIndex, chapter) in parsed.chapters.withIndex()) {
@@ -42,6 +49,47 @@ class SemanticDocumentBuilder(
             chapterStartPages.add(virtualPageIndex)
 
             for (parsedBlock in chapter.blocks) {
+                if (parsedBlock.type == BlockType.IMAGE) {
+                    val currentBlockID = nextBlockID++
+                    val currentParagraphID = nextParagraphID++
+                    val currentSentenceID = nextSentenceID++
+                    val altText = parsedBlock.text.trim().ifEmpty { "Image" }
+                    val imgSentence = SemanticSentence(
+                        id = currentSentenceID,
+                        sentenceID = currentSentenceID,
+                        paragraphID = currentParagraphID,
+                        blockID = currentBlockID,
+                        blockType = BlockType.IMAGE,
+                        primaryPageIndex = virtualPageIndex,
+                        pageSpans = setOf(virtualPageIndex),
+                        text = altText,
+                        words = emptyList(),
+                        imageData = parsedBlock.imageData,
+                        imageUrl = parsedBlock.imageUrl
+                    )
+                    allSentences.add(imgSentence)
+                    allBlocks.add(
+                        SemanticBlock(
+                            id = currentBlockID,
+                            blockID = currentBlockID,
+                            type = BlockType.IMAGE,
+                            level = parsedBlock.level,
+                            marker = parsedBlock.marker,
+                            pageIndex = virtualPageIndex,
+                            sentenceIDs = listOf(currentSentenceID)
+                        )
+                    )
+                    allParagraphs.add(
+                        SemanticParagraph(
+                            id = currentParagraphID,
+                            paragraphID = currentParagraphID,
+                            pageIndex = virtualPageIndex,
+                            sentenceIDs = listOf(currentSentenceID)
+                        )
+                    )
+                    continue
+                }
+
                 val blockText = parsedBlock.text.trim()
                 if (blockText.isEmpty()) continue
 

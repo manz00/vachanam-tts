@@ -81,7 +81,16 @@ public struct EPUBParser: DocumentParser {
                     ?? archive.string(for: cleanHref) else {
                 continue
             }
-            let blocks = parseHTMLBlocks(from: chapterContent)
+            let blocks = parseHTMLBlocks(from: chapterContent) { [self] src in
+                let imgData = self.resolveImageData(
+                    for: src,
+                    chapterNormalizedPath: normalizedPath,
+                    opfBaseFolder: opfBaseFolder,
+                    manifest: manifest,
+                    archive: archive
+                )
+                return (data: imgData, caption: nil)
+            }
             
             if !blocks.isEmpty {
                 let chapterTitle = extractTagContent(from: chapterContent, tag: "h1")
@@ -109,7 +118,16 @@ public struct EPUBParser: DocumentParser {
                         ?? archive.string(for: cleanHref) else {
                     continue
                 }
-                let blocks = parseHTMLBlocks(from: chapterContent)
+                let blocks = parseHTMLBlocks(from: chapterContent) { [self] src in
+                    let imgData = self.resolveImageData(
+                        for: src,
+                        chapterNormalizedPath: normalizedPath,
+                        opfBaseFolder: opfBaseFolder,
+                        manifest: manifest,
+                        archive: archive
+                    )
+                    return (data: imgData, caption: nil)
+                }
                 if !blocks.isEmpty {
                     let chapterTitle = extractTagContent(from: chapterContent, tag: "h1")
                         ?? extractTagContent(from: chapterContent, tag: "h2")
@@ -157,6 +175,18 @@ public struct EPUBParser: DocumentParser {
         pattern: #"<(h[1-6]|p|li|blockquote|div|dt|dd)[^>]*>(.*?)</\1>"#,
         options: [.caseInsensitive, .dotMatchesLineSeparators]
     )
+    private static let imgTagRegex = try? NSRegularExpression(
+        pattern: #"<(?:img|image)\b([^>]*)\/?>"#,
+        options: [.caseInsensitive]
+    )
+    private static let srcAttrRegex = try? NSRegularExpression(
+        pattern: #"\b(?:src|xlink:href|href)\s*=\s*['"]([^'"]+)['"]"#,
+        options: [.caseInsensitive]
+    )
+    private static let altAttrRegex = try? NSRegularExpression(
+        pattern: #"\b(?:alt|title)\s*=\s*['"]([^'"]*)['"]"#,
+        options: [.caseInsensitive]
+    )
     private static let breakRegex = try? NSRegularExpression(
         pattern: "(?i)<br\\s*/?>",
         options: []
@@ -185,6 +215,60 @@ public struct EPUBParser: DocumentParser {
         pattern: "\\n{3,}",
         options: []
     )
+    
+    // MARK: - Image Resolution Helper
+    
+    public func resolveImageData(
+        for rawSrc: String,
+        chapterNormalizedPath: String,
+        opfBaseFolder: String,
+        manifest: [String: String],
+        archive: ZipArchive
+    ) -> Data? {
+        let cleanSrc = (rawSrc.components(separatedBy: "#").first ?? rawSrc)
+            .removingPercentEncoding ?? rawSrc
+        guard !cleanSrc.isEmpty else { return nil }
+        
+        let chapterFolder: String
+        let components = chapterNormalizedPath.split(separator: "/")
+        if components.count > 1 {
+            chapterFolder = components.dropLast().joined(separator: "/") + "/"
+        } else {
+            chapterFolder = ""
+        }
+        
+        // Strategy 1: Relative to chapter folder in archive
+        let path1 = archive.normalizeEntryPath(chapterFolder + cleanSrc)
+        if let data = archive.data(for: path1) { return data }
+        
+        // Strategy 2: Relative to OPF base folder
+        let path2 = archive.normalizeEntryPath(opfBaseFolder + cleanSrc)
+        if let data = archive.data(for: path2) { return data }
+        
+        // Strategy 3: Directly as normalized path
+        let path3 = archive.normalizeEntryPath(cleanSrc)
+        if let data = archive.data(for: path3) { return data }
+        
+        // Strategy 4: Manifest lookup by matching filename
+        let filename = (cleanSrc as NSString).lastPathComponent.lowercased()
+        for manifestHref in manifest.values {
+            if (manifestHref as NSString).lastPathComponent.lowercased() == filename {
+                let norm = archive.normalizeEntryPath(manifestHref)
+                if let data = archive.data(for: norm) { return data }
+                let normWithOpf = archive.normalizeEntryPath(opfBaseFolder + manifestHref)
+                if let data = archive.data(for: normWithOpf) { return data }
+            }
+        }
+        
+        // Strategy 5: Lookup by filename across all archive entries
+        for entryKey in archive.entries.keys {
+            if (entryKey as NSString).lastPathComponent.lowercased() == filename {
+                if let data = archive.data(for: entryKey) { return data }
+            }
+        }
+        
+        return nil
+    }
     
     private static let namedEntities: [(String, String)] = [
         ("&nbsp;", " "),
@@ -282,7 +366,10 @@ public struct EPUBParser: DocumentParser {
     
     // MARK: - HTML Chapter Block Parser
     
-    public func parseHTMLBlocks(from html: String) -> [ParsedBlock] {
+    public func parseHTMLBlocks(
+        from html: String,
+        imageResolver: ((String) -> (data: Data?, caption: String?))? = nil
+    ) -> [ParsedBlock] {
         var blocks: [ParsedBlock] = []
         
         // Strip scripts and styles first using precompiled regexes
@@ -300,31 +387,87 @@ public struct EPUBParser: DocumentParser {
             }
         }
         
-        // Match headings, paragraphs, list items, blockquotes, divs, dd/dt
-        guard let regex = Self.blockPatternRegex else {
-            return blocks
+        // Helper to extract image blocks from an HTML fragment (e.g. <img> or <image>)
+        func extractImageBlocks(from fragment: String) -> [ParsedBlock] {
+            guard let imgRegex = Self.imgTagRegex else { return [] }
+            let nsFrag = fragment as NSString
+            let imgMatches = imgRegex.matches(in: fragment, range: NSRange(location: 0, length: nsFrag.length))
+            var imgBlocks: [ParsedBlock] = []
+            
+            for m in imgMatches {
+                let attrs = m.numberOfRanges >= 2 ? nsFrag.substring(with: m.range(at: 1)) : ""
+                let attrsNS = attrs as NSString
+                
+                var src: String?
+                var alt: String?
+                
+                if let srcMatch = Self.srcAttrRegex?.firstMatch(in: attrs, range: NSRange(location: 0, length: attrsNS.length)), srcMatch.numberOfRanges >= 2 {
+                    src = attrsNS.substring(with: srcMatch.range(at: 1))
+                }
+                if let altMatch = Self.altAttrRegex?.firstMatch(in: attrs, range: NSRange(location: 0, length: attrsNS.length)), altMatch.numberOfRanges >= 2 {
+                    alt = attrsNS.substring(with: altMatch.range(at: 1))
+                }
+                
+                guard let imageSrc = src, !imageSrc.isEmpty else { continue }
+                let (data, caption) = imageResolver?(imageSrc) ?? (nil, nil)
+                let resolvedCaption = cleanHTMLText(caption ?? alt ?? "")
+                
+                if let data = data {
+                    imgBlocks.append(ParsedBlock(type: .image, text: resolvedCaption, imageData: data))
+                } else if imageSrc.lowercased().hasPrefix("https://"), let url = URL(string: imageSrc) {
+                    imgBlocks.append(ParsedBlock(type: .image, text: resolvedCaption, imageURL: url))
+                }
+            }
+            return imgBlocks
         }
         
-        let ns = sanitized as NSString
-        let matches = regex.matches(in: sanitized, range: NSRange(location: 0, length: ns.length))
+        // Match headings, paragraphs, list items, blockquotes, divs, dd/dt
+        if let regex = Self.blockPatternRegex {
+            let ns = sanitized as NSString
+            let matches = regex.matches(in: sanitized, range: NSRange(location: 0, length: ns.length))
+            
+            for match in matches {
+                guard match.numberOfRanges >= 3 else { continue }
+                let tagName = ns.substring(with: match.range(at: 1)).lowercased()
+                let innerHTML = ns.substring(with: match.range(at: 2))
+                
+                // If innerHTML contains an image tag
+                if innerHTML.contains("<img") || innerHTML.contains("<IMG") || innerHTML.contains("<image") || innerHTML.contains("<IMAGE") {
+                    let extracted = extractImageBlocks(from: innerHTML)
+                    if !extracted.isEmpty {
+                        let text = cleanHTMLText(innerHTML)
+                        // If there was substantial text alongside the image, emit it
+                        if !text.isEmpty && text != extracted.first?.text {
+                            blocks.append(ParsedBlock(type: .paragraph, text: text))
+                        }
+                        blocks.append(contentsOf: extracted)
+                        continue
+                    }
+                }
+                
+                let text = cleanHTMLText(innerHTML)
+                guard !text.isEmpty else { continue }
+                
+                if tagName.hasPrefix("h") {
+                    let level = Int(tagName.dropFirst()) ?? 1
+                    blocks.append(ParsedBlock(type: .heading, text: text, level: level))
+                } else if tagName == "li" {
+                    blocks.append(ParsedBlock(type: .listItem, text: text, level: 1, marker: "•"))
+                } else if tagName == "blockquote" {
+                    blocks.append(ParsedBlock(type: .quote, text: text, level: 1))
+                } else {
+                    blocks.append(ParsedBlock(type: .paragraph, text: text, level: 1))
+                }
+            }
+        }
         
-        for match in matches {
-            guard match.numberOfRanges >= 3 else { continue }
-            let tagName = ns.substring(with: match.range(at: 1)).lowercased()
-            let innerHTML = ns.substring(with: match.range(at: 2))
-            let text = cleanHTMLText(innerHTML)
-            
-            guard !text.isEmpty else { continue }
-            
-            if tagName.hasPrefix("h") {
-                let level = Int(tagName.dropFirst()) ?? 1
-                blocks.append(ParsedBlock(type: .heading, text: text, level: level))
-            } else if tagName == "li" {
-                blocks.append(ParsedBlock(type: .listItem, text: text, level: 1, marker: "•"))
-            } else if tagName == "blockquote" {
-                blocks.append(ParsedBlock(type: .quote, text: text, level: 1))
-            } else {
-                blocks.append(ParsedBlock(type: .paragraph, text: text, level: 1))
+        // Standalone images / SVG images (e.g. cover page <svg><image .../></svg> or standalone <img ...>)
+        if blocks.isEmpty || (sanitized.contains("<img") || sanitized.contains("<image")) {
+            let standaloneImages = extractImageBlocks(from: sanitized)
+            for img in standaloneImages {
+                if !blocks.contains(where: { $0.imageData == img.imageData && $0.type == .image }) {
+                    blocks.append(img)
+                }
             }
         }
         

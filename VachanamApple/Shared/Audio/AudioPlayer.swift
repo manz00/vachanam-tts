@@ -118,7 +118,9 @@ public class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate, AVS
                 onComplete?()
             }
         } catch {
+            #if DEBUG
             print("AVAudioPlayer error: \(error.localizedDescription)")
+            #endif
             onComplete?()
         }
     }

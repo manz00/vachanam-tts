@@ -12,6 +12,7 @@ class MarkdownParser : DocumentParser {
     private val atxRegex = Pattern.compile("^(#{1,6})\\s+(.+)$")
     private val bulletRegex = Pattern.compile("^[\\s]*([•\\-*▪▫◦▸]|\\d+[.)])\\s+(.+)$")
     private val quoteRegex = Pattern.compile("^[\\s]*>\\s*(.+)$")
+    private val imageRegex = Pattern.compile("^!\\[(.*?)\\]\\((.*?)\\)$")
 
     override suspend fun parse(source: DocumentSource): ParsedDocument = withContext(Dispatchers.IO) {
         val (text, defaultTitle) = when (source) {
@@ -128,6 +129,17 @@ class MarkdownParser : DocumentParser {
                 val marker = bulletMatcher.group(1)
                 val itemText = cleanMarkdownFormatting(bulletMatcher.group(2) ?: "")
                 blocks.add(ParsedBlock(type = BlockType.LIST_ITEM, text = itemText, marker = marker))
+                i++
+                continue
+            }
+
+            // Image (![Alt](url))
+            val imgMatcher = imageRegex.matcher(trimmed)
+            if (imgMatcher.matches()) {
+                flushParagraph()
+                val altText = imgMatcher.group(1)?.trim() ?: ""
+                val imgUrl = imgMatcher.group(2)?.trim() ?: ""
+                blocks.add(ParsedBlock(type = BlockType.IMAGE, text = altText, imageUrl = imgUrl))
                 i++
                 continue
             }

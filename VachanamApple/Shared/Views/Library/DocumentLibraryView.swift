@@ -302,7 +302,9 @@ public struct DocumentLibraryView: View {
                         onSelectDocument(doc)
                     }
                 case .failure(let error):
+                    #if DEBUG
                     print("File picker error: \(error.localizedDescription)")
+                    #endif
                 }
             }
             .sheet(isPresented: $isWebArticleImportPresented) {
@@ -553,7 +555,9 @@ public struct DocumentLibraryView: View {
             try FileManager.default.copyItem(at: url, to: dest)
             return dest
         } catch {
+            #if DEBUG
             print("Failed to copy document to local documents: \(error.localizedDescription)")
+            #endif
             return FileManager.default.fileExists(atPath: dest.path) ? dest : url
         }
     }

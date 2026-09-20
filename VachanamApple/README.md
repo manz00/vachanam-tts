@@ -13,9 +13,9 @@
 
 ### 📖 Multi-Format Universal Reader
 - **PDF**: Spatial word-level bounding box tracking with Quartz 2D coordinate transformation math.
-- **EPUB**: Streaming ZIP parsing with OPF manifest/spine resolution and $O(1)$ case-insensitive hash lookups.
-- **Markdown & Plain Text**: ATX/Setext heading parsing, lists, blockquotes, and multi-encoding fallback cascade (`UTF-8` $\to$ `ISO-8859-1` $\to$ `Windows-1252` $\to$ `UTF-16` $\to$ `ASCII`).
-- **Web Articles**: In-app web article import with boilerplate extraction and entity decoding.
+- **EPUB**: Streaming ZIP parsing with OPF manifest/spine resolution, in-flow binary image extraction (`<img>` and `<image xlink:href>`), and $O(1)$ case-insensitive hash lookups.
+- **Markdown & Plain Text**: ATX/Setext heading parsing, lists, blockquotes, inline/block image rendering (`![alt](url)`), and multi-encoding fallback cascade (`UTF-8` $\to$ `ISO-8859-1` $\to$ `Windows-1252` $\to$ `UTF-16` $\to$ `ASCII`).
+- **Web Articles & Illustrated Books**: In-app web article import and responsive image flow preserving aspect ratios, rounded corners, subtle shadows, and italic captions.
 - **Virtual Pagination**: 120 FPS `LazyVStack` windowing ensuring instant scrolling across 10,000+ paragraph documents.
 
 ### ✏️ iPadOS Apple Pencil & PencilKit Integration (`iOS/`)
@@ -129,16 +129,39 @@ xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=i
 
 | Key | Action |
 | :--- | :--- |
-| **Space** | Play / Pause speech |
-| **Cmd + Right Arrow** | Skip forward 1 sentence |
-| **Cmd + Left Arrow** | Skip backward 1 sentence |
-| **Right Arrow** | Next page |
-| **Left Arrow** | Previous page |
+| **Right Arrow** / **Down Arrow** | Next page |
+| **Left Arrow** / **Up Arrow** | Previous page |
+| **Space** | Next page (or scroll down in continuous view) |
+| **Shift + Space** | Previous page (or scroll up in continuous view) |
+| **Page Down** / **Page Up** | Screen down / Screen up |
+| **Home** / **Cmd + Left Arrow** | First page |
+| **End** / **Cmd + Right Arrow** | Last page |
+| **[** / **Cmd + [** | Previous chapter / section |
+| **]** / **Cmd + ]** | Next chapter / section |
+| **c** | Cycle reading layout (Single Page $\to$ Two Pages $\to$ Continuous Scroll) |
+| **t** | Cycle theme (Original $\to$ Quiet $\to$ Paper $\to$ Charcoal $\to$ Night) |
+| **p** / **Opt + Space** | Play / Pause neural TTS narration |
+| **Opt + Right Arrow** | Next spoken sentence |
+| **Opt + Left Arrow** | Previous spoken sentence |
+| **Cmd + J** | Jump to page number modal |
 | **Cmd + B** | Toggle bookmark on current page |
 | **Cmd + T** | Toggle Table of Contents sidebar |
-| **Cmd + D** | Cycle reading theme (Sepia, Dark, Cream, OLED, White) |
-| **Cmd + =** / **Cmd + -** | Increase / Decrease font size |
-| **Cmd + 0** | Reset font size to default |
-| **Cmd + Shift + R** | Toggle Dyslexia Reading Ruler |
-| **Cmd + Shift + B** | Toggle Bionic Reading mode |
-| **Cmd + ?** | Open Keyboard Shortcuts cheat sheet |
+| **Cmd + G** | Toggle thumbnail grid overview |
+| **Cmd + D** | Toggle Dyslexia Reading Ruler |
+| **Cmd + E** | Export notes and annotations |
+| **Cmd + +** / **Cmd + -** | Zoom in / Zoom out |
+| **Cmd + 0** | Fit page to screen |
+| **?** | Open Keyboard Shortcuts cheat sheet |
+| **Esc** | Return to Document Library |
+
+---
+
+## Security & Over-the-Air (OTA) Delivery
+
+- **Hardened Runtime**: Mac Catalyst release builds compile with `ENABLE_HARDENED_RUNTIME = YES` for macOS Gatekeeper and notarization compliance.
+- **SSRF & Network Defense**: In-app web article fetching validates HTTPS-only URLs, strictly blocks private/reserved IP ranges and cloud metadata (`169.254.169.254`), limits redirects to 3, and caps responses to 5 MB.
+- **ZipArchive Decompression Safety**: Path traversal (`..`) and null bytes (`\0`) are stripped; single entries are capped at 100 MB, total extraction at 500 MB, and zip bombs are rejected (max ratio 1000:1).
+- **Privacy & Redacted Logging**: All diagnostic `print()` statements are gated behind `#if DEBUG` to prevent document text, file paths, or reading progress from appearing in production device logs.
+- **Temporary File Lifecycle & Backup Exclusion**: In-memory PDF data files automatically purge on document close (`deinit`), sandbox voice test artifacts are cleaned up on disappear, and audio caches are explicitly marked `isExcludedFromBackup = true` to preserve user iCloud backup storage quotas.
+- **OTA Updates**: Pushing to `main` creates GitHub Releases with SHA-256 verified Mac Catalyst archives (`Vachanam-MacCatalyst.zip.sha256`) and supports direct TestFlight deployment for background iPad updates.
+

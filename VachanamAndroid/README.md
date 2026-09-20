@@ -12,8 +12,8 @@
 
 ### 📖 3-Layer Universal Document Ingestion
 - **PDF**: `PdfTextExtractor` using PDFBox-Android for spatial word/sentence boundaries + `PdfDocumentWrapper` utilizing `android.graphics.pdf.PdfRenderer` for 2x high-resolution page bitmaps.
-- **EPUB**: `EPUBParser` with streaming ZIP archive decompression, OPF manifest/spine parsing, clean entity decoding, and word-gluing prevention.
-- **Markdown**: `MarkdownParser` parsing ATX/Setext headers, nested lists, quotes, and code blocks.
+- **EPUB**: `EPUBParser` with streaming ZIP archive decompression, OPF manifest/spine parsing, in-flow binary image extraction (`<img>` and `<image xlink:href>`), clean entity decoding, and word-gluing prevention.
+- **Markdown**: `MarkdownParser` parsing ATX/Setext headers, nested lists, quotes, inline/block image extraction (`![alt](url)`), and code blocks.
 - **Plain Text**: `PlainTextParser` with multi-encoding fallback cascade (`UTF-8` $\to$ `ISO-8859-1` $\to$ `Windows-1252` $\to$ `UTF-16` $\to$ `ASCII`).
 - **Web Articles**: `WebArticleParser` with URL HTTP content extraction and boilerplate stripping.
 - **Sentence-Aligned Virtual Pagination**: Non-PDF books are segmented into sentence-aligned virtual pages (`SemanticDocumentBuilder`) so sentences are never fractured across page turns.
@@ -108,9 +108,23 @@ cd VachanamAndroid
 # Run unit tests on JVM
 ./gradlew testDebugUnitTest
 
+# Assemble Release APK with full R8 minification & resource shrinking
+./gradlew assembleRelease
+
 # Assemble debug APK
 ./gradlew assembleDebug
 
 # Install on connected device/emulator
 ./gradlew installDebug
 ```
+
+---
+
+## Over-the-Air (OTA) Updates & Security
+
+- **Automatic OTA Updates via Obtainium**: Pushing commits to `main` builds signed release APKs and attaches them to GitHub Releases. Add `https://github.com/manz00/vachanam-tts` in Obtainium to get automatic background update notifications.
+- **R8 Minification**: Release builds strip unused classes and shrink resources (`isMinifyEnabled = true`, `isShrinkResources = true`).
+- **Integrity Verification**: Every release asset includes an immutable SHA-256 checksum (`Vachanam-Android.apk.sha256`).
+- **SSRF & Network Hardening**: `WebArticleParser` enforces HTTPS schemes, blocks private/loopback/cloud metadata IP ranges, and caps responses to 5 MB.
+- **Data Protection**: Backup rules under `res/xml/` protect user reading state while strictly excluding transient audio caches. Cleartext traffic is disabled.
+

@@ -196,6 +196,16 @@ public class ThemeManager: ObservableObject {
         }
         return currentReaderTheme.textColor
     }
+    
+    public func cycleTheme() {
+        let all = ReaderBackgroundTheme.allCases
+        if let idx = all.firstIndex(of: currentReaderTheme) {
+            let next = all[(idx + 1) % all.count]
+            currentReaderTheme = next
+        } else {
+            currentReaderTheme = .quiet
+        }
+    }
 }
 
 public extension Color {

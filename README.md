@@ -93,6 +93,56 @@ cd VachanamAndroid
 
 ---
 
+## 🚀 Device Deployment & Over-the-Air (OTA) Auto-Updates
+
+Vachanam provides an automated continuous delivery pipeline via **GitHub Actions** (`.github/workflows/`). Pushing code updates to the `main` branch automatically triggers cloud builds and prepares over-the-air updates across your devices.
+
+### 🤖 Android Devices (Phones, Tablets & E-Ink)
+
+#### Option 1: Automatic Over-the-Air Updates via Obtainium (Recommended)
+1. Install [Obtainium](https://github.com/ImranR98/Obtainium) on your Android device (an open-source app manager that tracks GitHub releases).
+2. Tap **Add App** and enter the repository URL: `https://github.com/manz00/vachanam-tts`.
+3. In app settings within Obtainium, enable **Background Updates** / **Auto-Install**.
+4. **Whenever you push an update to `main`**, GitHub Actions builds `Vachanam-Android.apk` and releases it. Obtainium automatically detects the new release, downloads it, and prompts to update your device.
+
+#### Option 2: Direct Local Install via ADB
+```bash
+# Connect Android device via USB with USB Debugging enabled (or wireless adb)
+cd VachanamAndroid
+./gradlew installDebug
+```
+
+---
+
+### 🍏 Apple Devices (iPad, iPhone & Mac)
+
+#### Option 1: Over-the-Air Background Updates via TestFlight (iPad & iPhone)
+1. iOS and iPadOS enforce Apple code signing requirements for over-the-air installation.
+2. In **App Store Connect**, generate an **App Store Connect API Key** (`Key ID`, `Issuer ID`, `.p8` file).
+3. Add these credentials to GitHub Repository Secrets (`APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_BASE64`).
+4. Every push to `main` triggers `.github/workflows/release-apple.yml` to archive and deploy to TestFlight.
+5. In the **TestFlight app** on your iPad, open Vachanam and toggle **Automatic Updates: ON**. Your iPad will automatically update silently in the background whenever you push updates.
+
+#### Option 2: Mac (Mac Catalyst) Direct Install
+- GitHub Actions packages `Vachanam-MacCatalyst.zip` and attaches it directly to each GitHub Release. Download, unzip, and drag `Vachanam.app` into `/Applications`.
+
+#### Option 3: Direct USB / Wi-Fi Install via Xcode
+- Connect iPad via USB-C or Wi-Fi pairing.
+- Open `VachanamApple/Vachanam.xcodeproj` in Xcode, select your iPad as destination, and hit **Run** (`⌘R`).
+
+---
+
+### 🛡️ Security, Cryptographic Verification & Supply-Chain Hardening
+
+- **Immutable Actions Pinning**: All GitHub Actions workflows are pinned to full commit SHAs with scoped minimal permissions (`permissions: {}` top-level).
+- **Cryptographic Asset Checksums**: Every release publishes verified SHA-256 hashes (`.sha256`) embedded in the release notes so users can verify binary integrity prior to sideloading or running.
+- **SSRF & Network Ingestion Hardening**: Live web article importing validates HTTPS schemes only, checks DNS resolution, and rejects private/loopback/cloud metadata IP ranges with a hard 5 MB streaming cap.
+- **Archive & ZIP Bomb Defense**: `ZipArchive` strips path traversals (`..`) and null bytes (`\0`), caps single entry decompression to 100 MB and cumulative archive expansion to 500 MB, and rejects zip bombs with expansion ratios > 1000:1.
+- **Production Privacy**: All diagnostic console logs containing file paths, reading progress, or document content are gated behind `#if DEBUG`.
+- **R8 / ProGuard Minification**: Android release builds enable full R8 code stripping and resource shrinking.
+
+---
+
 ## Core Technical Foundation
 
 For universal mathematical grammar, Unicode normalization tables, SI unit expansion engines, and cross-platform architecture specifications, refer to [TECHNICAL.md](TECHNICAL.md).

@@ -58,7 +58,9 @@ public class PreGeneratedPlaybackAdapter: ObservableObject {
                 wordTimestamps: wordTimestamps
             )
         } catch {
+            #if DEBUG
             print("PreGeneratedPlaybackAdapter failed to read \(audioURL.path): \(error.localizedDescription)")
+            #endif
             return nil
         }
     }

@@ -30,6 +30,12 @@ public class TTSAudioCache: @unchecked Sendable {
         self.diskDirectory = cachesURL.appendingPathComponent("TTSAudioCache", isDirectory: true)
         try? fileManager.createDirectory(at: diskDirectory, withIntermediateDirectories: true)
         
+        // AUD-24 / AUD-25: Explicitly exclude transient audio cache directory from iCloud backup
+        var resourceValues = URLResourceValues()
+        resourceValues.isExcludedFromBackup = true
+        var mutableURL = diskDirectory
+        try? mutableURL.setResourceValues(resourceValues)
+        
         memoryCache.countLimit = 150 // Keep up to 150 audio chunks in RAM
     }
     

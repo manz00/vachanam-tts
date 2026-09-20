@@ -14,6 +14,7 @@ public struct PaginatedReaderView: View {
     @Binding public var currentPageIndex: Int
     public let pageCount: Int
     public let documentTitle: String
+    public let isChromeVisible: Bool
     public let chapterTitleForPage: ((Int) -> String?)?
     public let onToggleChrome: () -> Void
     
@@ -40,6 +41,7 @@ public struct PaginatedReaderView: View {
         currentPageIndex: Binding<Int>,
         pageCount: Int,
         documentTitle: String,
+        isChromeVisible: Bool = false,
         chapterTitleForPage: ((Int) -> String?)? = nil,
         onToggleChrome: @escaping () -> Void = {}
     ) {
@@ -47,6 +49,7 @@ public struct PaginatedReaderView: View {
         self._currentPageIndex = currentPageIndex
         self.pageCount = max(pageCount, 1)
         self.documentTitle = documentTitle
+        self.isChromeVisible = isChromeVisible
         self.chapterTitleForPage = chapterTitleForPage
         self.onToggleChrome = onToggleChrome
     }
@@ -112,6 +115,9 @@ public struct PaginatedReaderView: View {
             }
         )
         
+        let spineWidth: CGFloat = 14
+        let pageWidth: CGFloat = max((size.width - spineWidth) / 2, 0)
+        
         TabView(selection: spreadBinding) {
             ForEach(0..<spreadCount, id: \.self) { spreadIndex in
                 let leftPageIndex = spreadIndex * 2
@@ -119,23 +125,38 @@ public struct PaginatedReaderView: View {
                 
                 HStack(spacing: 0) {
                     // Left Page
-                    singlePageColumn(for: leftPageIndex, in: CGSize(width: size.width / 2, height: size.height))
-                        .frame(width: size.width / 2)
+                    singlePageColumn(for: leftPageIndex, in: CGSize(width: pageWidth, height: size.height))
+                        .frame(width: pageWidth)
                     
-                    // Center Book Spine Divider
-                    Rectangle()
-                        .fill(themeManager.effectiveTextColor.opacity(0.10))
-                        .frame(width: 1)
-                        .padding(.vertical, 32)
+                    // Center Book Spine Divider with subtle realistic depth shading
+                    ZStack {
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        themeManager.effectiveTextColor.opacity(0.07),
+                                        themeManager.effectiveTextColor.opacity(0.01),
+                                        themeManager.effectiveTextColor.opacity(0.07)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: spineWidth)
+                        Rectangle()
+                            .fill(themeManager.effectiveTextColor.opacity(0.12))
+                            .frame(width: 1)
+                    }
+                    .padding(.vertical, 24)
                     
                     // Right Page (if exists)
                     if rightPageIndex < pageCount {
-                        singlePageColumn(for: rightPageIndex, in: CGSize(width: size.width / 2, height: size.height))
-                            .frame(width: size.width / 2)
+                        singlePageColumn(for: rightPageIndex, in: CGSize(width: pageWidth, height: size.height))
+                            .frame(width: pageWidth)
                     } else {
                         // Blank ending page for odd-count documents
                         Color.clear
-                            .frame(width: size.width / 2)
+                            .frame(width: pageWidth)
                     }
                 }
                 .tag(spreadIndex)
@@ -150,6 +171,11 @@ public struct PaginatedReaderView: View {
     private func singlePageColumn(for pageIndex: Int, in size: CGSize) -> some View {
         let pageSentences = pageMap[pageIndex] ?? []
         let currentChapter = chapterTitleForPage?(pageIndex) ?? documentTitle
+        let isLeftPage = (pageIndex % 2 == 0)
+        let effectiveFontSize = isTwoPage ? max(fontManager.fontSize * 0.80, 13) : fontManager.fontSize
+        let effectiveFont = fontManager.resolveFont(size: effectiveFontSize)
+        let effectiveLineSpacing: CGFloat = isTwoPage ? 3 : 6
+        let sentenceSpacing: CGFloat = isTwoPage ? 3 : fontManager.fontSize * (fontManager.lineSpacingMultiplier - 1.0) * 1.5
         
         VStack(spacing: 0) {
             // Running Top Header (Apple Books style)
@@ -163,7 +189,7 @@ public struct PaginatedReaderView: View {
                 Spacer()
             }
             .frame(height: 32)
-            .padding(.horizontal, isTwoPage ? 16 : 24)
+            .padding(.horizontal, isTwoPage ? (isLeftPage ? 20 : 12) : 28)
             .padding(.top, 4)
             
             // Page Text Body
@@ -199,7 +225,10 @@ public struct PaginatedReaderView: View {
                 
                 // Formatted Sentences Content
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: fontManager.fontSize * (fontManager.lineSpacingMultiplier - 1.0) * 1.5) {
+                    VStack(
+                        alignment: .leading,
+                        spacing: sentenceSpacing
+                    ) {
                         if pageSentences.isEmpty {
                             VStack(spacing: 8) {
                                 Spacer().frame(height: 60)
@@ -219,14 +248,15 @@ public struct PaginatedReaderView: View {
                                     sentence: sentence,
                                     isCurrentSentence: isCurrentSentence,
                                     currentWord: isCurrentSentence ? ttsController.currentWord : nil,
-                                    font: fontManager.resolveFont(),
+                                    font: effectiveFont,
                                     textColor: themeManager.effectiveTextColor,
                                     highlightChoice: accessibilityManager.colorChoice,
-                                    highlightMode: accessibilityManager.highlightMode
+                                    highlightMode: accessibilityManager.highlightMode,
+                                    lineSpacing: effectiveLineSpacing
                                 )
                                 .id(sentence.sentenceIndex)
-                                .padding(.vertical, 3)
-                                .padding(.horizontal, 6)
+                                .padding(.vertical, isTwoPage ? 1 : 3)
+                                .padding(.horizontal, 2)
                                 .background(
                                     (isCurrentSentence && (accessibilityManager.highlightMode == .both || accessibilityManager.highlightMode == .sentenceOnly))
                                         ? accessibilityManager.colorChoice.sentenceColor
@@ -243,9 +273,11 @@ public struct PaginatedReaderView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, isTwoPage ? 20 : 28)
-                    .padding(.vertical, 14)
-                    .frame(maxWidth: isTwoPage ? 560 : 780)
+                    .padding(.leading, isTwoPage ? (isLeftPage ? 20 : 12) : 28)
+                    .padding(.trailing, isTwoPage ? (isLeftPage ? 12 : 20) : 28)
+                    .padding(.top, isTwoPage ? 8 : 14)
+                    .padding(.bottom, isChromeVisible ? 80 : (isTwoPage ? 12 : 14))
+                    .frame(maxWidth: isTwoPage ? 540 : 720)
                     .frame(maxWidth: .infinity)
                 }
             }
@@ -253,29 +285,40 @@ public struct PaginatedReaderView: View {
             // Bottom Footer (Page indicator in Apple Books typography)
             HStack {
                 Spacer()
-                Text("\(pageIndex + 1)")
+                Text("\(pageIndex + 1) of \(pageCount)")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundColor(themeManager.effectiveTextColor.opacity(0.45))
                 Spacer()
             }
             .frame(height: 28)
-            .padding(.bottom, 6)
+            .padding(.bottom, isChromeVisible ? 70 : 6)
         }
     }
     
     // MARK: - Navigation Helpers
     
     private func flipBackward() {
-        let step = isTwoPage ? 2 : 1
         withAnimation(.easeInOut(duration: 0.25)) {
-            currentPageIndex = max(currentPageIndex - step, 0)
+            if isTwoPage {
+                let currentSpread = currentPageIndex / 2
+                currentPageIndex = max((currentSpread - 1) * 2, 0)
+            } else {
+                currentPageIndex = max(currentPageIndex - 1, 0)
+            }
         }
     }
     
     private func flipForward() {
-        let step = isTwoPage ? 2 : 1
         withAnimation(.easeInOut(duration: 0.25)) {
-            currentPageIndex = min(currentPageIndex + step, pageCount - 1)
+            if isTwoPage {
+                let currentSpread = currentPageIndex / 2
+                let nextSpread = currentSpread + 1
+                if nextSpread * 2 < pageCount {
+                    currentPageIndex = nextSpread * 2
+                }
+            } else {
+                currentPageIndex = min(currentPageIndex + 1, pageCount - 1)
+            }
         }
     }
 }

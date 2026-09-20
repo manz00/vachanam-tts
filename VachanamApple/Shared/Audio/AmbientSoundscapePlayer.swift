@@ -145,7 +145,9 @@ public class AmbientSoundscapePlayer: NSObject, ObservableObject, AVAudioPlayerD
         AudioSession.shared.configureSession()
         
         guard let url = urlForPreset(preset) else {
+            #if DEBUG
             print("Soundscape audio resource not found: \(preset.resourceName).m4a")
+            #endif
             return
         }
         
@@ -173,7 +175,9 @@ public class AmbientSoundscapePlayer: NSObject, ObservableObject, AVAudioPlayerD
                 self.isPlaying = true
             }
         } catch {
+            #if DEBUG
             print("Failed to start ambient player: \(error.localizedDescription)")
+            #endif
             DispatchQueue.main.async {
                 self.isPlaying = false
             }

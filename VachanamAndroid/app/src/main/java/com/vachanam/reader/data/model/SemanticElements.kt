@@ -45,7 +45,9 @@ data class SemanticSentence(
     val text: String,
     val words: List<SemanticWord>,
     val lineBoundsByPage: Map<Int, List<BoundingBox>> = emptyMap(),
-    val boundsByPage: Map<Int, BoundingBox> = emptyMap()
+    val boundsByPage: Map<Int, BoundingBox> = emptyMap(),
+    val imageData: ByteArray? = null,
+    val imageUrl: String? = null
 ) {
     fun lineBounds(pageIndex: Int): List<BoundingBox> = lineBoundsByPage[pageIndex] ?: emptyList()
     fun bounds(pageIndex: Int): BoundingBox = boundsByPage[pageIndex] ?: BoundingBox.ZERO

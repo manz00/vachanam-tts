@@ -114,6 +114,7 @@ public struct ReaderContainerView: View {
                                 currentPageIndex: $currentPageIndex,
                                 pageCount: document.pageCount,
                                 documentTitle: document.title,
+                                isChromeVisible: isChromeVisible,
                                 chapterTitleForPage: { pIndex in
                                     document.tocItems.last(where: { $0.pageIndex <= pIndex })?.title
                                 },
@@ -243,24 +244,72 @@ public struct ReaderContainerView: View {
             isDeveloperInspectorPresented = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .readerGoToNextPage)) { _ in
-            if readingMode == .readerView, currentPageIndex < document.pageCount - 1 {
-                currentPageIndex += 1
-            }
+            goToNextPage()
         }
         .onReceive(NotificationCenter.default.publisher(for: .readerGoToPreviousPage)) { _ in
-            if readingMode == .readerView, currentPageIndex > 0 {
-                currentPageIndex -= 1
-            }
+            goToPreviousPage()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .readerGoToFirstPage)) { _ in
+            goToFirstPage()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .readerGoToLastPage)) { _ in
+            goToLastPage()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .readerPageDown)) { _ in
+            goToNextPage()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .readerPageUp)) { _ in
+            goToPreviousPage()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .readerScrollDown)) { _ in
+            goToNextPage()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .readerScrollUp)) { _ in
+            goToPreviousPage()
         }
         .onReceive(NotificationCenter.default.publisher(for: .readerJumpToPage)) { notif in
             if let target = notif.userInfo?["pageIndex"] as? Int, target >= 0, target < document.pageCount {
                 if currentPageIndex != target {
-                    currentPageIndex = target
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        currentPageIndex = target
+                    }
                 }
             }
         }
         .focusable()
         .focusEffectDisabled()
+        .onKeyPress(.leftArrow) {
+            NotificationCenter.default.post(name: .readerGoToPreviousPage, object: nil)
+            return .handled
+        }
+        .onKeyPress(.rightArrow) {
+            NotificationCenter.default.post(name: .readerGoToNextPage, object: nil)
+            return .handled
+        }
+        .onKeyPress(.upArrow) {
+            NotificationCenter.default.post(name: .readerScrollUp, object: nil)
+            return .handled
+        }
+        .onKeyPress(.downArrow) {
+            NotificationCenter.default.post(name: .readerScrollDown, object: nil)
+            return .handled
+        }
+        .onKeyPress(.pageUp) {
+            NotificationCenter.default.post(name: .readerPageUp, object: nil)
+            return .handled
+        }
+        .onKeyPress(.pageDown) {
+            NotificationCenter.default.post(name: .readerPageDown, object: nil)
+            return .handled
+        }
+        .onKeyPress(.home) {
+            NotificationCenter.default.post(name: .readerGoToFirstPage, object: nil)
+            return .handled
+        }
+        .onKeyPress(.end) {
+            NotificationCenter.default.post(name: .readerGoToLastPage, object: nil)
+            return .handled
+        }
         .onKeyPress(.space) {
             NotificationCenter.default.post(name: .readerPageDown, object: nil)
             return .handled
@@ -274,15 +323,110 @@ public struct ReaderContainerView: View {
             return .handled
         }
         .onKeyPress { keyPress in
-            if keyPress.characters == "?" {
+            switch keyPress.characters {
+            case "?":
                 isShortcutsPresented.toggle()
                 return .handled
+            case "[":
+                goToPreviousChapter()
+                return .handled
+            case "]":
+                goToNextChapter()
+                return .handled
+            case "c", "C":
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    isChromeVisible.toggle()
+                }
+                return .handled
+            case "t", "T":
+                themeManager.cycleTheme()
+                return .handled
+            case "p", "P":
+                if ttsController.isPlaying {
+                    ttsController.pause()
+                } else {
+                    ttsController.play()
+                }
+                return .handled
+            default:
+                return .ignored
             }
-            return .ignored
         }
         .onDisappear {
             documentInitTask?.cancel()
             progressSaveTask?.cancel()
+        }
+    }
+    
+    // MARK: - Navigation Control Helpers
+    
+    private func goToNextPage() {
+        guard readingMode == .readerView else { return }
+        let step = themeManager.readingLayout.pageStep
+        withAnimation(.easeInOut(duration: 0.25)) {
+            if themeManager.readingLayout.isTwoPage {
+                let currentSpread = currentPageIndex / 2
+                let nextSpread = currentSpread + 1
+                if nextSpread * 2 < document.pageCount {
+                    currentPageIndex = nextSpread * 2
+                }
+            } else {
+                currentPageIndex = min(currentPageIndex + step, document.pageCount - 1)
+            }
+        }
+    }
+    
+    private func goToPreviousPage() {
+        guard readingMode == .readerView else { return }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            if themeManager.readingLayout.isTwoPage {
+                let currentSpread = currentPageIndex / 2
+                currentPageIndex = max((currentSpread - 1) * 2, 0)
+            } else {
+                currentPageIndex = max(currentPageIndex - 1, 0)
+            }
+        }
+    }
+    
+    private func goToFirstPage() {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            currentPageIndex = 0
+        }
+        if readingMode == .pdfLayout {
+            NotificationCenter.default.post(name: .readerJumpToPage, object: nil, userInfo: ["pageIndex": 0])
+        }
+    }
+    
+    private func goToLastPage() {
+        let lastPage = max(0, document.pageCount - 1)
+        withAnimation(.easeInOut(duration: 0.25)) {
+            currentPageIndex = lastPage
+        }
+        if readingMode == .pdfLayout {
+            NotificationCenter.default.post(name: .readerJumpToPage, object: nil, userInfo: ["pageIndex": lastPage])
+        }
+    }
+    
+    private func goToNextChapter() {
+        if let nextTOC = document.tocItems.first(where: { $0.pageIndex > currentPageIndex }) {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                currentPageIndex = nextTOC.pageIndex
+            }
+            NotificationCenter.default.post(name: .readerJumpToPage, object: nil, userInfo: ["pageIndex": nextTOC.pageIndex])
+        } else {
+            goToLastPage()
+        }
+    }
+    
+    private func goToPreviousChapter() {
+        let prevTOCs = document.tocItems.filter { $0.pageIndex < currentPageIndex }
+        if let prevTOC = prevTOCs.last {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                currentPageIndex = prevTOC.pageIndex
+            }
+            NotificationCenter.default.post(name: .readerJumpToPage, object: nil, userInfo: ["pageIndex": prevTOC.pageIndex])
+        } else {
+            goToFirstPage()
         }
     }
     
@@ -549,7 +693,9 @@ public struct ReaderContainerView: View {
                     }
                     semDoc = built
                 } catch {
+                    #if DEBUG
                     print("Failed to parse non-PDF document: \(error.localizedDescription)")
+                    #endif
                     let fallback = ParsedDocument(
                         title: docTitle,
                         format: docFormat,

@@ -21,7 +21,9 @@ public class AudioSession {
             try session.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers, .allowBluetoothHFP, .allowBluetoothA2DP])
             try session.setActive(true)
         } catch {
+            #if DEBUG
             print("Failed to configure AVAudioSession: \(error.localizedDescription)")
+            #endif
         }
         #endif
     }

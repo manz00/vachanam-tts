@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  test-apple:
+    name: Apple Tests (Mac Catalyst & Unit Tests)
+    runs-on: macos-14
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.0.app || true
+
+      - name: Regenerate Xcode Project
+        run: |
+          cd VachanamApple
+          python3 generate_project.py
+
+      - name: Run Mac Catalyst Tests
+        run: |
+          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
+            -scheme Vachanam \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
+            -only-testing:VachanamTests \
+            -quiet test
+
+  test-android:
+    name: Android Unit Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@3a5042881c46ac69ea7629d5369e7b18bf23db7c # v4.7.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@017a9effdb900e5b5b2fddfb590a105619dca3c3 # v4.4.2
+
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x VachanamAndroid/gradlew
+
+      - name: Run Android Unit Tests
+        run: |
+          cd VachanamAndroid
+          ./gradlew testDebugUnitTest --continue

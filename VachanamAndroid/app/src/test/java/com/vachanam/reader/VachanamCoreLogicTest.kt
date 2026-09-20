@@ -133,4 +133,74 @@ class VachanamCoreLogicTest {
         assertTrue("Expected multiple chunks for 20 words with max 15, got: ${chunks.size}", chunks.size >= 2)
         assertEquals(20, chunks.sumOf { it.wordCount })
     }
+
+    @Test
+    fun testMarkdownParser_imageExtraction() = runBlocking {
+        val parser = MarkdownParser()
+        val md = """
+            # Document With Media
+
+            Here is a system diagram:
+
+            ![Architecture Overview](https://example.com/arch.png)
+
+            And here is narrative text.
+        """.trimIndent()
+
+        val doc = parser.parse(DocumentSource.RawText(md, "Media Doc"))
+        val imgBlock = doc.allBlocks.firstOrNull { it.type == BlockType.IMAGE }
+        assertNotNull(imgBlock)
+        assertEquals("Architecture Overview", imgBlock?.text)
+        assertEquals("https://example.com/arch.png", imgBlock?.imageUrl)
+    }
+
+    @Test
+    fun testWebArticleParser_blocksInsecureHttpScheme() {
+        try {
+            com.vachanam.reader.data.parser.WebArticleParser.validateUrl("http://insecure-news.example.com/article")
+            fail("Expected SecurityException for HTTP scheme")
+        } catch (e: SecurityException) {
+            assertTrue(e.message?.contains("Only HTTPS is permitted") == true)
+        }
+    }
+
+    @Test
+    fun testWebArticleParser_blocksLocalhostAndLoopback() {
+        listOf(
+            "https://localhost/secret",
+            "https://127.0.0.1:8080/admin",
+            "https://sub.localhost/internal"
+        ).forEach { url ->
+            try {
+                com.vachanam.reader.data.parser.WebArticleParser.validateUrl(url)
+                fail("Expected SecurityException for loopback/localhost: $url")
+            } catch (e: SecurityException) {
+                // Expected
+            }
+        }
+    }
+
+    @Test
+    fun testWebArticleParser_blocksPrivateSubnetsAndMetadata() {
+        listOf(
+            "https://169.254.169.254/latest/meta-data/",
+            "https://10.0.0.1/router",
+            "https://192.168.1.1/gateway"
+        ).forEach { url ->
+            try {
+                com.vachanam.reader.data.parser.WebArticleParser.validateUrl(url)
+                fail("Expected SecurityException for private IP/metadata: $url")
+            } catch (e: SecurityException) {
+                // Expected
+            }
+        }
+    }
+
+    @Test
+    fun testWebArticleParser_allowsValidHttpsUrl() {
+        val validUrl = com.vachanam.reader.data.parser.WebArticleParser.validateUrl("https://en.wikipedia.org/wiki/Speech_synthesis")
+        assertEquals("https", validUrl.protocol)
+        assertEquals("en.wikipedia.org", validUrl.host)
+    }
 }
+

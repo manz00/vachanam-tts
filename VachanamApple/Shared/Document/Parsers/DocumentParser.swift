@@ -19,12 +19,23 @@ public struct ParsedBlock: Sendable, Identifiable {
     public let text: String
     public let level: Int
     public let marker: String?
+    public let imageData: Data?
+    public let imageURL: URL?
     
-    public init(type: BlockType, text: String, level: Int = 1, marker: String? = nil) {
+    public init(
+        type: BlockType,
+        text: String,
+        level: Int = 1,
+        marker: String? = nil,
+        imageData: Data? = nil,
+        imageURL: URL? = nil
+    ) {
         self.type = type
         self.text = text
         self.level = level
         self.marker = marker
+        self.imageData = imageData
+        self.imageURL = imageURL
     }
 }
 

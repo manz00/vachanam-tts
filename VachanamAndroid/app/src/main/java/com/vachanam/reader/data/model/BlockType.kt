@@ -13,5 +13,6 @@ enum class BlockType {
     PAGE_NUMBER,
     TABLE_OF_CONTENTS,
     SIDENOTE,
-    SYMBOL_TABLE
+    SYMBOL_TABLE,
+    IMAGE
 }

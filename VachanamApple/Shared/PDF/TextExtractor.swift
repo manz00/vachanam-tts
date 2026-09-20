@@ -57,6 +57,12 @@ public struct SentenceItem: Identifiable, Hashable {
     public let words: [WordRect]
     public let pageIndex: Int
     public let sentenceIndex: Int
+    public let imageData: Data?
+    public let imageURL: URL?
+    
+    public var isImage: Bool {
+        imageData != nil || imageURL != nil
+    }
     
     public init(
         text: String,
@@ -65,7 +71,9 @@ public struct SentenceItem: Identifiable, Hashable {
         lineBounds: [CGRect] = [],
         words: [WordRect],
         pageIndex: Int,
-        sentenceIndex: Int = 0
+        sentenceIndex: Int = 0,
+        imageData: Data? = nil,
+        imageURL: URL? = nil
     ) {
         self.text = text
         self.range = range
@@ -74,6 +82,8 @@ public struct SentenceItem: Identifiable, Hashable {
         self.words = words
         self.pageIndex = pageIndex
         self.sentenceIndex = sentenceIndex
+        self.imageData = imageData
+        self.imageURL = imageURL
     }
     
     public init(from semanticSentence: SemanticSentence) {
@@ -84,6 +94,8 @@ public struct SentenceItem: Identifiable, Hashable {
         self.lineBounds = semanticSentence.lineBounds(for: semanticSentence.primaryPageIndex)
         self.bounds = semanticSentence.bounds(for: semanticSentence.primaryPageIndex)
         self.words = semanticSentence.words.map { WordRect(from: $0) }
+        self.imageData = semanticSentence.imageData
+        self.imageURL = semanticSentence.imageURL
     }
 }
 

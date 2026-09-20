@@ -25,6 +25,7 @@ public enum BlockType: String, Codable, Sendable {
     case tableOfContents
     case sidenote
     case symbolTable
+    case image
 }
 
 public struct SemanticBlock: Identifiable, Hashable, Sendable {
@@ -114,6 +115,8 @@ public struct SemanticSentence: Identifiable, Hashable, Sendable {
     public let words: [SemanticWord]
     public let lineBoundsByPage: [Int: [CGRect]]
     public let boundsByPage: [Int: CGRect]
+    public let imageData: Data?
+    public let imageURL: URL?
     
     public init(
         sentenceID: Int,
@@ -125,7 +128,9 @@ public struct SemanticSentence: Identifiable, Hashable, Sendable {
         text: String,
         words: [SemanticWord],
         lineBoundsByPage: [Int: [CGRect]],
-        boundsByPage: [Int: CGRect]
+        boundsByPage: [Int: CGRect],
+        imageData: Data? = nil,
+        imageURL: URL? = nil
     ) {
         self.id = sentenceID
         self.sentenceID = sentenceID
@@ -138,6 +143,8 @@ public struct SemanticSentence: Identifiable, Hashable, Sendable {
         self.words = words
         self.lineBoundsByPage = lineBoundsByPage
         self.boundsByPage = boundsByPage
+        self.imageData = imageData
+        self.imageURL = imageURL
     }
     
     /// Line bounds specifically for a given page index.
