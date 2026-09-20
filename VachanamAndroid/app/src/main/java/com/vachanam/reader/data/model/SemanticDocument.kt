@@ -37,13 +37,9 @@ class SemanticDocument(
 
     private val wordsByPage: Map<Int, List<SemanticWord>> = words.groupBy { it.pageIndex }
     private val blocksByPage: Map<Int, List<SemanticBlock>> = blocks.groupBy { it.pageIndex }
-    private val sentencesByPage: Map<Int, List<SemanticSentence>> = buildMap {
-        for (s in sentences) {
-            for (p in s.pageSpans) {
-                getOrPut(p) { mutableListOf() }.add(s)
-            }
-        }
-    }
+    private val sentencesByPage: Map<Int, List<SemanticSentence>> = sentences
+        .flatMap { s -> s.pageSpans.map { p -> p to s } }
+        .groupBy({ it.first }, { it.second })
 
     // MARK: - Lookups
     fun block(id: Int): SemanticBlock? = blocksByID[id]
