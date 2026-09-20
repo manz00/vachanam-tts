@@ -66,15 +66,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Select Latest Xcode 16
+      - name: Select Latest Xcode
         run: |
-          ls -la /Applications | grep -i Xcode || true
-          XCODE_APP=$(find /Applications -maxdepth 1 -name "Xcode_16*.app" | sort -V | tail -n 1)
+          echo "=== Available Xcode installations ==="
+          ls -d /Applications/Xcode* || true
+          XCODE_APP=$(find /Applications -maxdepth 1 -name "Xcode*.app" | sort -V | tail -n 1)
           if [ -n "$XCODE_APP" ]; then
             echo "Selecting $XCODE_APP"
             sudo xcode-select -s "$XCODE_APP"
           fi
           xcodebuild -version
+          swift --version
 
       - name: Regenerate Xcode Project
         run: |
@@ -83,6 +85,7 @@ jobs:
 
       - name: Build Mac Catalyst App
         run: |
+          set -o pipefail
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -configuration Release \
@@ -96,7 +99,12 @@ jobs:
             -packageSigningEntityPolicy warn \
             CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
-            build
+            build 2>&1 | tee "${GITHUB_WORKSPACE}/xcodebuild_release.log" || {
+              EXIT_CODE=$?
+              echo "::error title=Xcodebuild Release Failed::$(grep -E 'error:|fatal:' "${GITHUB_WORKSPACE}/xcodebuild_release.log" | tail -n 10 | tr '\n' ' ')"
+              exit $EXIT_CODE
+            }
+
 
 
       - name: Package Mac Catalyst App & DMG Installer

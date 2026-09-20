@@ -17,15 +17,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Select Latest Xcode 16
+      - name: Select Latest Xcode
         run: |
-          ls -la /Applications | grep -i Xcode || true
-          XCODE_APP=$(find /Applications -maxdepth 1 -name "Xcode_16*.app" | sort -V | tail -n 1)
+          echo "=== Available Xcode installations ==="
+          ls -d /Applications/Xcode* || true
+          XCODE_APP=$(find /Applications -maxdepth 1 -name "Xcode*.app" | sort -V | tail -n 1)
           if [ -n "$XCODE_APP" ]; then
             echo "Selecting $XCODE_APP"
             sudo xcode-select -s "$XCODE_APP"
           fi
           xcodebuild -version
+          swift --version
 
       - name: Regenerate Xcode Project
         run: |
@@ -34,6 +36,7 @@ jobs:
 
       - name: Build Mac Catalyst App
         run: |
+          set -o pipefail
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -destination 'platform=macOS,variant=Mac Catalyst' \
@@ -46,11 +49,15 @@ jobs:
             -packageSigningEntityPolicy warn \
             CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
-            build
-
+            build 2>&1 | tee /tmp/xcodebuild_build.log || {
+              EXIT_CODE=$?
+              echo "::error title=Xcodebuild Failed::$(grep -E 'error:|fatal:' /tmp/xcodebuild_build.log | tail -n 10 | tr '\n' ' ')"
+              exit $EXIT_CODE
+            }
 
       - name: Run Unit Tests (iOS Simulator)
         run: |
+          set -o pipefail
           DEVICE_ID=$(xcrun simctl list devices available | grep -E "iPad|iPhone" | head -n 1 | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/')
           if [ -n "$DEVICE_ID" ]; then
             echo "Booting iOS Simulator ($DEVICE_ID)..."
@@ -65,13 +72,18 @@ jobs:
             -destination "$DEST" \
             -only-testing:VachanamTests \
             -derivedDataPath ./DerivedData/Simulator \
+            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
             -skipPackagePluginValidation \
             -skipMacroValidation \
             -skipPackageSignatureValidation \
             -packageFingerprintPolicy warn \
             -packageSigningEntityPolicy warn \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            test 2>&1 | tee /tmp/xcodebuild_test.log || { echo "=== TESTS FAILED ==="; tail -n 120 /tmp/xcodebuild_test.log; exit 1; }
+            test 2>&1 | tee /tmp/xcodebuild_test.log || {
+              EXIT_CODE=$?
+              echo "::error title=iOS Tests Failed::$(grep -E 'error:|fatal:|failed' /tmp/xcodebuild_test.log | tail -n 10 | tr '\n' ' ')"
+              exit $EXIT_CODE
+            }
 
   test-android:
     name: Android Unit Tests
