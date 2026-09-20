@@ -84,6 +84,11 @@ jobs:
       - name: Build Mac Catalyst App
         run: |
           set +e
+          echo "### 📱 Available Destinations on Runner" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          xcodebuild -project VachanamApple/Vachanam.xcodeproj -scheme Vachanam -showdestinations 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -configuration Release \
@@ -101,7 +106,10 @@ jobs:
           echo "xcodebuild finished with exit status: $BUILD_STATUS"
           if [ $BUILD_STATUS -ne 0 ]; then
             echo "::error::xcodebuild failed with exit status $BUILD_STATUS"
-            echo "=== XCODEBUILD ERROR LOG (LAST 150 LINES) ==="
+            echo "### ❌ Xcodebuild Build Log (Last 120 lines)" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            tail -n 120 "${GITHUB_WORKSPACE}/xcodebuild_release.log" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
             tail -n 150 "${GITHUB_WORKSPACE}/xcodebuild_release.log"
             exit $BUILD_STATUS
           fi
