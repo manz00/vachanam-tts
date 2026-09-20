@@ -40,7 +40,17 @@ jobs:
           if [ ! -f debug.keystore ]; then
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
-          ./gradlew assembleRelease --stacktrace --no-daemon
+          echo "Starting assembleRelease..."
+          ./gradlew assembleRelease --stacktrace --no-daemon > build_output.txt 2>&1 || BUILD_STATUS=$?
+          if [ "${BUILD_STATUS:-0}" -ne 0 ]; then
+            ERR_MSG=$(grep -E 'FAILURE:|What went wrong:|Caused by:' build_output.txt | head -n 4 | tr '\n' ' ' | sed 's/\"//g' | cut -c 1-200)
+            echo "::error title=Gradle Failed::$ERR_MSG"
+            echo "====== BUILD OUTPUT TAIL (100 lines) ======"
+            tail -n 100 build_output.txt
+            echo "==========================================="
+            exit $BUILD_STATUS
+          fi
+          echo "assembleRelease succeeded!"
 
       - name: Prepare APK Artifact & Compute SHA-256
         id: checksum
