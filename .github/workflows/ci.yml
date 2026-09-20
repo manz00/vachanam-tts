@@ -34,9 +34,10 @@ jobs:
 
       - name: Build Mac Catalyst App
         run: |
+          set -e -o pipefail
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
-            -destination 'platform=macOS,variant=Mac Catalyst' \
+            -destination 'generic/platform=macOS,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData/MacCatalyst \
             -skipPackagePluginValidation \
             -skipMacroValidation \
@@ -44,8 +45,8 @@ jobs:
             -packageFingerprintPolicy warn \
             -packageSigningEntityPolicy warn \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
-            build 2>&1 | tee /tmp/xcodebuild_ci.log || { echo "=== XCODEBUILD FAILED ==="; tail -n 120 /tmp/xcodebuild_ci.log; exit 1; }
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            build 2>&1 | tee /tmp/xcodebuild_ci.log
 
       - name: Run Unit Tests (iOS Simulator)
         run: |

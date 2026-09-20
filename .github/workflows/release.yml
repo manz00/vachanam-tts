@@ -83,9 +83,11 @@ jobs:
 
       - name: Build Mac Catalyst App
         run: |
+          set -e -o pipefail
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
-            -destination 'platform=macOS,variant=Mac Catalyst' \
+            -configuration Release \
+            -destination 'generic/platform=macOS,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData/MacCatalyst \
             -skipPackagePluginValidation \
             -skipMacroValidation \
@@ -93,25 +95,20 @@ jobs:
             -packageFingerprintPolicy warn \
             -packageSigningEntityPolicy warn \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
-            build 2>&1 | tee "${GITHUB_WORKSPACE}/xcodebuild_release.log" || { echo "=== XCODEBUILD FAILED ==="; tail -n 120 "${GITHUB_WORKSPACE}/xcodebuild_release.log"; exit 1; }
-
-      - name: Upload Xcodebuild Log on Failure
-        if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: xcodebuild-release-failure-log
-          path: xcodebuild_release.log
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            build 2>&1 | tee "${GITHUB_WORKSPACE}/xcodebuild_release.log"
 
       - name: Package Mac Catalyst App & DMG Installer
         run: |
           mkdir -p "${GITHUB_WORKSPACE}/dist"
           echo "=== Searching for built app bundles ==="
-          find ./DerivedData/MacCatalyst -name "*.app" -type d -print
-          RAW_PATH=$(find ./DerivedData/MacCatalyst -name "*.app" -type d -not -path "*/Intermediates*" | head -n 1)
+          find ./DerivedData/MacCatalyst -name "Vachanam.app" -type d -print
+          RAW_PATH=$(find ./DerivedData/MacCatalyst -name "Vachanam.app" -type d -path "*/Release-maccatalyst/*" | head -n 1)
           if [ -z "$RAW_PATH" ]; then
-            echo "::warning::No non-intermediate app found, searching all .app directories"
-            RAW_PATH=$(find . -name "*.app" -type d | head -n 1)
+            RAW_PATH=$(find ./DerivedData/MacCatalyst -name "Vachanam.app" -type d -not -path "*/Intermediates*" | head -n 1)
+          fi
+          if [ -z "$RAW_PATH" ]; then
+            RAW_PATH=$(find . -name "Vachanam.app" -type d -not -path "*/Intermediates*" | head -n 1)
           fi
           if [ -n "$RAW_PATH" ] && [ -d "$RAW_PATH" ]; then
             APP_PATH=$(cd "$(dirname "$RAW_PATH")" && pwd)/$(basename "$RAW_PATH")
@@ -153,6 +150,13 @@ jobs:
             dist/Vachanam-macOS.dmg.sha256
             dist/Vachanam-MacCatalyst.zip
             dist/Vachanam-MacCatalyst.zip.sha256
+
+      - name: Upload Xcodebuild Log on Failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: xcodebuild-release-failure-log
+          path: xcodebuild_release.log
 
   publish-release:
     name: Publish Unified GitHub Release
