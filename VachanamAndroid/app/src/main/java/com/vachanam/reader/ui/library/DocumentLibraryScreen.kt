@@ -314,7 +314,7 @@ fun DocumentLibraryScreen(
                 listOf(
                     DocumentFormat.EPUB to "EPUB",
                     DocumentFormat.PDF to "PDF",
-                    DocumentFormat.PLAINTEXT to "Articles / Text"
+                    DocumentFormat.PLAIN_TEXT to "Articles / Text"
                 ).forEach { (fmt, label) ->
                     FilterChip(
                         selected = selectedFormatFilter == fmt,
