@@ -15,10 +15,7 @@ let package = Package(
     ],
     dependencies: [
         .package(name: "KokoroPipeline", path: "../swift"),
-        .package(
-            url: "https://github.com/mattmireles/MisakiSwift",
-            revision: "3a27756a780fc138e328a96e533fb440a3419d5b"
-        ),
+        .package(name: "MisakiSwift", path: "../MisakiSwift"),
     ],
     targets: [
         .target(

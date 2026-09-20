@@ -208,6 +208,12 @@ graph TD
     - **DerivedData Isolation & Resilient SPM Resolution**: Configured isolated `-derivedDataPath ./DerivedData/MacCatalyst` across both CI and Release workflows to prevent cache collision/corruption (exit code 74), with automated log capture (`tail -n 120`) and artifact preservation on failure.
     - **Dual-Mode Headless Execution**: Configured Mac Catalyst compilation for desktop distribution, paired with headless iOS Simulator unit testing (`xcrun simctl boot "$DEVICE_ID"`) to bypass macOS WindowServer GUI constraints on headless CI runners.
     - **Dependabot Semver-Major Guards**: Configured `dependabot.yml` to ignore breaking semver-major updates to prevent inadvertent breakage of pinned GitHub Action checksums.
+26. **[AUD-30] SPM Swift Toolchain Decoupling & MisakiSwift Local Vendoring**:
+    - **Root Cause & Exit Code 74 Diagnostics**: Remote dependency `https://github.com/mattmireles/MisakiSwift` declared `// swift-tools-version: 6.2` in its manifest. When resolving dependencies on Xcode 16.x runners (which support up to Swift 6.0/6.1), Xcode crashed with exit code 74 (`package 'MisakiSwift' is using Swift tools version 6.2 which is not supported by the current Swift tools version (6.0)`).
+    - **Local Package Vendoring**: Vendored `MisakiSwift` locally at `VachanamApple/Packages/kokoro-coreml/MisakiSwift`, updating `swift-tts/Package.swift` to reference `.package(name: "MisakiSwift", path: "../MisakiSwift")`.
+    - **Swift Tools Version Compatibility**: Relaxed `Package.swift` toolchain requirement to `// swift-tools-version: 5.9`, enabling seamless resolution and compilation across Xcode 16.0 through modern toolchains.
+    - **Resource Bundle Restructuring**: Positioned dictionary data under `Sources/MisakiSwift/MisakiData` and declared `resources: [.copy("MisakiData")]`, generating SPM `Bundle.module` accessor cleanly without duplicate assets or access-level conflicts.
+    - **Ad-Hoc Signing Alignment**: Enforced `CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES` for headless Mac Catalyst artifact builds, ensuring entitlements-bearing binaries sign cleanly on ARM64 macOS runners without requiring external developer certificates.
 
 ---
 

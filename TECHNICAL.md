@@ -429,6 +429,12 @@ Structured around the principle:
     - **Dual-Mode Unit Testing**: Configured native Mac Catalyst execution for zero-latency test execution on macOS runners, with dynamic simulator fallback (`xcrun simctl list devices available`) avoiding rigid hardcoded device name failures.
     - **Dependabot Semver-Major Guards**: Configured `dependabot.yml` to ignore breaking semver-major updates to prevent inadvertent breakage of pinned GitHub Action checksums.
 
+  - **`[AUD-30]` SPM Swift Toolchain Decoupling & MisakiSwift Local Vendoring**:
+    - **Root Cause & Exit Code 74 Resolution**: Remote dependency `https://github.com/mattmireles/MisakiSwift` pinned `// swift-tools-version: 6.2` in its manifest, crashing Xcode 16.x runners (Swift 6.0/6.1) during package graph resolution with exit code 74.
+    - **Local Package Vendoring**: Vendored `MisakiSwift` locally at `VachanamApple/Packages/kokoro-coreml/MisakiSwift` with `.package(name: "MisakiSwift", path: "../MisakiSwift")` and `swift-tools-version: 5.9`.
+    - **Resource Bundle Restructuring**: Positioned dictionary data under `Sources/MisakiSwift/MisakiData` and declared `resources: [.copy("MisakiData")]`, generating SPM `Bundle.module` accessor cleanly without duplicate assets or access conflicts.
+    - **Headless Build Signing**: Configured `CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES` for headless Mac Catalyst artifact builds, ensuring entitlements-bearing binaries sign cleanly on ARM64 macOS runners.
+
 ---
 
 ## 7. Multi-Platform Build, Test & Technical Docs
