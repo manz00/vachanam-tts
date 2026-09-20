@@ -43,7 +43,13 @@ jobs:
         id: checksum
         run: |
           mkdir -p dist
-          cp VachanamAndroid/app/build/outputs/apk/release/app-release.apk dist/Vachanam-Android.apk
+          APK_SRC=$(find VachanamAndroid/app/build/outputs/apk -name "*.apk" -not -name "*androidTest*" | head -n 1)
+          if [ -z "$APK_SRC" ]; then
+            echo "Error: No APK found in build outputs!"
+            exit 1
+          fi
+          echo "Found APK at: $APK_SRC"
+          cp "$APK_SRC" dist/Vachanam-Android.apk
           cd dist
           sha256sum Vachanam-Android.apk > Vachanam-Android.apk.sha256
           SHA=$(awk '{print $1}' Vachanam-Android.apk.sha256)
@@ -71,6 +77,7 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ steps.tag_gen.outputs.TAG_NAME }}
           name: "Vachanam Release ${{ steps.tag_gen.outputs.TAG_NAME }}"
           body: |
