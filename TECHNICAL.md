@@ -406,6 +406,17 @@ Structured around the principle:
       - `VoiceTestingSandboxView`: Added automatic purging of old temporary report JSON and synthesized WAV files upon re-execution and `.onDisappear`.
       - `TTSAudioCache`: Set `URLResourceValues.isExcludedFromBackup = true` on the disk cache directory to prevent transient neural audio artifacts from consuming user iCloud backup storage quotas.
 
+  - **`[AUD-26]` Android Release Pipeline Hardening & Obtainium Substantial Release Resolution**:
+    - **Obtainium Discovery & Substantial Release**: Resolved Obtainium's *"could not find substantial release"* error by completing end-to-end automated builds of signed release APKs (`Vachanam-Android.apk`) attached with SHA-256 checksums to GitHub Releases (`v1.0.x`).
+    - **Production Source Verification**: Fixed Kotlin compiler errors that escaped unit testing:
+      - Corrected `sentencesByPage` grouping logic in `SemanticDocument.kt`.
+      - Guarded nullable chapter titles in `BookPreparationService.kt`.
+      - Provided default parameters (`val id: Int = ...`) across all semantic data models and passed both `chunkID` and `id` in `TTSChunker.kt`.
+      - Corrected `DocumentFormat.PLAIN_TEXT` enum reference in `DocumentLibraryScreen.kt`.
+      - Defined `CoralRed` theme token in `Color.kt` and wired `AppState.play()` / `AppState.pause()` delegation to `TTSController`.
+      - Replaced non-existent `Waveform` icon with `Icons.Default.Waves` for pink noise in `SoundscapePickerSheet.kt`.
+    - **CI Diagnostic Annotations**: Configured line-by-line compiler error annotations in `release-android.yml` for real-time failure triage.
+
 ---
 
 ## 7. Multi-Platform Build, Test & Technical Docs

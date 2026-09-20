@@ -144,6 +144,16 @@ graph TD
        - `testWebArticleParser_allowsValidHttpsUrl`: Validates standard public HTTPS URLs.
    - **TTS & Layout Alignment**:
      - Synchronized 100 words/virtual page budget and image alt-text handling parity with Apple implementation.
+9. **[AUD-26] Android Release Pipeline Hardening & Obtainium Substantial Release Resolution**:
+   - **Obtainium Discovery & Substantial Release**: Resolved Obtainium's *"could not find substantial release"* error by completing end-to-end automated builds of signed release APKs (`Vachanam-Android.apk`) attached with SHA-256 checksums to GitHub Releases (`v1.0.x`).
+   - **Full Production Source Verification**:
+     - Fixed `SemanticDocument.kt:41` `sentencesByPage` grouping logic.
+     - Fixed nullable chapter title call in `BookPreparationService.kt:88`.
+     - Provided default parameter `val id: Int = ...` in `SemanticElements.kt` (`SemanticBlock`, `SemanticWord`, `SemanticSentence`, `SemanticParagraph`, `TTSChunk`) and updated `TTSChunker.kt` to pass both `chunkID` and `id`.
+     - Corrected `DocumentFormat.PLAIN_TEXT` enum constant in `DocumentLibraryScreen.kt`.
+     - Defined `CoralRed` token in `Color.kt` and wired `AppState.play()` and `AppState.pause()` delegation to `TTSController`.
+     - Replaced non-existent `Waveform` icon with `Icons.Default.Waves` for pink noise in `SoundscapePickerSheet.kt`.
+   - **CI Compiler Diagnostic Trap**: Enhanced `.github/workflows/release-android.yml` to trap Kotlin compiler errors and emit individual GitHub Actions error annotations for immediate troubleshooting.
 
 ---
 
