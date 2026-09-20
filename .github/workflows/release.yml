@@ -83,20 +83,29 @@ jobs:
 
       - name: Build Mac Catalyst App
         run: |
-          set -e -o pipefail
+          set +e
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -configuration Release \
-            -destination 'generic/platform=macOS,variant=Mac Catalyst' \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData/MacCatalyst \
             -skipPackagePluginValidation \
             -skipMacroValidation \
             -skipPackageSignatureValidation \
             -packageFingerprintPolicy warn \
             -packageSigningEntityPolicy warn \
-            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
-            build 2>&1 | tee "${GITHUB_WORKSPACE}/xcodebuild_release.log"
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
+            build > "${GITHUB_WORKSPACE}/xcodebuild_release.log" 2>&1
+          BUILD_STATUS=$?
+          echo "xcodebuild finished with exit status: $BUILD_STATUS"
+          if [ $BUILD_STATUS -ne 0 ]; then
+            echo "::error::xcodebuild failed with exit status $BUILD_STATUS"
+            echo "=== XCODEBUILD ERROR LOG (LAST 150 LINES) ==="
+            tail -n 150 "${GITHUB_WORKSPACE}/xcodebuild_release.log"
+            exit $BUILD_STATUS
+          fi
+          set -e
 
       - name: Package Mac Catalyst App & DMG Installer
         run: |
