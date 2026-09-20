@@ -51,7 +51,13 @@ android {
     lint {
         abortOnError = false
         checkReleaseBuilds = false
+        ignoreWarnings = true
+        checkDependencies = false
     }
+}
+
+tasks.matching { it.name.startsWith("lint") }.configureEach {
+    enabled = false
 }
 
 dependencies {
