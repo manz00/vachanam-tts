@@ -40,36 +40,27 @@ jobs:
           if [ ! -f debug.keystore ]; then
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
-          ./gradlew assembleRelease --stacktrace --no-daemon 2>&1 | tee ../build.log || {
-            echo "::error title=Gradle Build Failed::assembleRelease returned non-zero"
-            tail -n 120 ../build.log
-            exit 1
-          }
-
-      - name: Upload Build Log
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: gradle-build-log
-          path: build.log
+          ./gradlew assembleRelease --stacktrace --no-daemon
 
       - name: Prepare APK Artifact & Compute SHA-256
         id: checksum
         run: |
           mkdir -p dist
-          find . -name "*.apk" -ls || true
-          APK_SRC=$(find VachanamAndroid/app/build/outputs -name "*.apk" -not -name "*androidTest*" | head -n 1)
+          echo "Scanning workspace for generated APK files..."
+          find . -name "*.apk" || true
+          APK_SRC=$(find . -name "*release*.apk" -not -name "*androidTest*" | head -n 1)
           if [ -z "$APK_SRC" ]; then
             APK_SRC=$(find . -name "*.apk" -not -name "*androidTest*" | head -n 1)
           fi
           if [ -z "$APK_SRC" ]; then
-            echo "Error: No APK found in build outputs!"
+            echo "Error: No APK found anywhere in workspace!"
+            find VachanamAndroid -maxdepth 4 -ls || true
             exit 1
           fi
           echo "Found APK at: $APK_SRC"
           cp "$APK_SRC" dist/Vachanam-Android.apk
-          sha256sum dist/Vachanam-Android.apk | awk '{print $1 "  Vachanam-Android.apk"}' > dist/Vachanam-Android.apk.sha256
-          SHA=$(awk '{print $1}' dist/Vachanam-Android.apk.sha256)
+          SHA=$(sha256sum dist/Vachanam-Android.apk | awk '{print $1}')
+          echo "$SHA  Vachanam-Android.apk" > dist/Vachanam-Android.apk.sha256
           echo "APK_SHA256=$SHA" >> $GITHUB_OUTPUT
           echo "Computed SHA-256: $SHA"
 
