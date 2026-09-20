@@ -80,12 +80,6 @@ jobs:
           cd VachanamApple
           python3 generate_project.py
 
-      - name: Resolve Swift Package Dependencies
-        run: |
-          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
-            -scheme Vachanam \
-            -resolvePackageDependencies
-
       - name: Build Mac Catalyst App (Release)
         run: |
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
@@ -120,6 +114,7 @@ jobs:
 
       - name: Upload Apple Artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: hashFiles('dist/Vachanam-macOS.dmg') != ''
         with:
           name: apple-release-package
           path: |
@@ -131,6 +126,7 @@ jobs:
   publish-release:
     name: Publish Unified GitHub Release
     needs: [build-android, build-apple]
+    if: always() && (needs.build-android.result == 'success' || needs.build-apple.result == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -139,12 +135,14 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Download Android Artifact
+        if: needs.build-android.result == 'success'
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
         with:
           name: android-release-package
           path: dist
 
       - name: Download Apple Artifact
+        if: needs.build-apple.result == 'success'
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
         with:
           name: apple-release-package

@@ -31,12 +31,6 @@ jobs:
           cd VachanamApple
           python3 generate_project.py
 
-      - name: Resolve Swift Package Dependencies
-        run: |
-          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
-            -scheme Vachanam \
-            -resolvePackageDependencies
-
       - name: Build Mac Catalyst
         run: |
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
