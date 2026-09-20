@@ -85,7 +85,7 @@ class BookPreparationService(private val context: Context) {
                         chapterSummaries.add(
                             ChapterPreparationSummary(
                                 chapterIndex = idx,
-                                title = ch.title.ifEmpty { "Chapter ${idx + 1}" },
+                                title = ch.title?.takeIf { it.isNotBlank() } ?: "Chapter ${idx + 1}",
                                 wordCount = chWords,
                                 estimatedAudioMinutes = chAudioMin
                             )
