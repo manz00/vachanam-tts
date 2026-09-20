@@ -21,6 +21,7 @@ import com.vachanam.reader.ui.settings.SettingsScreen
 import com.vachanam.reader.ui.theme.DeepNavy
 import com.vachanam.reader.ui.theme.VachanamTheme
 import com.vachanam.reader.ui.tts.SoundscapePickerSheet
+import com.vachanam.reader.util.FileUtils
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -117,14 +118,10 @@ class MainActivity : ComponentActivity() {
             intent.data?.let { uri ->
                 lifecycleScope.launch {
                     try {
-                        val fileName = uri.lastPathSegment?.substringAfterLast('/') ?: "document.pdf"
-                        val destFile = File(filesDir, fileName)
-                        contentResolver.openInputStream(uri)?.use { input ->
-                            FileOutputStream(destFile).use { output ->
-                                input.copyTo(output)
-                            }
+                        val destFile = FileUtils.copyUriToInternalStorage(this@MainActivity, uri)
+                        if (destFile != null) {
+                            appState.openDocument(destFile)
                         }
-                        appState.openDocument(destFile)
                     } catch (_: Exception) {}
                 }
             }

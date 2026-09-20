@@ -40,6 +40,9 @@ class AppState(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     private val _selectedTab = MutableStateFlow("library")
     val selectedTab: StateFlow<String> = _selectedTab.asStateFlow()
 
@@ -70,9 +73,14 @@ class AppState(
         _selectedTab.value = tab
     }
 
-    suspend fun openDocument(file: File) {
+    fun clearErrorMessage() {
+        _errorMessage.value = null
+    }
+
+    suspend fun openDocument(file: File): Boolean {
         _isLoading.value = true
-        try {
+        _errorMessage.value = null
+        return try {
             val format = DocumentFormat.detect(file)
             val doc = if (format == DocumentFormat.PDF) {
                 PdfTextExtractor.shared.extractSemanticDocument(file)
@@ -98,8 +106,10 @@ class AppState(
 
             prefs.edit().putString(lastOpenedDocKey, file.absolutePath).apply()
             _selectedTab.value = "reader"
-        } catch (_: Exception) {
-            // Document open fallback
+            true
+        } catch (e: Exception) {
+            _errorMessage.value = e.localizedMessage ?: "Failed to open document"
+            false
         } finally {
             _isLoading.value = false
         }

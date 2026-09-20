@@ -15,52 +15,65 @@ class PdfDocumentWrapper(
 
     private var fileDescriptor: ParcelFileDescriptor? = null
     private var renderer: PdfRenderer? = null
+    private val lock = Any()
 
     val pageCount: Int
-        get() = renderer?.pageCount ?: 0
+        get() = synchronized(lock) { renderer?.pageCount ?: 0 }
 
     init {
         fileDescriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
         renderer = PdfRenderer(fileDescriptor!!)
     }
 
-    fun getPageDimensions(pageIndex: Int): Pair<Int, Int> {
+    fun getPageDimensions(pageIndex: Int): Pair<Int, Int> = synchronized(lock) {
         val r = renderer ?: return Pair(0, 0)
         if (pageIndex !in 0 until r.pageCount) return Pair(0, 0)
-        val page = r.openPage(pageIndex)
-        val w = page.width
-        val h = page.height
-        page.close()
-        return Pair(w, h)
+        try {
+            val page = r.openPage(pageIndex)
+            val w = page.width
+            val h = page.height
+            page.close()
+            Pair(w, h)
+        } catch (_: Exception) {
+            Pair(612, 792)
+        }
     }
 
     suspend fun renderPageBitmap(
         pageIndex: Int,
         scale: Float = 2.0f
     ): Bitmap? = withContext(Dispatchers.Default) {
-        val r = renderer ?: return@withContext null
-        if (pageIndex !in 0 until r.pageCount) return@withContext null
+        synchronized(lock) {
+            val r = renderer ?: return@synchronized null
+            if (pageIndex !in 0 until r.pageCount) return@synchronized null
 
-        val page = r.openPage(pageIndex)
-        val targetWidth = (page.width * scale).toInt().coerceAtLeast(1)
-        val targetHeight = (page.height * scale).toInt().coerceAtLeast(1)
+            try {
+                val page = r.openPage(pageIndex)
+                val targetWidth = (page.width * scale).toInt().coerceAtLeast(1)
+                val targetHeight = (page.height * scale).toInt().coerceAtLeast(1)
 
-        val bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-        bitmap.eraseColor(Color.WHITE)
+                val bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+                bitmap.eraseColor(Color.WHITE)
 
-        val matrix = Matrix().apply {
-            postScale(scale, scale)
+                val matrix = Matrix().apply {
+                    postScale(scale, scale)
+                }
+
+                page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                page.close()
+
+                bitmap
+            } catch (_: Exception) {
+                null
+            }
         }
-
-        page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-        page.close()
-
-        bitmap
     }
 
-    override fun close() {
-        renderer?.close()
-        fileDescriptor?.close()
+    override fun close() = synchronized(lock) {
+        try {
+            renderer?.close()
+            fileDescriptor?.close()
+        } catch (_: Exception) {}
         renderer = null
         fileDescriptor = null
     }

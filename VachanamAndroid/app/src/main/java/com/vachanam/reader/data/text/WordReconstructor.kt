@@ -15,6 +15,12 @@ class WordReconstructor {
         "graphy", "meter", "scopic", "phobia", "philic", "genesis"
     )
 
+    private val commonCompoundPrefixes: Set<String> = setOf(
+        "all", "cross", "ex", "half", "high", "low", "mid", "multi", "non", "off",
+        "on", "out", "over", "post", "pre", "pro", "quasi", "self", "semi", "sub",
+        "ultra", "un", "under", "well", "co", "user", "state", "real", "time"
+    )
+
     fun resolveHyphenation(firstPart: String, secondPart: String): WordReconstructionResult {
         val trimmedFirst = firstPart.trim()
         val trimmedSecond = secondPart.trim()
@@ -40,6 +46,15 @@ class WordReconstructor {
 
         val merged = prefix + suffix
         val hyphenated = "$prefix-$suffix"
+
+        val lowerPrefix = prefix.lowercase()
+        if (commonCompoundPrefixes.contains(lowerPrefix)) {
+            return WordReconstructionResult(
+                reconstructedWord = hyphenated,
+                wasHyphenJoined = true,
+                preservedHyphen = true
+            )
+        }
 
         val lowerSuffix = suffix.lowercase()
         if (commonSuffixes.contains(lowerSuffix)) {

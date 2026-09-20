@@ -154,6 +154,13 @@ graph TD
      - Defined `CoralRed` token in `Color.kt` and wired `AppState.play()` and `AppState.pause()` delegation to `TTSController`.
      - Replaced non-existent `Waveform` icon with `Icons.Default.Waves` for pink noise in `SoundscapePickerSheet.kt`.
    - **CI Compiler Diagnostic Trap**: Enhanced `.github/workflows/release-android.yml` to trap Kotlin compiler errors and emit individual GitHub Actions error annotations for immediate troubleshooting.
+10. **[AUD-27] Storage Access Framework (SAF) URI Resolution, PdfRenderer Concurrency Hardening & Robust Reader Fallback**:
+    - **SAF Content URI Resolution (`FileUtils.kt`)**: Replaced raw `uri.lastPathSegment` extraction with `OpenableColumns.DISPLAY_NAME` query and `ContentResolver.getType()` MIME-type fallback. Sanitizes colons (`:`) and path separators to prevent file extension loss on Samsung Galaxy/Android devices.
+    - **`PdfRenderer` Thread-Safety (`PdfDocumentWrapper.kt`)**: Synchronized all `openPage()` operations across background threads and Compose main thread, eliminating `IllegalStateException: Already has open page`.
+    - **Failure Surface & Error Propagation (`AppState.kt` & `DocumentLibraryScreen.kt`)**: Replaced silent error swallows with `errorMessage` state flow and user-facing snackbars.
+    - **Graceful Reader Fallback (`ReaderContainerView.kt`)**: Replaced early `document ?: return` blank screen with an interactive empty state view providing a "Return to Library" navigation action.
+    - **Word Reconstruction Compound Heuristics (`WordReconstructor.kt`)**: Added compound prefix detection (`well-`, `user-`, `self-`, etc.) to preserve genuine hyphenated compound words while rejoining broken line-break morphemes.
+    - **TTS Sentence Chunking (`TTSChunker.kt`)**: Added slicing for sentences whose word count exceeds `maxWordsPerChunk`, ensuring chunk bounds constraints are respected for optimal audio synthesis.
 
 ---
 

@@ -74,6 +74,26 @@ class TTSChunker(
                 continue
             }
 
+            // If this sentence itself is larger than maxWordsPerChunk, split its words across chunks
+            if (sentence.words.size > maxWordsPerChunk) {
+                flushChunk()
+                val slices = sentence.words.chunked(maxWordsPerChunk)
+                for (slice in slices) {
+                    primaryPage = sentence.primaryPageIndex
+                    currentBlockType = sentence.blockType
+                    currentBlockID = sentence.blockID
+                    currentSentenceIDs.add(sentence.sentenceID)
+                    currentWordIDs.addAll(slice.map { it.globalWordID })
+                    currentWords.addAll(slice.map { it.spokenText ?: it.text })
+                    currentPageSpans.addAll(slice.map { it.pageIndex })
+
+                    if (currentWordIDs.size >= maxWordsPerChunk) {
+                        flushChunk()
+                    }
+                }
+                continue
+            }
+
             // If adding this sentence exceeds max words and we already have minimum words, flush first
             if (currentWordIDs.size + sentence.words.size > maxWordsPerChunk && currentWordIDs.size >= minWordsPerChunk) {
                 flushChunk()

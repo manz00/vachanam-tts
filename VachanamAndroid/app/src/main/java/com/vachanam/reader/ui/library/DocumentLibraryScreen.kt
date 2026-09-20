@@ -33,6 +33,7 @@ import com.vachanam.reader.data.persistence.BookPreparationService
 import com.vachanam.reader.data.persistence.BookShelf
 import com.vachanam.reader.data.persistence.ReadingProgress
 import com.vachanam.reader.ui.theme.*
+import com.vachanam.reader.util.FileUtils
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -78,16 +79,26 @@ fun DocumentLibraryScreen(
         recentDocs = progressTracker.allRecentDocuments()
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
             scope.launch {
-                val copiedFile = copyUriToInternalStorage(context, uri)
+                val copiedFile = FileUtils.copyUriToInternalStorage(context, uri)
                 if (copiedFile != null) {
-                    appState.openDocument(copiedFile)
+                    val success = appState.openDocument(copiedFile)
                     refreshDocuments()
-                    onOpenReader()
+                    if (success) {
+                        onOpenReader()
+                    } else {
+                        snackbarHostState.showSnackbar(
+                            message = appState.errorMessage.value ?: "Unable to open book. Unsupported format or corrupted file."
+                        )
+                    }
+                } else {
+                    snackbarHostState.showSnackbar("Failed to read selected file from storage.")
                 }
             }
         }
@@ -127,6 +138,7 @@ fun DocumentLibraryScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -413,8 +425,18 @@ fun DocumentLibraryScreen(
                                 val file = File(record.documentUri)
                                 if (file.exists()) {
                                     scope.launch {
-                                        appState.openDocument(file)
-                                        onOpenReader()
+                                        val success = appState.openDocument(file)
+                                        if (success) {
+                                            onOpenReader()
+                                        } else {
+                                            snackbarHostState.showSnackbar(
+                                                message = appState.errorMessage.value ?: "Failed to open book."
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar("Book file no longer exists.")
                                     }
                                 }
                             },
@@ -937,21 +959,4 @@ private fun WebArticleImportDialog(
             }
         }
     )
-}
-
-private fun copyUriToInternalStorage(context: android.content.Context, uri: Uri): File? {
-    return try {
-        val fileName = uri.lastPathSegment?.substringAfterLast('/') ?: "document.pdf"
-        val cleanName = if (fileName.contains(".")) fileName else "$fileName.pdf"
-        val destFile = File(context.filesDir, cleanName)
-
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            FileOutputStream(destFile).use { output ->
-                input.copyTo(output)
-            }
-        }
-        destFile
-    } catch (_: Exception) {
-        null
-    }
 }

@@ -66,7 +66,31 @@ fun ReaderContainerView(
     val readingLayout by themeManager.currentReadingLayout.collectAsState()
     val theme by themeManager.currentReaderTheme.collectAsState()
 
-    val currentDoc = document ?: return
+    val currentDoc = document
+    if (currentDoc == null) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(DeepNavy),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "No document loaded",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onBack,
+                    colors = ButtonDefaults.buttonColors(containerColor = WarmAmber)
+                ) {
+                    Text("Back to Library", color = Color.Black)
+                }
+            }
+        }
+        return
+    }
 
     val isPdf = docFile != null && DocumentFormat.detect(docFile!!) == DocumentFormat.PDF
     var isPdfMode by remember(isPdf) { mutableStateOf(isPdf) }
