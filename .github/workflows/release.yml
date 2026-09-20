@@ -108,26 +108,40 @@ jobs:
       - name: Package Mac Catalyst App & DMG Installer
         run: |
           mkdir -p "${GITHUB_WORKSPACE}/dist"
-          APP_PATH=$(find "${GITHUB_WORKSPACE}/DerivedData" -name "Vachanam.app" -type d -not -path "*/Intermediates.noindex/*" | head -n 1)
-          echo "Discovered APP_PATH: $APP_PATH"
-          if [ -n "$APP_PATH" ] && [ -d "$APP_PATH" ]; then
-            APP_DIR="$(dirname "$APP_PATH")"
+          echo "=== Searching for built app bundles ==="
+          find . -name "*.app" -type d -print
+          RAW_PATH=$(find . -name "*.app" -type d -not -path "*/Intermediates*" | head -n 1)
+          if [ -z "$RAW_PATH" ]; then
+            echo "::warning::No non-intermediate app found, searching all .app directories"
+            RAW_PATH=$(find . -name "*.app" -type d | head -n 1)
+          fi
+          if [ -n "$RAW_PATH" ] && [ -d "$RAW_PATH" ]; then
+            APP_PATH=$(cd "$(dirname "$RAW_PATH")" && pwd)/$(basename "$RAW_PATH")
+            echo "Selected absolute APP_PATH: $APP_PATH"
+
             # 1. Create .zip package
-            (cd "$APP_DIR" && zip -r -y "${GITHUB_WORKSPACE}/dist/Vachanam-MacCatalyst.zip" "Vachanam.app")
+            (cd "$(dirname "$APP_PATH")" && zip -r -y "${GITHUB_WORKSPACE}/dist/Vachanam-MacCatalyst.zip" "$(basename "$APP_PATH")")
 
             # 2. Create native .dmg installer package
             mkdir -p "${GITHUB_WORKSPACE}/dmg_staging"
             cp -R "$APP_PATH" "${GITHUB_WORKSPACE}/dmg_staging/"
             ln -s /Applications "${GITHUB_WORKSPACE}/dmg_staging/Applications"
-            hdiutil create -volname "Vachanam" -srcfolder "${GITHUB_WORKSPACE}/dmg_staging" -ov -format UDZO "${GITHUB_WORKSPACE}/dist/Vachanam-macOS.dmg"
+            if ! hdiutil create -volname "Vachanam" -srcfolder "${GITHUB_WORKSPACE}/dmg_staging" -ov -format UDZO "${GITHUB_WORKSPACE}/dist/Vachanam-macOS.dmg"; then
+              echo "Retrying DMG without Applications symlink..."
+              rm -f "${GITHUB_WORKSPACE}/dmg_staging/Applications"
+              hdiutil create -volname "Vachanam" -srcfolder "${GITHUB_WORKSPACE}/dmg_staging" -ov -format UDZO "${GITHUB_WORKSPACE}/dist/Vachanam-macOS.dmg"
+            fi
             rm -rf "${GITHUB_WORKSPACE}/dmg_staging"
 
             cd "${GITHUB_WORKSPACE}/dist"
             shasum -a 256 Vachanam-MacCatalyst.zip > Vachanam-MacCatalyst.zip.sha256
-            shasum -a 256 Vachanam-macOS.dmg > Vachanam-macOS.dmg.sha256
+            if [ -f "Vachanam-macOS.dmg" ]; then
+              shasum -a 256 Vachanam-macOS.dmg > Vachanam-macOS.dmg.sha256
+            fi
             ls -la "${GITHUB_WORKSPACE}/dist"
           else
-            echo "::error::Vachanam.app not found in DerivedData"
+            echo "::error::No .app bundle found in workspace"
+            find . -maxdepth 5 -ls || true
             exit 1
           fi
 

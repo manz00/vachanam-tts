@@ -40,12 +40,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-
 
-      - name: Build Mac Catalyst & Test Targets
+      - name: Build Mac Catalyst App
         run: |
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -destination 'platform=macOS,variant=Mac Catalyst' \
-            -derivedDataPath ./DerivedData \
+            -derivedDataPath ./DerivedData/MacCatalyst \
             -skipPackagePluginValidation \
             -skipMacroValidation \
             -skipPackageSignatureValidation \
@@ -53,40 +53,31 @@ jobs:
             -packageSigningEntityPolicy warn \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
-            build-for-testing 2>&1 | tee /tmp/xcodebuild_ci.log || { echo "=== XCODEBUILD FAILED ==="; tail -n 120 /tmp/xcodebuild_ci.log; exit 1; }
+            build 2>&1 | tee /tmp/xcodebuild_ci.log || { echo "=== XCODEBUILD FAILED ==="; tail -n 120 /tmp/xcodebuild_ci.log; exit 1; }
 
       - name: Run Unit Tests (iOS Simulator)
         run: |
           DEVICE_ID=$(xcrun simctl list devices available | grep -E "iPad|iPhone" | head -n 1 | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/')
           if [ -n "$DEVICE_ID" ]; then
-            echo "Running tests on iOS Simulator ($DEVICE_ID)..."
-            xcodebuild -project VachanamApple/Vachanam.xcodeproj \
-              -scheme Vachanam \
-              -destination "id=$DEVICE_ID" \
-              -only-testing:VachanamTests \
-              -derivedDataPath ./DerivedData \
-              -skipPackagePluginValidation \
-              -skipMacroValidation \
-              -skipPackageSignatureValidation \
-              -packageFingerprintPolicy warn \
-              -packageSigningEntityPolicy warn \
-              CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-              test
+            echo "Booting iOS Simulator ($DEVICE_ID)..."
+            xcrun simctl boot "$DEVICE_ID" || true
+            DEST="id=$DEVICE_ID"
           else
-            echo "Fallback to named simulator..."
-            xcodebuild -project VachanamApple/Vachanam.xcodeproj \
-              -scheme Vachanam \
-              -destination 'platform=iOS Simulator,OS=latest,name=iPhone 16' \
-              -only-testing:VachanamTests \
-              -derivedDataPath ./DerivedData \
-              -skipPackagePluginValidation \
-              -skipMacroValidation \
-              -skipPackageSignatureValidation \
-              -packageFingerprintPolicy warn \
-              -packageSigningEntityPolicy warn \
-              CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-              test
+            DEST="platform=iOS Simulator,OS=latest,name=iPhone 16"
           fi
+          echo "Testing with destination: $DEST"
+          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
+            -scheme Vachanam \
+            -destination "$DEST" \
+            -only-testing:VachanamTests \
+            -derivedDataPath ./DerivedData/Simulator \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            -skipPackageSignatureValidation \
+            -packageFingerprintPolicy warn \
+            -packageSigningEntityPolicy warn \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            test 2>&1 | tee /tmp/xcodebuild_test.log || { echo "=== TESTS FAILED ==="; tail -n 120 /tmp/xcodebuild_test.log; exit 1; }
 
   test-android:
     name: Android Unit Tests
