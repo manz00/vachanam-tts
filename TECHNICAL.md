@@ -440,7 +440,7 @@ Structured around the principle:
 ## 7. Multi-Platform Build, Test & Technical Docs
 
 Detailed platform-specific technical specifications and audit histories are maintained in their respective platform directories:
-- **Apple (iPadOS & macOS)**: See [VachanamApple/TECHNICAL.md](VachanamApple/TECHNICAL.md) for Quartz 2D math, CoreML/MLX pipelines, and Apple audit entries (`[AUD-01]`..`[AUD-16]`, `[AUD-18]`).
+- **Apple (iPadOS & macOS)**: See [VachanamApple/TECHNICAL.md](VachanamApple/TECHNICAL.md) for Quartz 2D math, CoreML/MLX pipelines, and Apple audit entries (`[AUD-01]`..`[AUD-16]`, `[AUD-18]`, `[AUD-30]`, `[AUD-31]`).
 - **Android (12+)**: See [VachanamAndroid/TECHNICAL.md](VachanamAndroid/TECHNICAL.md) for PDFBox coordinate mapping, Android TTS integration, and Android audit entry (`[AUD-17]`).
 
 ### Build & Test Commands

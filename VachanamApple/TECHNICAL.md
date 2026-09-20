@@ -214,6 +214,10 @@ graph TD
     - **Swift Tools Version Compatibility**: Relaxed `Package.swift` toolchain requirement to `// swift-tools-version: 5.9`, enabling seamless resolution and compilation across Xcode 16.0 through modern toolchains.
     - **Resource Bundle Restructuring**: Positioned dictionary data under `Sources/MisakiSwift/MisakiData` and declared `resources: [.copy("MisakiData")]`, generating SPM `Bundle.module` accessor cleanly without duplicate assets or access-level conflicts.
     - **Ad-Hoc Signing Alignment**: Enforced `CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES` for headless Mac Catalyst artifact builds, ensuring entitlements-bearing binaries sign cleanly on ARM64 macOS runners without requiring external developer certificates.
+27. **[AUD-31] CI Test Suite Optimization & Simulator Destination Specifier Fix**:
+    - **Mac Catalyst Direct Unit Testing**: Integrated native Mac Catalyst unit testing (`-destination 'platform=macOS,variant=Mac Catalyst'`) into CI pipeline, reusing the warm `./DerivedData/MacCatalyst` cache from the build step for 35-second test execution.
+    - **Exit Code 70 Resolution (Destination Specifier)**: Fixed simulator destination string from bare `id=$DEVICE_ID` to `platform=iOS Simulator,id=$DEVICE_ID` with fallback to `name=iPad Air 11-inch (M4)`, resolving Xcode's failure to match headless CoreSimulator instances.
+    - **Isolated Log Captures**: Separated build, Mac Catalyst test, and iOS simulator test logging paths (`/tmp/xcodebuild_build.log`, `/tmp/xcodebuild_test.log`, `/tmp/xcodebuild_sim_test.log`) with `set -o pipefail` and GitHub Actions `::error` annotations for instant diagnostic visibility.
 
 ---
 

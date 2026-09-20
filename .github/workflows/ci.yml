@@ -55,6 +55,27 @@ jobs:
               exit $EXIT_CODE
             }
 
+      - name: Run Unit Tests (Mac Catalyst)
+        run: |
+          set -o pipefail
+          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
+            -scheme Vachanam \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
+            -only-testing:VachanamTests \
+            -derivedDataPath ./DerivedData/MacCatalyst \
+            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            -skipPackageSignatureValidation \
+            -packageFingerprintPolicy warn \
+            -packageSigningEntityPolicy warn \
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
+            test 2>&1 | tee /tmp/xcodebuild_test.log || {
+              EXIT_CODE=$?
+              echo "::error title=Mac Catalyst Tests Failed::$(grep -E 'error:|fatal:|failed' /tmp/xcodebuild_test.log | tail -n 10 | tr '\n' ' ')"
+              exit $EXIT_CODE
+            }
+
       - name: Run Unit Tests (iOS Simulator)
         run: |
           set -o pipefail
@@ -62,9 +83,9 @@ jobs:
           if [ -n "$DEVICE_ID" ]; then
             echo "Booting iOS Simulator ($DEVICE_ID)..."
             xcrun simctl boot "$DEVICE_ID" || true
-            DEST="id=$DEVICE_ID"
+            DEST="platform=iOS Simulator,id=$DEVICE_ID"
           else
-            DEST="platform=iOS Simulator,OS=latest,name=iPhone 16"
+            DEST="platform=iOS Simulator,name=iPad Air 11-inch (M4)"
           fi
           echo "Testing with destination: $DEST"
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
@@ -79,9 +100,9 @@ jobs:
             -packageFingerprintPolicy warn \
             -packageSigningEntityPolicy warn \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            test 2>&1 | tee /tmp/xcodebuild_test.log || {
+            test 2>&1 | tee /tmp/xcodebuild_sim_test.log || {
               EXIT_CODE=$?
-              echo "::error title=iOS Tests Failed::$(grep -E 'error:|fatal:|failed' /tmp/xcodebuild_test.log | tail -n 10 | tr '\n' ' ')"
+              echo "::error title=iOS Tests Failed::$(grep -E 'error:|fatal:|failed' /tmp/xcodebuild_sim_test.log | tail -n 10 | tr '\n' ' ')"
               exit $EXIT_CODE
             }
 
