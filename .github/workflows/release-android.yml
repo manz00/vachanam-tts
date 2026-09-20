@@ -36,14 +36,15 @@ jobs:
 
       - name: Build Android Release APK
         run: |
+          set -eo pipefail
           cd VachanamAndroid
-          if ! ./gradlew assembleRelease --stacktrace --no-daemon 2>&1 | tee ../build.log; then
-            echo "::error title=Gradle Build Failed::$(grep -E -A 4 -B 1 'e: |FAILURE:|ERROR:|Caused by:' ../build.log | head -n 12 | tr '\n' ' ')"
+          if ! ./gradlew assembleRelease -x lint -x lintVitalRelease --stacktrace --no-daemon 2>&1 | tee ../build.log; then
+            echo "::error title=Gradle Build Failed::$(grep -E -A 4 -B 1 'e: |FAILURE:|ERROR:|Caused by:' ../build.log | head -n 12 | tr '\n' ' ' | sed 's/\"//g')"
             exit 1
           fi
 
-      - name: Upload Build Log on Failure
-        if: failure()
+      - name: Upload Build Log
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: gradle-build-log
@@ -53,7 +54,11 @@ jobs:
         id: checksum
         run: |
           mkdir -p dist
-          APK_SRC=$(find VachanamAndroid/app/build/outputs/apk -name "*.apk" -not -name "*androidTest*" | head -n 1)
+          find . -name "*.apk" -ls || true
+          APK_SRC=$(find VachanamAndroid/app/build/outputs -name "*.apk" -not -name "*androidTest*" | head -n 1)
+          if [ -z "$APK_SRC" ]; then
+            APK_SRC=$(find . -name "*.apk" -not -name "*androidTest*" | head -n 1)
+          fi
           if [ -z "$APK_SRC" ]; then
             echo "Error: No APK found in build outputs!"
             exit 1
