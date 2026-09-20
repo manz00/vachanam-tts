@@ -38,10 +38,7 @@ jobs:
         run: |
           set -eo pipefail
           cd VachanamAndroid
-          if ! ./gradlew assembleRelease -x lint -x lintVitalRelease --stacktrace --no-daemon 2>&1 | tee ../build.log; then
-            echo "::error title=Gradle Build Failed::$(grep -E -A 4 -B 1 'e: |FAILURE:|ERROR:|Caused by:' ../build.log | head -n 12 | tr '\n' ' ' | sed 's/\"//g')"
-            exit 1
-          fi
+          ./gradlew assembleRelease --stacktrace --no-daemon 2>&1 | tee ../build.log
 
       - name: Upload Build Log
         if: always()
@@ -65,9 +62,8 @@ jobs:
           fi
           echo "Found APK at: $APK_SRC"
           cp "$APK_SRC" dist/Vachanam-Android.apk
-          cd dist
-          sha256sum Vachanam-Android.apk > Vachanam-Android.apk.sha256
-          SHA=$(awk '{print $1}' Vachanam-Android.apk.sha256)
+          sha256sum dist/Vachanam-Android.apk | awk '{print $1 "  Vachanam-Android.apk"}' > dist/Vachanam-Android.apk.sha256
+          SHA=$(awk '{print $1}' dist/Vachanam-Android.apk.sha256)
           echo "APK_SHA256=$SHA" >> $GITHUB_OUTPUT
           echo "Computed SHA-256: $SHA"
 
@@ -89,30 +85,37 @@ jobs:
           fi
 
       - name: Create or Update GitHub Release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: ${{ steps.tag_gen.outputs.TAG_NAME }}
-          name: "Vachanam Release ${{ steps.tag_gen.outputs.TAG_NAME }}"
-          body: |
-            Automated over-the-air update release for Vachanam.
-            
-            ### Changes in this build
-            - Commit: ${{ github.sha }}
-            - Ref: ${{ github.ref }}
-            
-            ### Verification Checksum (SHA-256)
-            ```text
-            ${{ steps.checksum.outputs.APK_SHA256 }}  Vachanam-Android.apk
-            ```
-            
-            ### How to Auto-Update on Android
-            - If you use **Obtainium**: Updates will be detected and installed automatically on your device.
-            - Direct download: Download `Vachanam-Android.apk` below and open it to update.
-          files: |
-            dist/Vachanam-Android.apk
-            dist/Vachanam-Android.apk.sha256
-          generate_release_notes: true
-          draft: false
-          prerelease: false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.tag_gen.outputs.TAG_NAME }}
+          APK_SHA256: ${{ steps.checksum.outputs.APK_SHA256 }}
+        run: |
+          cat << 'EOF' > release_body.md
+          Automated over-the-air update release for Vachanam.
+
+          ### Changes in this build
+          - Commit: ${{ github.sha }}
+          - Ref: ${{ github.ref }}
+
+          ### Verification Checksum (SHA-256)
+          ```text
+          EOF
+          echo "${APK_SHA256}  Vachanam-Android.apk" >> release_body.md
+          cat << 'EOF' >> release_body.md
+          ```
+
+          ### How to Auto-Update on Android
+          - If you use **Obtainium**: Updates will be detected and installed automatically on your device.
+          - Direct download: Download `Vachanam-Android.apk` below and open it to update.
+          EOF
+
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release upload "$TAG_NAME" dist/Vachanam-Android.apk dist/Vachanam-Android.apk.sha256 --clobber
+            gh release edit "$TAG_NAME" --title "Vachanam Release $TAG_NAME" --notes-file release_body.md
+          else
+            gh release create "$TAG_NAME" dist/Vachanam-Android.apk dist/Vachanam-Android.apk.sha256 \
+              --title "Vachanam Release $TAG_NAME" \
+              --notes-file release_body.md \
+              --generate-notes
+          fi
