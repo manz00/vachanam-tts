@@ -28,7 +28,8 @@ Official, ready-to-install precompiled packages are automatically built on every
 | OS / Device | Package Format | Download | Install Notes |
 | :--- | :--- | :--- | :--- |
 | 🤖 **Android (12+)** | `Vachanam-Android.apk` | [**Download Android APK**](https://github.com/manz00/vachanam-tts/releases/latest) | Compatible with **Obtainium** for automatic over-the-air updates. |
-| 🍏 **macOS (Apple Silicon)** | `Vachanam-MacCatalyst.zip` | [**Download macOS App**](https://github.com/manz00/vachanam-tts/releases/latest) | Unzip `Vachanam.app` and drag into `/Applications`. |
+| 🍏 **macOS (Apple Silicon)** | `Vachanam-macOS.dmg` | [**Download macOS DMG**](https://github.com/manz00/vachanam-tts/releases/latest) | Apple Disk Image: open `.dmg` and drag `Vachanam.app` into `/Applications`. |
+| 🍏 **macOS (Portable)** | `Vachanam-MacCatalyst.zip` | [**Download macOS Zip**](https://github.com/manz00/vachanam-tts/releases/latest) | Standalone uncompressed app bundle archive. |
 
 > [!TIP]
 > All build artifacts, previous version archives, and SHA-256 integrity checksums are available on the [Releases Page](https://github.com/manz00/vachanam-tts/releases).

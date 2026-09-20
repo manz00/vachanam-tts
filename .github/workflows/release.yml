@@ -84,15 +84,25 @@ jobs:
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: Package Mac Catalyst App & Compute Checksum
+      - name: Package Mac Catalyst App & DMG Installer
         run: |
           mkdir -p dist
           APP_PATH=$(find ./DerivedData -name "Vachanam.app" -type d | head -n 1)
           if [ -d "$APP_PATH" ]; then
+            # 1. Create .zip package
             cd "$(dirname "$APP_PATH")"
             zip -r -y "${GITHUB_WORKSPACE}/dist/Vachanam-MacCatalyst.zip" "Vachanam.app"
+
+            # 2. Create native .dmg installer package
+            mkdir -p "${GITHUB_WORKSPACE}/dmg_staging"
+            cp -R "$APP_PATH" "${GITHUB_WORKSPACE}/dmg_staging/"
+            ln -s /Applications "${GITHUB_WORKSPACE}/dmg_staging/Applications"
+            hdiutil create -volname "Vachanam" -srcfolder "${GITHUB_WORKSPACE}/dmg_staging" -ov -format UDZO "${GITHUB_WORKSPACE}/dist/Vachanam-macOS.dmg"
+            rm -rf "${GITHUB_WORKSPACE}/dmg_staging"
+
             cd "${GITHUB_WORKSPACE}/dist"
             shasum -a 256 Vachanam-MacCatalyst.zip > Vachanam-MacCatalyst.zip.sha256
+            shasum -a 256 Vachanam-macOS.dmg > Vachanam-macOS.dmg.sha256
           fi
 
       - name: Upload Apple Artifact
@@ -100,6 +110,8 @@ jobs:
         with:
           name: apple-release-package
           path: |
+            dist/Vachanam-macOS.dmg
+            dist/Vachanam-macOS.dmg.sha256
             dist/Vachanam-MacCatalyst.zip
             dist/Vachanam-MacCatalyst.zip.sha256
 
@@ -142,11 +154,12 @@ jobs:
           cat << 'EOF' > release_body.md
           ## Vachanam Precompiled Packages
 
-          Automated universal build for Android and Apple (Mac Catalyst).
+          Automated universal build for Android and Apple (macOS & Mac Catalyst).
 
           ### 📦 Download Packages
           - 🤖 **Android APK**: [`Vachanam-Android.apk`](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_gen.outputs.TAG_NAME }}/Vachanam-Android.apk)
-          - 🍏 **macOS App**: [`Vachanam-MacCatalyst.zip`](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_gen.outputs.TAG_NAME }}/Vachanam-MacCatalyst.zip)
+          - 🍏 **macOS Disk Image (DMG)**: [`Vachanam-macOS.dmg`](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_gen.outputs.TAG_NAME }}/Vachanam-macOS.dmg)
+          - 🍏 **macOS Portable Zip**: [`Vachanam-MacCatalyst.zip`](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_gen.outputs.TAG_NAME }}/Vachanam-MacCatalyst.zip)
 
           ### 🔒 Verification Checksums (SHA-256)
           ```text
@@ -157,10 +170,10 @@ jobs:
 
           ### 🔄 Over-the-Air Auto-Updates
           - **Android (Obtainium)**: Add `https://github.com/${{ github.repository }}` in Obtainium to receive background auto-updates.
-          - **Manual**: Download and install the latest APK or Mac zip anytime from this release.
+          - **Manual**: Download and install the latest APK or Mac DMG anytime from this release.
           EOF
 
-          FILES=(dist/Vachanam-Android.apk dist/Vachanam-Android.apk.sha256 dist/Vachanam-MacCatalyst.zip dist/Vachanam-MacCatalyst.zip.sha256)
+          FILES=(dist/Vachanam-Android.apk dist/Vachanam-Android.apk.sha256 dist/Vachanam-macOS.dmg dist/Vachanam-macOS.dmg.sha256 dist/Vachanam-MacCatalyst.zip dist/Vachanam-MacCatalyst.zip.sha256)
 
           if gh release view "$TAG_NAME" >/dev/null 2>&1; then
             gh release upload "$TAG_NAME" "${FILES[@]}" --clobber
