@@ -36,9 +36,15 @@ jobs:
 
       - name: Build Android Release APK
         run: |
-          set -eo pipefail
           cd VachanamAndroid
-          ./gradlew assembleRelease --stacktrace --no-daemon 2>&1 | tee ../build.log
+          if [ ! -f debug.keystore ]; then
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+          ./gradlew assembleRelease --stacktrace --no-daemon 2>&1 | tee ../build.log || {
+            echo "::error title=Gradle Build Failed::assembleRelease returned non-zero"
+            tail -n 120 ../build.log
+            exit 1
+          }
 
       - name: Upload Build Log
         if: always()
