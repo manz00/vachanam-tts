@@ -205,8 +205,8 @@ graph TD
       - `-skipPackageSignatureValidation`
       - `-packageFingerprintPolicy warn`
       - `-packageSigningEntityPolicy warn`
-    - **Swift Package Manager Caching**: Added GitHub Actions SPM caching for `DerivedData/SourcePackages` keyed on `Package.swift` hashes to eliminate redundant network fetches.
-    - **Dual-Mode Unit Testing**: Configured native Mac Catalyst execution for zero-latency test execution on macOS runners, with dynamic simulator fallback (`xcrun simctl list devices available`) avoiding rigid hardcoded device name failures.
+    - **DerivedData Isolation & Resilient SPM Resolution**: Configured isolated `-derivedDataPath ./DerivedData/MacCatalyst` across both CI and Release workflows to prevent cache collision/corruption (exit code 74), with automated log capture (`tail -n 120`) and artifact preservation on failure.
+    - **Dual-Mode Headless Execution**: Configured Mac Catalyst compilation for desktop distribution, paired with headless iOS Simulator unit testing (`xcrun simctl boot "$DEVICE_ID"`) to bypass macOS WindowServer GUI constraints on headless CI runners.
     - **Dependabot Semver-Major Guards**: Configured `dependabot.yml` to ignore breaking semver-major updates to prevent inadvertent breakage of pinned GitHub Action checksums.
 
 ---

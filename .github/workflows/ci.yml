@@ -32,14 +32,6 @@ jobs:
           cd VachanamApple
           python3 generate_project.py
 
-      - name: Cache Swift PM Packages
-        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4
-        with:
-          path: DerivedData/SourcePackages
-          key: ${{ runner.os }}-spm-${{ hashFiles('VachanamApple/Packages/**/Package.swift') }}
-          restore-keys: |
-            ${{ runner.os }}-spm-
-
       - name: Build Mac Catalyst App
         run: |
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
