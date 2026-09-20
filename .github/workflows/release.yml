@@ -79,9 +79,10 @@ jobs:
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -configuration Release \
-            -destination 'platform=macOS,variant=Mac Catalyst' \
+            -destination 'platform=macOS,arch=arm64,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            ARCHS=arm64 \
             build
 
       - name: Package Mac Catalyst App & DMG Installer

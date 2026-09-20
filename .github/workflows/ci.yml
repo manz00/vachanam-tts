@@ -29,9 +29,10 @@ jobs:
         run: |
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
-            -destination 'platform=macOS,variant=Mac Catalyst' \
+            -destination 'platform=macOS,arch=arm64,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            ARCHS=arm64 \
             build
 
       - name: Run Unit Tests (iOS Simulator)
