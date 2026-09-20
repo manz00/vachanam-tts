@@ -94,7 +94,7 @@ fun SoundscapePickerSheet(
                         ) {
                             val icon: ImageVector = when (preset) {
                                 SoundscapePreset.BROWN_NOISE -> Icons.Default.GraphicEq
-                                SoundscapePreset.PINK_NOISE -> Icons.Default.Waveform
+                                SoundscapePreset.PINK_NOISE -> Icons.Default.Waves
                                 SoundscapePreset.BINAURAL_FOCUS -> Icons.Default.Psychology
                                 SoundscapePreset.SOFT_RAIN -> Icons.Default.WaterDrop
                                 SoundscapePreset.LIBRARY_AMBIENCE -> Icons.Default.LocalLibrary

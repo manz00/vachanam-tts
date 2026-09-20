@@ -8,6 +8,7 @@ val SurfaceElevated = Color(0xFF1F2A3C)
 val WarmAmber = Color(0xFFF59E0B)
 val VibrantTeal = Color(0xFF14B8A6)
 val SoftRed = Color(0xFFEF4444)
+val CoralRed = Color(0xFFEF4444)
 
 val HighlightYellow = Color(0xFFFFE040).copy(alpha = 0.35f)
 val HighlightBlue = Color(0xFF3B82F6).copy(alpha = 0.30f)

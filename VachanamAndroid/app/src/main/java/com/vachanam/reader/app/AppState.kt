@@ -131,6 +131,14 @@ class AppState(
         _selectedTab.value = "library"
     }
 
+    fun play() {
+        ttsController.play()
+    }
+
+    fun pause() {
+        ttsController.pause()
+    }
+
     private fun copyBenchmarkAssetToInternal(): File? {
         return try {
             val outFile = File(context.filesDir, "The_Ultimate_Multi_Discipline_TTS_Benchmark.pdf")
