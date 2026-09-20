@@ -43,11 +43,10 @@ jobs:
           echo "Starting assembleRelease..."
           ./gradlew assembleRelease --stacktrace --no-daemon > build_output.txt 2>&1 || BUILD_STATUS=$?
           if [ "${BUILD_STATUS:-0}" -ne 0 ]; then
-            ERR_MSG=$(grep -i -E '(^e: |error: |compilation error)' build_output.txt | head -n 3 | tr '\n' ' ' | sed 's/\"//g' | cut -c 1-250)
-            if [ -z "$ERR_MSG" ]; then
-              ERR_MSG=$(grep -E 'Caused by:' build_output.txt | head -n 3 | tr '\n' ' ' | sed 's/\"//g' | cut -c 1-250)
-            fi
-            echo "::error title=Kotlin Compilation Failed::$ERR_MSG"
+            grep -i -E '(^e: |error: |compilation error)' build_output.txt | head -n 10 | while IFS= read -r err_line; do
+              clean_err=$(echo "$err_line" | tr '\r\n' ' ' | sed 's/\"//g')
+              echo "::error title=Compiler Error::$clean_err"
+            done
             echo "====== BUILD OUTPUT TAIL (100 lines) ======"
             tail -n 100 build_output.txt
             echo "==========================================="

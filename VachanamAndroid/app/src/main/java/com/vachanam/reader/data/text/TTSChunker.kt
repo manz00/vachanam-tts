@@ -35,9 +35,11 @@ class TTSChunker(
                 else -> 0.35
             }
 
+            val cId = currentChunkID++
             chunks.add(
                 TTSChunk(
-                    chunkID = currentChunkID++,
+                    chunkID = cId,
+                    id = cId,
                     sentenceIDs = currentSentenceIDs.toList(),
                     wordIDs = currentWordIDs.toList(),
                     primaryPageIndex = primaryPage,

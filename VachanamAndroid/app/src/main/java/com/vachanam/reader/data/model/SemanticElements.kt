@@ -1,8 +1,8 @@
 package com.vachanam.reader.data.model
 
 data class SemanticBlock(
-    val id: Int, // Same as blockID
     val blockID: Int,
+    val id: Int = blockID,
     val type: BlockType,
     val level: Int = 1,
     val marker: String? = null,
@@ -19,8 +19,8 @@ data class TextRange(
 }
 
 data class SemanticWord(
-    val id: Int, // Same as globalWordID
     val globalWordID: Int,
+    val id: Int = globalWordID,
     val text: String,
     val originalText: String = text,
     var spokenText: String? = null,
@@ -35,8 +35,8 @@ data class SemanticWord(
 )
 
 data class SemanticSentence(
-    val id: Int, // Same as sentenceID
     val sentenceID: Int,
+    val id: Int = sentenceID,
     val paragraphID: Int,
     val blockID: Int = paragraphID,
     val blockType: BlockType = BlockType.PARAGRAPH,
@@ -54,15 +54,15 @@ data class SemanticSentence(
 }
 
 data class SemanticParagraph(
-    val id: Int, // Same as paragraphID
     val paragraphID: Int,
+    val id: Int = paragraphID,
     val pageIndex: Int,
     val sentenceIDs: List<Int>
 )
 
 data class TTSChunk(
-    val id: Int, // Same as chunkID
     val chunkID: Int,
+    val id: Int = chunkID,
     val sentenceIDs: List<Int>,
     val wordIDs: List<Int>,
     val primaryPageIndex: Int = 0,
