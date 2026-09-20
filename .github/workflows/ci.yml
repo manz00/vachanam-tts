@@ -79,9 +79,9 @@ jobs:
       - name: Run Unit Tests (iOS Simulator)
         run: |
           set -o pipefail
-          DEVICE_ID=$(xcrun simctl list devices available | grep -E "iPad|iPhone" | head -n 1 | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/')
+          DEVICE_ID=$(xcrun simctl list devices available | grep -i "iPad" | head -n 1 | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/')
           if [ -n "$DEVICE_ID" ]; then
-            echo "Booting iOS Simulator ($DEVICE_ID)..."
+            echo "Booting iPad Simulator ($DEVICE_ID)..."
             xcrun simctl boot "$DEVICE_ID" || true
             DEST="platform=iOS Simulator,id=$DEVICE_ID"
           else
