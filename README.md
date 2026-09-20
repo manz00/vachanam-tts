@@ -21,6 +21,20 @@ The project is architected as two native, self-contained platform implementation
 
 ---
 
+## 📥 Precompiled Packages
+
+Official, ready-to-install precompiled packages are automatically built on every update and published via [GitHub Releases](https://github.com/manz00/vachanam-tts/releases):
+
+| OS / Device | Package Format | Download | Install Notes |
+| :--- | :--- | :--- | :--- |
+| 🤖 **Android (12+)** | `Vachanam-Android.apk` | [**Download Android APK**](https://github.com/manz00/vachanam-tts/releases/latest) | Compatible with **Obtainium** for automatic over-the-air updates. |
+| 🍏 **macOS (Apple Silicon)** | `Vachanam-MacCatalyst.zip` | [**Download macOS App**](https://github.com/manz00/vachanam-tts/releases/latest) | Unzip `Vachanam.app` and drag into `/Applications`. |
+
+> [!TIP]
+> All build artifacts, previous version archives, and SHA-256 integrity checksums are available on the [Releases Page](https://github.com/manz00/vachanam-tts/releases).
+
+---
+
 ## Repository Structure
 
 ```

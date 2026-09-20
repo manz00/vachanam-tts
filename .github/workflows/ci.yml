@@ -25,14 +25,31 @@ jobs:
           cd VachanamApple
           python3 generate_project.py
 
-      - name: Run Mac Catalyst Tests
+      - name: Build Mac Catalyst
         run: |
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -destination 'platform=macOS,variant=Mac Catalyst' \
-            -only-testing:VachanamTests \
+            -derivedDataPath ./DerivedData \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            -quiet test
+            build
+
+      - name: Run Unit Tests (iOS Simulator)
+        run: |
+          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
+            -scheme Vachanam \
+            -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' \
+            -only-testing:VachanamTests \
+            -derivedDataPath ./DerivedData \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            test || \
+          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
+            -scheme Vachanam \
+            -destination 'platform=iOS Simulator,OS=latest,name=iPhone 16' \
+            -only-testing:VachanamTests \
+            -derivedDataPath ./DerivedData \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            test
 
   test-android:
     name: Android Unit Tests
