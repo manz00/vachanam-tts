@@ -16,11 +16,21 @@ final class AppStateLifecycleTests: XCTestCase {
         super.setUp()
         AppState.shared.closeCurrentDocument()
         PlaybackCoordinator.shared.stop()
+        PlaybackCoordinator.shared.unloadDocument()
+        // Clean tracker state for the benchmark document to prevent cross-test pollution
+        let benchmarkURL = DocumentLibraryView.ensureBenchmarkDocumentExists()
+        ReadingProgressTracker.shared.removeRecord(path: benchmarkURL.path)
+        // Reset UserDefaults keys that tests may have set
+        UserDefaults.standard.removeObject(forKey: "vachanam_last_opened_document_path")
+        UserDefaults.standard.removeObject(forKey: "vachanam_has_launched_before")
     }
     
     override func tearDown() {
         AppState.shared.closeCurrentDocument()
         PlaybackCoordinator.shared.stop()
+        PlaybackCoordinator.shared.unloadDocument()
+        let benchmarkURL = DocumentLibraryView.ensureBenchmarkDocumentExists()
+        ReadingProgressTracker.shared.removeRecord(path: benchmarkURL.path)
         super.tearDown()
     }
     

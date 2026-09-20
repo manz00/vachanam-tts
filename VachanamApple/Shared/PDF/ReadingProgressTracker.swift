@@ -8,6 +8,11 @@
 import Foundation
 import Combine
 
+// MARK: - Path Normalization
+private func normalizedPath(for url: URL) -> String {
+    url.standardizedFileURL.path
+}
+
 public struct ReadingRecord: Identifiable, Codable, Equatable, Hashable {
     public var id: String { documentPath }
     public let documentPath: String
@@ -74,7 +79,7 @@ public class ReadingProgressTracker: ObservableObject {
         lastWordID: Int? = nil,
         lastSentenceID: Int? = nil
     ) {
-        let path = documentURL.path
+        let path = normalizedPath(for: documentURL)
         let speed = max(wpm, 60)
         let estMinutes = remainingWords > 0 ? (remainingWords / speed) : max((totalPages - currentPage - 1) * 2, 0)
         
@@ -121,7 +126,8 @@ public class ReadingProgressTracker: ObservableObject {
     }
     
     public func record(for documentURL: URL) -> ReadingRecord? {
-        history.first { $0.documentPath == documentURL.path }
+        let normalized = normalizedPath(for: documentURL)
+        return history.first { $0.documentPath == normalized }
     }
     
     public func lastPage(for documentURL: URL) -> Int {
@@ -137,10 +143,11 @@ public class ReadingProgressTracker: ObservableObject {
     }
     
     public func updatePath(oldPath: String, newURL: URL) {
-        if let idx = history.firstIndex(where: { $0.documentPath == oldPath }) {
+        let normalizedOld = URL(fileURLWithPath: oldPath).standardizedFileURL.path
+        if let idx = history.firstIndex(where: { $0.documentPath == normalizedOld }) {
             let old = history[idx]
             let updated = ReadingRecord(
-                documentPath: newURL.path,
+                documentPath: normalizedPath(for: newURL),
                 title: old.title,
                 currentPage: old.currentPage,
                 totalPages: old.totalPages,
@@ -155,7 +162,8 @@ public class ReadingProgressTracker: ObservableObject {
     }
     
     public func removeRecord(path: String) {
-        history.removeAll { $0.documentPath == path }
+        let normalized = URL(fileURLWithPath: path).standardizedFileURL.path
+        history.removeAll { $0.documentPath == normalized }
         saveHistory()
     }
     

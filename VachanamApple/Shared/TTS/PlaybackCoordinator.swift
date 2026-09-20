@@ -176,6 +176,19 @@ public class PlaybackCoordinator: ObservableObject {
         }
     }
     
+    /// Fully resets document and cursor state. Call after stop() to prevent stale
+    /// activeSemanticDocument from leaking into saveCurrentProgress() in subsequent operations.
+    public func unloadDocument() {
+        activeSemanticDocument = nil
+        clearCursor()
+        currentChunkID = nil
+        currentSentenceID = nil
+        currentWordID = nil
+        visiblePageIndex = 0
+        playbackMode = .liveSynthesis
+        preGeneratedManifest = nil
+    }
+    
     // MARK: - Visible Page Synchronization
     
     public func setVisiblePageIndex(_ pageIndex: Int) {
