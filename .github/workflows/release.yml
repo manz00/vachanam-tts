@@ -5,7 +5,15 @@ on:
     branches: [ main ]
     tags:
       - 'v*'
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'docs/**'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -83,6 +91,14 @@ jobs:
           cd VachanamApple
           python3 generate_project.py
 
+      - name: Cache Swift Package Manager Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ./DerivedData/SourcePackages
+          key: spm-release-${{ runner.os }}-${{ hashFiles('VachanamApple/Vachanam.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'VachanamApple/Packages/kokoro-coreml/swift-tts/Package.resolved', 'VachanamApple/Packages/kokoro-coreml/MisakiSwift/Package.resolved') }}
+          restore-keys: |
+            spm-release-${{ runner.os }}-
+
       - name: Build Mac Catalyst App
         run: |
           set -o pipefail
@@ -97,8 +113,13 @@ jobs:
             -skipPackageSignatureValidation \
             -packageFingerprintPolicy warn \
             -packageSigningEntityPolicy warn \
-            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
-            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=YES \
             build 2>&1 | tee "${GITHUB_WORKSPACE}/xcodebuild_release.log" || {
               EXIT_CODE=$?
               echo "::error title=Xcodebuild Release Failed::$(grep -E 'error:|fatal:' "${GITHUB_WORKSPACE}/xcodebuild_release.log" | tail -n 10 | tr '\n' ' ')"

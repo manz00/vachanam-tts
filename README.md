@@ -38,7 +38,7 @@ Official, ready-to-install precompiled packages are automatically built on every
 
 ## Repository Structure
 
-```
+```text
 vachanam-tts/
 ├── VachanamApple/              # Native Apple (iPadOS & Mac Catalyst) Swift application
 │   ├── README.md               # Apple user guide, features, keyboard shortcuts, hardware tiers
@@ -63,7 +63,6 @@ vachanam-tts/
 │   └── settings.gradle.kts     # Gradle settings
 ├── README.md                   # Monorepo overview & platform directory hub (this document)
 ├── TECHNICAL.md                # Cross-platform shared architecture & mathematical speech grammar
-├── AGENTS.md                   # Repository memory, project integrity rules & test commands
 └── LICENSE                     # MIT License
 ```
 
@@ -72,6 +71,7 @@ vachanam-tts/
 ## Quickstart: Build & Run
 
 ### 🍏 Apple (iPadOS & Mac Catalyst)
+
 ```bash
 cd VachanamApple
 
@@ -87,11 +87,13 @@ xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=m
 # 4. Run Unit Tests (iPad Simulator)
 xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' -only-testing:VachanamTests -quiet test
 ```
+
 *For in-depth Apple documentation, see [VachanamApple/README.md](VachanamApple/README.md).*
 
 ---
 
 ### 🤖 Android (Kotlin + Jetpack Compose)
+
 ```bash
 cd VachanamAndroid
 
@@ -104,6 +106,7 @@ cd VachanamAndroid
 # 3. Install on connected device/emulator
 ./gradlew installDebug
 ```
+
 *For in-depth Android documentation, see [VachanamAndroid/README.md](VachanamAndroid/README.md).*
 
 ---
@@ -115,12 +118,14 @@ Vachanam provides an automated continuous delivery pipeline via **GitHub Actions
 ### 🤖 Android Devices (Phones, Tablets & E-Ink)
 
 #### Option 1: Automatic Over-the-Air Updates via Obtainium (Recommended)
+
 1. Install [Obtainium](https://github.com/ImranR98/Obtainium) on your Android device (an open-source app manager that tracks GitHub releases).
 2. Tap **Add App** and enter the repository URL: `https://github.com/manz00/vachanam-tts`.
 3. In app settings within Obtainium, enable **Background Updates** / **Auto-Install**.
 4. **Whenever you push an update to `main`**, GitHub Actions builds `Vachanam-Android.apk` and releases it. Obtainium automatically detects the new release, downloads it, and prompts to update your device.
 
 #### Option 2: Direct Local Install via ADB
+
 ```bash
 # Connect Android device via USB with USB Debugging enabled (or wireless adb)
 cd VachanamAndroid
@@ -132,6 +137,7 @@ cd VachanamAndroid
 ### 🍏 Apple Devices (iPad, iPhone & Mac)
 
 #### Option 1: Over-the-Air Background Updates via TestFlight (iPad & iPhone)
+
 1. iOS and iPadOS enforce Apple code signing requirements for over-the-air installation.
 2. In **App Store Connect**, generate an **App Store Connect API Key** (`Key ID`, `Issuer ID`, `.p8` file).
 3. Add these credentials to GitHub Repository Secrets (`APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_BASE64`).
@@ -139,9 +145,11 @@ cd VachanamAndroid
 5. In the **TestFlight app** on your iPad, open Vachanam and toggle **Automatic Updates: ON**. Your iPad will automatically update silently in the background whenever you push updates.
 
 #### Option 2: Mac (Mac Catalyst) Direct Install
+
 - GitHub Actions packages `Vachanam-MacCatalyst.zip` and attaches it directly to each GitHub Release. Download, unzip, and drag `Vachanam.app` into `/Applications`.
 
 #### Option 3: Direct USB / Wi-Fi Install via Xcode
+
 - Connect iPad via USB-C or Wi-Fi pairing.
 - Open `VachanamApple/Vachanam.xcodeproj` in Xcode, select your iPad as destination, and hit **Run** (`⌘R`).
 

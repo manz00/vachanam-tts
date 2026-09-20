@@ -3,111 +3,57 @@ name: CI
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'docs/**'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'docs/**'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test-apple:
-    name: Apple Tests (Mac Catalyst & Unit Tests)
-    runs-on: macos-15
+  # ============================================================================
+  # 1. Path Filter: Detect changed files to avoid spinning up unnecessary runners
+  # ============================================================================
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      android: ${{ steps.filter.outputs.android }}
+      apple: ${{ steps.filter.outputs.apple }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Select Latest Xcode
-        run: |
-          echo "=== Available Xcode installations ==="
-          ls -d /Applications/Xcode* || true
-          XCODE_APP=$(find /Applications -maxdepth 1 -name "Xcode*.app" | sort -V | tail -n 1)
-          if [ -n "$XCODE_APP" ]; then
-            echo "Selecting $XCODE_APP"
-            sudo xcode-select -s "$XCODE_APP"
-          fi
-          xcodebuild -version
-          swift --version
+      - name: Check Changed Paths
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: filter
+        with:
+          filters: |
+            android:
+              - 'VachanamAndroid/**'
+              - '.github/workflows/ci.yml'
+            apple:
+              - 'VachanamApple/**'
+              - '.github/workflows/ci.yml'
 
-      - name: Regenerate Xcode Project
-        run: |
-          cd VachanamApple
-          python3 generate_project.py
-
-      - name: Build Mac Catalyst App
-        run: |
-          set -o pipefail
-          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
-            -scheme Vachanam \
-            -destination 'platform=macOS,variant=Mac Catalyst' \
-            -derivedDataPath ./DerivedData/MacCatalyst \
-            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
-            -skipPackagePluginValidation \
-            -skipMacroValidation \
-            -skipPackageSignatureValidation \
-            -packageFingerprintPolicy warn \
-            -packageSigningEntityPolicy warn \
-            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
-            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
-            build 2>&1 | tee /tmp/xcodebuild_build.log || {
-              EXIT_CODE=$?
-              echo "::error title=Xcodebuild Failed::$(grep -E 'error:|fatal:' /tmp/xcodebuild_build.log | tail -n 10 | tr '\n' ' ')"
-              exit $EXIT_CODE
-            }
-
-      - name: Run Unit Tests (Mac Catalyst)
-        run: |
-          set -o pipefail
-          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
-            -scheme Vachanam \
-            -destination 'platform=macOS,variant=Mac Catalyst' \
-            -only-testing:VachanamTests \
-            -derivedDataPath ./DerivedData/MacCatalyst \
-            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
-            -skipPackagePluginValidation \
-            -skipMacroValidation \
-            -skipPackageSignatureValidation \
-            -packageFingerprintPolicy warn \
-            -packageSigningEntityPolicy warn \
-            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
-            test 2>&1 | tee /tmp/xcodebuild_test.log || {
-              EXIT_CODE=$?
-              echo "::error title=Mac Catalyst Tests Failed::$(grep -E 'error:|fatal:|failed' /tmp/xcodebuild_test.log | tail -n 10 | tr '\n' ' ')"
-              exit $EXIT_CODE
-            }
-
-      - name: Run Unit Tests (iOS Simulator)
-        run: |
-          set -o pipefail
-          DEVICE_ID=$(xcrun simctl list devices available | grep -i "iPad" | head -n 1 | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/')
-          if [ -n "$DEVICE_ID" ]; then
-            echo "Booting iPad Simulator ($DEVICE_ID)..."
-            xcrun simctl boot "$DEVICE_ID" || true
-            DEST="platform=iOS Simulator,id=$DEVICE_ID"
-          else
-            DEST="platform=iOS Simulator,name=iPad Air 11-inch (M4)"
-          fi
-          echo "Testing with destination: $DEST"
-          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
-            -scheme Vachanam \
-            -destination "$DEST" \
-            -only-testing:VachanamTests \
-            -derivedDataPath ./DerivedData/Simulator \
-            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
-            -skipPackagePluginValidation \
-            -skipMacroValidation \
-            -skipPackageSignatureValidation \
-            -packageFingerprintPolicy warn \
-            -packageSigningEntityPolicy warn \
-            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            test 2>&1 | tee /tmp/xcodebuild_sim_test.log || {
-              EXIT_CODE=$?
-              echo "::error title=iOS Tests Failed::$(grep -E 'error:|fatal:|failed' /tmp/xcodebuild_sim_test.log | tail -n 10 | tr '\n' ' ')"
-              exit $EXIT_CODE
-            }
-
+  # ============================================================================
+  # 2. Android Unit Tests (Linux runner, 1x minute rate)
+  # ============================================================================
   test-android:
     name: Android Unit Tests
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.android == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -134,3 +80,165 @@ jobs:
             echo "::error title=Unit Tests Failed::$(grep -E -A 4 -B 1 'e: |FAILURE:|ERROR:|FAILED' ../unit_tests.log | head -n 12 | tr '\n' ' ')"
             exit 1
           fi
+
+  # ============================================================================
+  # 3. Mac Catalyst Tests (Native macOS, isolated runner, fast ~35s execution)
+  # ============================================================================
+  test-mac-catalyst:
+    name: Mac Catalyst Unit Tests
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.apple == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Select Latest Xcode
+        run: |
+          echo "=== Available Xcode installations ==="
+          ls -d /Applications/Xcode* || true
+          XCODE_APP=$(find /Applications -maxdepth 1 -name "Xcode*.app" | sort -V | tail -n 1)
+          if [ -n "$XCODE_APP" ]; then
+            echo "Selecting $XCODE_APP"
+            sudo xcode-select -s "$XCODE_APP"
+          fi
+          xcodebuild -version
+          swift --version
+
+      - name: Regenerate Xcode Project
+        run: |
+          cd VachanamApple
+          python3 generate_project.py
+
+      - name: Cache Swift PM Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ./DerivedData/SourcePackages
+          key: spm-catalyst-${{ runner.os }}-${{ hashFiles('VachanamApple/Vachanam.xcodeproj/project.pbxproj', 'VachanamApple/Packages/**/Package.swift') }}
+          restore-keys: |
+            spm-catalyst-${{ runner.os }}-
+
+      - name: Resolve Package Dependencies
+        run: |
+          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
+            -scheme Vachanam \
+            -resolvePackageDependencies \
+            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            -skipPackageSignatureValidation \
+            -packageFingerprintPolicy warn \
+            -packageSigningEntityPolicy warn
+
+      - name: Run Unit Tests (Mac Catalyst)
+        run: |
+          set -o pipefail
+          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
+            -scheme Vachanam \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
+            -only-testing:VachanamTests \
+            -derivedDataPath ./DerivedData/MacCatalyst \
+            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            -skipPackageSignatureValidation \
+            -packageFingerprintPolicy warn \
+            -packageSigningEntityPolicy warn \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=YES \
+            test 2>&1 | tee /tmp/xcodebuild_catalyst_test.log || {
+              EXIT_CODE=$?
+              echo "::error title=Mac Catalyst Tests Failed::$(grep -E 'error:|fatal:|failed' /tmp/xcodebuild_catalyst_test.log | tail -n 10 | tr '\n' ' ')"
+              exit $EXIT_CODE
+            }
+
+  # ============================================================================
+  # 4. iOS Simulator Tests (iPad Air CoreSimulator, isolated runner)
+  # ============================================================================
+  test-ios-simulator:
+    name: iOS Simulator Tests (iPad)
+    needs: [detect-changes]
+    if: (needs.detect-changes.outputs.apple == 'true' && github.event_name == 'pull_request') || github.event_name == 'workflow_dispatch'
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Select Latest Xcode
+        run: |
+          echo "=== Available Xcode installations ==="
+          ls -d /Applications/Xcode* || true
+          XCODE_APP=$(find /Applications -maxdepth 1 -name "Xcode*.app" | sort -V | tail -n 1)
+          if [ -n "$XCODE_APP" ]; then
+            echo "Selecting $XCODE_APP"
+            sudo xcode-select -s "$XCODE_APP"
+          fi
+          xcodebuild -version
+          swift --version
+
+      - name: Regenerate Xcode Project
+        run: |
+          cd VachanamApple
+          python3 generate_project.py
+
+      - name: Cache Swift PM Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ./DerivedData/SourcePackages
+          key: spm-sim-${{ runner.os }}-${{ hashFiles('VachanamApple/Vachanam.xcodeproj/project.pbxproj', 'VachanamApple/Packages/**/Package.swift') }}
+          restore-keys: |
+            spm-sim-${{ runner.os }}-
+
+      - name: Resolve Package Dependencies
+        run: |
+          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
+            -scheme Vachanam \
+            -resolvePackageDependencies \
+            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            -skipPackageSignatureValidation \
+            -packageFingerprintPolicy warn \
+            -packageSigningEntityPolicy warn
+
+      - name: Boot iPad Simulator & Run Tests
+        run: |
+          set -o pipefail
+          DEVICE_ID=$(xcrun simctl list devices available | grep -i "iPad" | head -n 1 | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/')
+          if [ -n "$DEVICE_ID" ]; then
+            echo "Booting iPad Simulator ($DEVICE_ID)..."
+            xcrun simctl boot "$DEVICE_ID" || true
+            DEST="platform=iOS Simulator,id=$DEVICE_ID"
+          else
+            DEST="platform=iOS Simulator,name=iPad Air 11-inch (M4)"
+          fi
+          echo "Testing with destination: $DEST"
+
+          xcodebuild -project VachanamApple/Vachanam.xcodeproj \
+            -scheme Vachanam \
+            -destination "$DEST" \
+            -only-testing:VachanamTests \
+            -derivedDataPath ./DerivedData/Simulator \
+            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            -skipPackageSignatureValidation \
+            -packageFingerprintPolicy warn \
+            -packageSigningEntityPolicy warn \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            test 2>&1 | tee /tmp/xcodebuild_sim_test.log || {
+              EXIT_CODE=$?
+              echo "::error title=iOS Tests Failed::$(grep -E 'error:|fatal:|failed' /tmp/xcodebuild_sim_test.log | tail -n 10 | tr '\n' ' ')"
+              exit $EXIT_CODE
+            }

@@ -32,6 +32,7 @@ graph TD
 ```
 
 ### Layer 1: Layout Coordinate Normalization
+
 - **PDF Coordinate System (Quartz 2D)**: Origin $(0, 0)$ is at the **bottom-left** corner of the page.
 - **SwiftUI / UIKit Coordinate System**: Origin $(0, 0)$ is at the **top-left** corner of the view.
 - **Transform**:
@@ -40,6 +41,7 @@ graph TD
   $$x_{\text{norm}} = \frac{x}{\text{width}}, \quad y_{\text{norm}} = \frac{y}{\text{height}}$$
 
 ### Layer 2: Semantic Text & Speech Processing
+
 1. **Word Reconstruction (`WordReconstructor.swift`)**:
    - Joins hyphenated words broken across line breaks (`probabil-` + `ity` $\to$ `probability`).
    - Preserves compound words (`state-of-the-art`, `well-known`).
@@ -55,6 +57,7 @@ graph TD
    - Groups sentences into 10–25 word `TTSChunk` items with tuned inter-sentence pauses.
 
 ### Layer 3: Audio Timeline & Synchronization
+
 - **Authoritative Playback Cursor**: Managed by `PlaybackCoordinator.swift`.
 - **Drift Compensation**: Audio timestamp telemetry keeps the visual highlight bounded to within $\pm 50\text{ ms}$ of the synthesized phoneme audio.
 - **Audio Session**: Configured for `.playback` with `.duckOthers` or `.mixWithOthers` based on ambient soundscape toggle.
@@ -223,6 +226,14 @@ graph TD
     - **URL Path Standardization**: Standardized all URL path evaluations in `ReadingProgressTracker` using `url.standardizedFileURL.path` for robust deduplication, lookup, and persistence across sandboxed container environments.
     - **Coordinator Reset (`unloadDocument`)**: Implemented `PlaybackCoordinator.unloadDocument()` to explicitly clear `activeSemanticDocument`, `activeDocumentURL`, and cursor positions, preventing stale document references from leaking into subsequent `saveCurrentProgress()` invocations across test methods.
     - **Test Lifecycle Isolation**: Enforced complete cleanup of `ReadingProgressTracker` history and UserDefaults in `setUp` and `tearDown` across `AppStateLifecycleTests`, eliminating cross-test pollution.
+29. **[AUD-33] CI Pipeline Multi-Job Separation & Runner Quota Hardening**:
+    - **Multi-Job Pipeline Decoupling**: Split unified Apple job into parallel, isolated jobs (`test-android`, `test-mac-catalyst`, and `test-ios-simulator`), eliminating cross-platform SPM lock contention and `DerivedData` cache collisions.
+    - **Runner Minute Quota Optimization**: Added top-level workflow concurrency cancellation (`cancel-in-progress: true`) and path filtering (`dorny/paths-filter@v3` and global `paths-ignore: ['**.md', 'docs/**']`), preventing macOS runners (10x billable multiplier) from executing on Android-only commits or documentation updates.
+    - **Single-Pass Mac Catalyst Execution**: Consolidated redundant `build` and `test` steps into a single `xcodebuild ... test` pass with ad-hoc signing (`CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES AD_HOC_CODE_SIGNING_ALLOWED=YES ARCHS=arm64 ONLY_ACTIVE_ARCH=YES`), cutting runner runtime and billing by ~50%.
+    - **Isolated SPM Cache Keys**: Partitioned package cache keys (`spm-catalyst-${{ runner.os }}-...` vs `spm-sim-${{ runner.os }}-...`) ensuring zero cross-platform poisoning between macOS and simulator packages.
+30. **[AUD-34] MLXUtilsLibrary Vendoring & Pull Request Simulator Gating**:
+    - **Swift 6.2 Toolchain Exit Code 74 Elimination**: Remote dependency `https://github.com/mlalma/MLXUtilsLibrary.git` declared `swift-tools-version: 6.2`, breaking Xcode 16's package resolution on GitHub Actions runners (`macos-15`). Vendored `MLXUtilsLibrary` locally under `VachanamApple/Packages/kokoro-coreml/MLXUtilsLibrary` with `swift-tools-version: 5.9`, eliminating the fatal toolchain mismatch and remote package fetch.
+    - **Simulator Runner Gating**: Gated the iPad CoreSimulator test job (`test-ios-simulator`) to execute only on Pull Requests targeting `main` or manual `workflow_dispatch`, while keeping native Mac Catalyst unit testing (~35s) active on all pushes, cutting overall macOS runner minute consumption by ~70%.
 
 ---
 

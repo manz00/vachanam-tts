@@ -8,7 +8,7 @@ Comprehensive technical specifications, coordinate models, algorithmic engines, 
 
 Vachanam processes documents across three synchronized abstraction layers:
 
-```
+```text
 ┌───────────────────────────────────────────────────────────────┐
 │              LAYER 1: COORDINATE & VIEW MAPPING               │
 │  - PDFKit Quartz 2D (origin: bottom-left, pts)                │
@@ -34,6 +34,7 @@ Vachanam processes documents across three synchronized abstraction layers:
 ```
 
 ### Coordinate Space Conversions
+
 - **PDFKit Quartz 2D**: Origin `(0, 0)` is at the bottom-left of the page. Y increases upwards.
 - **UIKit / SwiftUI Views**: Origin `(0, 0)` is at the top-left of the view. Y increases downwards.
 - **Conversion Contract**:
@@ -48,6 +49,7 @@ Vachanam processes documents across three synchronized abstraction layers:
 ## 2. Core Algorithmic Engines
 
 ### 2.1 Sentence Segmentation & Semantic Blocks (`SentenceSegmenter`, `ParagraphDetector`)
+
 - **Monotonic Global Word ID Contract**:
   Every word across the entire document receives an immutable `globalWordID` ($0, 1, 2, \dots, N$). Sentence boundaries, audio chunks, and highlight rects all point directly to this contiguous index space.
 - **Semantic Block Classification (`BlockType`)**:
@@ -59,6 +61,7 @@ Vachanam processes documents across three synchronized abstraction layers:
   - `.symbolTable`: Frontmatter notation tables and glossaries.
 
 ### 2.2 Page Furniture Detection (`PageFurnitureDetector`)
+
 - **Spatial Zones**:
   - Running Headers: top 12% of page height.
   - Running Footers: bottom 10% of page height.
@@ -71,6 +74,7 @@ Vachanam processes documents across three synchronized abstraction layers:
   Pre-analyzes candidate text in header and footer bands across the entire document; recurring strings (book/chapter titles, author names, Roman numeral frontmatter like `ii Contents`) across multiple pages are classified as `.pageHeader` and `.pageFooter`. In multi-page documents, non-recurring lines in the footer band are preserved as body text unless matching an explicit publication disclaimer or page number.
 
 ### 2.3 Mathematical Speech Normalization (`MathSpeechEngine` & `TextNormalizer`)
+
 - **Exponents & Scientific Notation**:
   - Integer powers ($10^{23}$, $x^{-34}$, $10^{-12}$) expand into natural phrases ("ten to the power of twenty three", "ten to the minus thirty four").
   - Scientific $e$-notation (`6.022e23`) normalizes to standard spoken English ("six point zero two two times ten to the twenty three").
@@ -86,6 +90,7 @@ Vachanam processes documents across three synchronized abstraction layers:
   Spoken cleanly as `link to domain.com` or `publication link`, avoiding letter-by-letter spelling of protocol tokens.
 
 ### 2.4 Audio Chunking & Acoustic Naturalness (`TTSChunker`)
+
 - **Token & Word Duration Tuning**:
   Chunks are sized to 10–25 words (1–2 sentences) to match Kokoro's fixed 128-token input limit, guaranteeing sub-2s time-to-first-audio.
 - **Minimum Word Constraint**:
@@ -100,7 +105,7 @@ Vachanam processes documents across three synchronized abstraction layers:
 Structured around the principle:
 > **PDF lines are for rendering. Sentences are for TTS. Words are for synchronization. Playback uses one authoritative global cursor.**
 
-```
+```text
                      ┌──────────────────┐
                      │    PDF / EPUB    │
                      └────────┬─────────┘
@@ -143,6 +148,7 @@ Structured around the principle:
 ```
 
 ### Core Components & Contracts
+
 1. **`PlaybackCursor`**:
    Single authoritative position tracker: `documentID`, `pageIndex`, `paragraphIndex`, `sentenceIndex`, `wordIndex`, and `globalWordID`.
 2. **`PlaybackScope`**:
@@ -160,7 +166,7 @@ Structured around the principle:
 
 ## 4. Universal Document Ingestion & Parsers
 
-```
+```text
                 Universal Input Source
       (PDF, EPUB, Markdown, Plain Text, Web URL)
                          │
@@ -177,7 +183,7 @@ Structured around the principle:
                                │            │            │
                                └─────┬──────┘            │
                                      ▼                   │
-                              WebArticleParser           │
+                               WebArticleParser           │
                                      │                   │
                                      ▼                   │
                           ParsedDocument Model ──────────┘
@@ -185,10 +191,11 @@ Structured around the principle:
                           SemanticDocumentBuilder
                                      │
                                      ▼
-                           SemanticDocument (3-Layer)
+                            SemanticDocument (3-Layer)
 ```
 
 ### 4.1 EPUB & ZIP Decompression (`EPUBParser`, `ZipArchive`)
+
 - **ARM64 Unaligned Reading**: Employs manual little-endian byte readers (`readUInt16`, `readUInt32`) in `ZipArchive` to eliminate `misaligned raw pointer` fatal errors on Apple Silicon.
 - **Chunked Dynamic Deflate**: Streams decompressions in 32 KB dynamic buffers, supporting streaming archives with general-purpose bit 3 Data Descriptors (`uncompressedSize = 0`).
 - **Path Normalization & Archive Lookup**: Resolves Windows backslashes (`\`), strips leading `./` and `/`, resolves relative components (`..`), and decodes URI percent encodings (`%20`).
@@ -196,12 +203,14 @@ Structured around the principle:
 - **Word-Gluing Prevention & HTML Entity Decoding**: Pre-converts `<br>`, `<p>`, `<div>`, `</li>`, and heading tags into newlines before stripping markup. Decodes decimal (`&#8212;`), hexadecimal (`&#x2600;`), and extended named HTML entities.
 
 ### 4.2 Plain Text & Markdown Parsers (`PlainTextParser`, `MarkdownParser`)
+
 - **Multi-Encoding Fallback Cascade**: Replaced strict UTF-8 loading with a robust decoding cascade:
   $$\text{Data} \longrightarrow \text{UTF-8} \longrightarrow \text{ISO Latin 1} \longrightarrow \text{Windows-1252} \longrightarrow \text{UTF-16} \longrightarrow \text{ASCII}$$
 - **CRLF Normalization**: Standardizes Windows `\r\n` and legacy `\r` line breaks into `\n`.
 - **Setext Heading Recognition**: Supports underline headers (`===` for Level 1, `---` for Level 2) alongside standard ATX (`#`) headings in Markdown.
 
 ### 4.3 Semantic Document Bridge (`SemanticDocumentBuilder`)
+
 - **Sentence-Aligned Virtual Page Boundaries**: Partitions non-PDF documents into virtual pages strictly at sentence boundaries, avoiding split sentence spans.
 
 ---
@@ -209,6 +218,7 @@ Structured around the principle:
 ## 5. Audio Engine & Neural Model Integration
 
 ### 5.1 On-Device TTS Models & Memory Constraints
+
 | Model | Size | Arch / Framework | Min RAM | Key Traits |
 | :--- | :--- | :--- | :--- | :--- |
 | **Apple Natural** | System | `AVSpeechSynthesizer` | 2 GB | Offline, zero-overhead, system voice catalog |
@@ -218,18 +228,22 @@ Structured around the principle:
 | **CosyVoice 3 0.5B** | ~500 MB | 4-bit Quantized MLX | 8 GB | Real-time streaming voice synthesis |
 
 ### 5.2 Neural Model Memory Lifecycle & Loaded State Architecture
-```
+
+```text
 [Cloud / Remote] ──Download──> [On-Disk Cache] ──Load──> [Unified RAM (Active Model)] ──Unload──> [On-Disk Cache]
 ```
+
 - **Unified Memory Management (`loadModel` / `unloadModel`)**: Calling `loadModel(weightsDirectory:)` verifies directory integrity, warms up the Misaki G2P phonetic lookup cache, and transitions `isLoaded = true`. Calling `unloadModel()` purges cached execution buffers, freeing RAM for multitasking.
 - **Automatic Lifecycle Synchronization**: Switching active models unloads the outgoing model and loads the incoming model asynchronously.
 - **VoiceProfileResolver**: In simulator environments or when neural weights are not yet downloaded, dynamically maps voice presets (`af_heart`, `am_michael`, `bf_emma`) to matching high-definition system voices with fine-tuned pitch and cadence.
 
 ### 5.3 Mac Audiobook Studio & iCloud Pre-Generated Pipeline
+
 - Pre-generates complete books in batch on macOS into AAC `.m4a` chapter audio and microsecond word-level timing indexes (`manifest.json`).
 - Replicates bundles across iCloud Drive (`iCloudSyncManager`) for instantaneous zero-inference playback on iPad and mobile devices via `PreGeneratedPlaybackAdapter`.
 
 ### 5.4 Ambient Focus Soundscapes Architecture
+
 - Integrated background acoustic player with 5 tailored ambient loops: **Brown Noise**, **Pink Noise**, **40Hz Binaural Beats**, **Soft Rain**, and **Library Ambience**.
 - Dedicated `AVAudioPlayer` instances with `.mixWithOthers` audio session category.
 - Automatically couples with speech narration (starts on Play, pauses on Pause, stops on Stop) with an independent **Study Mode** toggle for reading without speech narration.
@@ -322,20 +336,22 @@ Structured around the principle:
       - `Vachanam/Tests/` & `Vachanam/UITests/`: Moved test suites from root workspace into `Vachanam/`, establishing a clean 2-app workspace structure (`Vachanam/` + `VachanamAndroid/`).
     - Upgraded `generate_project.py` with explicit PBXGroup definitions for `Shared`, `iOS (iPadOS & PencilKit)`, `macOS (Mac Catalyst & Studio)`, `Tests`, `UITests`, and `Resources`.
     - Preserved single unified multi-platform Xcode project scheme `Vachanam` targeting both iOS (iPadOS) and macOS (Mac Catalyst) without duplicated compilation settings or split targets.
-18. **[AUD-19] Apple Books Reading Experience, Shelf Organization & Book Intelligence (Apple & Android)**:
+19. **[AUD-19] Apple Books Reading Experience, Shelf Organization & Book Intelligence (Apple & Android)**:
     - **Dual-Mode Reading Layout**: Built synchronized Apple Books-inspired paginated reading mode (`.paginated` using SwiftUI `TabView` on Apple and Jetpack Compose `HorizontalPager` on Android) with running chapter header, footer page count, edge-tap navigation, center-tap animated chrome hide/show, and bidirectional TTS page turns. Kept `.continuous` vertical scroll mode selectable via Appearance settings.
     - **Apple Books Theme Palettes**: Synchronized 5-theme color palettes (`Original`, `Quiet`, `Paper`, `Charcoal`, `Night`) across SwiftUI and Jetpack Compose.
     - **Library Organization & Shelves (`BookCollectionManager`)**: Built-in collections (`All`, `Reading`, `Favorites`, `Finished`) and user-created custom shelves with persistent storage and horizontal category filter pills.
     - **Document Deletion & Sandbox Sanitation**: Complete purge of local files, reading progress records, favorite/finished states, and shelf associations.
     - **Book Intelligence Preloading (`BookPreparationService`)**: Async background task analyzes book chapters, computes exact word counts, and predicts human reading time (~225 wpm) and neural audio narration time (~150 wpm).
     - **Precision Resume Toast Banner**: Floating toast on opening a document displaying current chapter position and an inline `Play` button to start TTS immediately.
-19. **[AUD-20] Unified Reading Layouts (Single Page, Two Pages, Continuous Scroll) & Universal Dynamic Theme Synchronization**:
+
+20. **[AUD-20] Unified Reading Layouts (Single Page, Two Pages, Continuous Scroll) & Universal Dynamic Theme Synchronization**:
     - **App-Dependent Architecture**: Decoupled reading layouts and color themes from file formats. `ReadingLayout` and `ReaderBackgroundTheme` are maintained globally in `ThemeManager` across both Apple (Swift) and Android (Kotlin), ensuring consistent user preferences regardless of whether reading EPUB, PDF, Markdown, Plain Text, or Web Articles.
     - **Two-Page Book Spread Mode**: Implemented `.twoPage` / `TWO_PAGE` ("Two Pages") across all document readers. Renders dual columns side-by-side with a subtle center book spine divider (`textColor` alpha 0.12), running chapter header, and dual-page indicators ("Pages X–Y of N"). Synchronized edge taps (`-2 / +2` step) and automated TTS page flips when narration advances across two-page boundaries.
     - **Dynamic PDF Theme Background Binding**: Bound native PDF viewports (`pdfView.backgroundColor` in Quartz 2D / PDFKit on Apple, and container canvas on Android) directly to `currentReaderTheme.backgroundColor`. Eliminates jarring bright white borders around PDF pages when reading under Quiet, Paper, Charcoal, or Night themes. Native PDFs also map `ReadingLayout` directly to PDF display modes (`.singlePage`, `.twoUp`, and `.singlePageContinuous`).
     - **Universal Paginated Reader View**: Replaced format-specific reader views (`EPUBPaginatedReaderView` / `EPUBPaginatedReader`) with universal `PaginatedReaderView` supporting any `SemanticDocument`. Added clean text extraction toggle to PDF reader views, enabling any academic PDF to be read either in original fixed-layout or in reflowed clean typography with font resizing, OpenDyslexic, bionic reading, and full 3-layout pagination.
     - **Scrubber & Controls Parity**: Updated `ReaderScrubberBar` and top navigation bars across iOS, macOS, and Android to support 3-layout cycling, dual-page progress labeling, and seamless PDF mode switching.
-20. **[AUD-21] In-Flow Multi-Format Image Ingestion, Apple Books Page Bounds & Keyboard Navigation Suite (Apple & Android)**:
+
+21. **[AUD-21] In-Flow Multi-Format Image Ingestion, Apple Books Page Bounds & Keyboard Navigation Suite (Apple & Android)**:
     - **In-Flow Image Extraction & Semantic Pipeline**:
       - `EPUBParser`: Implemented full archive binary extraction for `<img>` and SVG `<image xlink:href>` tags. Resolved paths relative to chapter directories and manifest tables, extracting image data and preserving in-flow reading order.
       - `MarkdownParser`: Extracted `![alt](url_or_path)` into discrete `ParsedBlock` items with alt captions and resolved URLs.
@@ -349,12 +365,14 @@ Structured around the principle:
       - Wired comprehensive `.onKeyPress` listeners and NotificationCenter publishers for all reading layouts: Left/Right arrows, Up/Down arrows, Page Up/Down, Space/Shift-Space, Home/End, Command-J.
       - Added single-key shortcuts: `c` (cycle reading layout), `t` (cycle theme), `p` (play/pause TTS), `[` and `]` (previous/next chapter), `?` (shortcuts cheatsheet), `Esc` (return to library).
       - Enforced spread-aligned stepping (`pageStep = 2`) in two-page mode to prevent asymmetric spread splits.
-21. **[AUD-22] Two-Page Spread Geometry & Virtual Page Budget Calibration (Apple & Android)**:
+
+22. **[AUD-22] Two-Page Spread Geometry & Virtual Page Budget Calibration (Apple & Android)**:
     - **Two-Page Spread Column Width Math**: Fixed two-page column width computation to `pageWidth = (size.width - spineWidth) / 2` with `spineWidth = 14`, ensuring exact viewport fit without horizontal clipping or bleed.
     - **Floating Chrome Insets**: Added dynamic bottom safe insets in `PaginatedReaderView` so text and footers remain unobscured when the scrubber and playback bars are visible.
     - **Reflowable Virtual Page Calibration**: Calibrated `targetWordsPerVirtualPage` from 350 to **100 words** across `SemanticDocumentBuilder.swift` and `SemanticDocumentBuilder.kt`, preventing excessive 50–60 line overflows in two-page mode and eliminating awkward vertical scrolling.
     - **Responsive Two-Page Typography**: Applied `0.80x` body font scaling and tightened line spacing (3pt) in `PaginatedReaderView` to ensure all lines fit comfortably within screen bounds.
-22. **[AUD-23] Automated Push-to-Deploy CI/CD Pipelines & Security Hardening (Apple & Android)**:
+
+23. **[AUD-23] Automated Push-to-Deploy CI/CD Pipelines & Security Hardening (Apple & Android)**:
     - **Automated Continuous Delivery Workflows**:
       - Added `.github/workflows/ci.yml`: Runs Mac Catalyst XCTest suite and Android unit tests on all PRs and pushes.
       - Added `.github/workflows/release-android.yml`: Automatically builds signed APK on push to `main` and publishes a GitHub Release tagged with build numbers for instant over-the-air auto-updates via Obtainium or direct APK download.
@@ -387,7 +405,7 @@ Structured around the principle:
     - **Android R8 Release Minification (`build.gradle.kts`)**:
       - Enabled `isMinifyEnabled = true` and `isShrinkResources = true` in the release build type with debug key fallback signing for immediate sideloading and OTA updates.
 
-  - **`[AUD-25]` Reader UI/UX Layout Boundary & Adversarial Regression Suite**:
+25. **[AUD-25] Reader UI/UX Layout Boundary & Adversarial Regression Suite**:
     - **Layout Boundary Edge-Case Suite (`LayoutBoundaryEdgeCaseTests.swift`)**:
       - **Empty Documents (0 Blocks)**: Handled gracefully by `SemanticDocumentBuilder`, emitting 1 blank virtual page with 0 sentences and 0 words rather than throwing index out of bounds.
       - **Single Sentence Documents**: Verified across layouts with correct 1-page bounds.
@@ -406,7 +424,7 @@ Structured around the principle:
       - `VoiceTestingSandboxView`: Added automatic purging of old temporary report JSON and synthesized WAV files upon re-execution and `.onDisappear`.
       - `TTSAudioCache`: Set `URLResourceValues.isExcludedFromBackup = true` on the disk cache directory to prevent transient neural audio artifacts from consuming user iCloud backup storage quotas.
 
-  - **`[AUD-26]` Android Release Pipeline Hardening & Obtainium Substantial Release Resolution**:
+26. **[AUD-26] Android Release Pipeline Hardening & Obtainium Substantial Release Resolution**:
     - **Obtainium Discovery & Substantial Release**: Resolved Obtainium's *"could not find substantial release"* error by completing end-to-end automated builds of signed release APKs (`Vachanam-Android.apk`) attached with SHA-256 checksums to GitHub Releases (`v1.0.x`).
     - **Production Source Verification**: Fixed Kotlin compiler errors that escaped unit testing:
       - Corrected `sentencesByPage` grouping logic in `SemanticDocument.kt`.
@@ -417,7 +435,7 @@ Structured around the principle:
       - Replaced non-existent `Waveform` icon with `Icons.Default.Waves` for pink noise in `SoundscapePickerSheet.kt`.
     - **CI Diagnostic Annotations**: Configured line-by-line compiler error annotations in `release-android.yml` for real-time failure triage.
 
-  - **`[AUD-29]` Deterministic Apple Project Generator & Headless CI/CD Pipeline Hardening**:
+27. **[AUD-29] Deterministic Apple Project Generator & Headless CI/CD Pipeline Hardening**:
     - **Deterministic UUID Generation**: Replaced nondeterministic `uuid.uuid4()` generation in `generate_project.py` with name-based `uuid.uuid5` hashing against a fixed project namespace. Files, build items, packages, configurations, and target schemes now generate identical byte-for-byte outputs on successive runs, preventing spurious git churn and SPM fingerprint cache invalidation.
     - **Headless SPM & Package Validation Flags**: Replaced redundant `defaults write` GUI commands in CI workflows with canonical CLI flags:
       - `-skipPackagePluginValidation`
@@ -429,33 +447,44 @@ Structured around the principle:
     - **Dual-Mode Unit Testing**: Configured native Mac Catalyst execution for zero-latency test execution on macOS runners, with dynamic simulator fallback (`xcrun simctl list devices available`) avoiding rigid hardcoded device name failures.
     - **Dependabot Semver-Major Guards**: Configured `dependabot.yml` to ignore breaking semver-major updates to prevent inadvertent breakage of pinned GitHub Action checksums.
 
-  - **`[AUD-30]` SPM Swift Toolchain Decoupling & MisakiSwift Local Vendoring**:
+28. **[AUD-30] SPM Swift Toolchain Decoupling & MisakiSwift Local Vendoring**:
     - **Root Cause & Exit Code 74 Resolution**: Remote dependency `https://github.com/mattmireles/MisakiSwift` pinned `// swift-tools-version: 6.2` in its manifest, crashing Xcode 16.x runners (Swift 6.0/6.1) during package graph resolution with exit code 74.
     - **Local Package Vendoring**: Vendored `MisakiSwift` locally at `VachanamApple/Packages/kokoro-coreml/MisakiSwift` with `.package(name: "MisakiSwift", path: "../MisakiSwift")` and `swift-tools-version: 5.9`.
     - **Resource Bundle Restructuring**: Positioned dictionary data under `Sources/MisakiSwift/MisakiData` and declared `resources: [.copy("MisakiData")]`, generating SPM `Bundle.module` accessor cleanly without duplicate assets or access conflicts.
     - **Headless Build Signing**: Configured `CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES` for headless Mac Catalyst artifact builds, ensuring entitlements-bearing binaries sign cleanly on ARM64 macOS runners.
 
-  - **`[AUD-31]` CI Test Suite Optimization & Simulator Destination Specifier Fix**:
+29. **[AUD-31] CI Test Suite Optimization & Simulator Destination Specifier Fix**:
     - **Mac Catalyst Direct Unit Testing**: Integrated native Mac Catalyst unit testing (`-destination 'platform=macOS,variant=Mac Catalyst'`) into CI pipeline, reusing the warm `./DerivedData/MacCatalyst` cache from the build step for 35-second test execution.
     - **Exit Code 70 Resolution**: Fixed simulator destination string from bare `id=$DEVICE_ID` to `platform=iOS Simulator,id=$DEVICE_ID` with fallback to `name=iPad Air 11-inch (M4)`, resolving Xcode's failure to match headless CoreSimulator instances.
     - **Isolated Diagnostics**: Separated build, Mac Catalyst test, and iOS simulator test logging paths with `set -o pipefail` and GitHub Actions `::error` annotations.
 
-  - **`[AUD-32]` URL Path Normalization & XCTest Singleton State Isolation**:
+30. **[AUD-32] URL Path Normalization & XCTest Singleton State Isolation**:
     - **URL Path Standardization**: Standardized all URL path evaluations in `ReadingProgressTracker` using `url.standardizedFileURL.path` to eliminate dictionary key divergence from `/var/` vs `/private/var/` symlinks in sandboxed CI runner environments.
     - **Coordinator Reset (`unloadDocument`)**: Implemented `PlaybackCoordinator.unloadDocument()` to explicitly clear `activeSemanticDocument`, `activeDocumentURL`, and cursor positions upon teardown.
     - **Test Lifecycle Isolation**: Enforced complete cleanup of `ReadingProgressTracker` history and UserDefaults in `setUp` and `tearDown` across `AppStateLifecycleTests`.
+
+31. **[AUD-33] CI Pipeline Multi-Job Separation & Runner Quota Hardening**:
+    - **Multi-Job Decoupling**: Split unified Apple CI into independent jobs (`test-android`, `test-mac-catalyst`, `test-ios-simulator`) preventing SPM cache lock contention and DerivedData collision.
+    - **Quota Optimization**: Introduced workflow concurrency cancellation (`cancel-in-progress: true`), path filtering (`dorny/paths-filter@v3`), and documentation ignores (`paths-ignore: ['**.md', 'docs/**']`), protecting the 10x macOS billing quota.
+    - **Consolidated Execution**: Eliminated redundant standalone `build` step for Mac Catalyst in CI, executing compilation and testing in a single `xcodebuild ... test` pass with ad-hoc signing flags.
+
+32. **[AUD-34] MLXUtilsLibrary Vendoring & Pull Request Simulator Gating**:
+    - **Swift 6.2 Toolchain Exit Code 74 Elimination**: Remote dependency `https://github.com/mlalma/MLXUtilsLibrary.git` declared `swift-tools-version: 6.2`, breaking Xcode 16 on GitHub Actions runners (`macos-15`). Vendored `MLXUtilsLibrary` locally under `VachanamApple/Packages/kokoro-coreml/MLXUtilsLibrary` with `swift-tools-version: 5.9`, eliminating the fatal toolchain mismatch and remote package fetch.
+    - **Simulator Runner Gating**: Gated the iPad CoreSimulator test job (`test-ios-simulator`) to execute only on Pull Requests targeting `main` or manual `workflow_dispatch`, while keeping native Mac Catalyst unit testing (~35s) active on all pushes, cutting overall macOS runner minute consumption by ~70%.
 
 ---
 
 ## 7. Multi-Platform Build, Test & Technical Docs
 
 Detailed platform-specific technical specifications and audit histories are maintained in their respective platform directories:
-- **Apple (iPadOS & macOS)**: See [VachanamApple/TECHNICAL.md](VachanamApple/TECHNICAL.md) for Quartz 2D math, CoreML/MLX pipelines, and Apple audit entries (`[AUD-01]`..`[AUD-16]`, `[AUD-18]`, `[AUD-30]`, `[AUD-31]`).
+
+- **Apple (iPadOS & macOS)**: See [VachanamApple/TECHNICAL.md](VachanamApple/TECHNICAL.md) for Quartz 2D math, CoreML/MLX pipelines, and Apple audit entries (`[AUD-01]`..`[AUD-16]`, `[AUD-18]`, `[AUD-30]`..`[AUD-34]`).
 - **Android (12+)**: See [VachanamAndroid/TECHNICAL.md](VachanamAndroid/TECHNICAL.md) for PDFBox coordinate mapping, Android TTS integration, and Android audit entry (`[AUD-17]`).
 
 ### Build & Test Commands
 
 #### Apple (iPadOS & Mac Catalyst)
+
 ```bash
 cd VachanamApple
 
@@ -470,6 +499,7 @@ xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=i
 ```
 
 #### Android (Kotlin + Jetpack Compose)
+
 ```bash
 cd VachanamAndroid
 

@@ -12,6 +12,7 @@
 ## Key Features
 
 ### 📖 Multi-Format Universal Reader
+
 - **PDF**: Spatial word-level bounding box tracking with Quartz 2D coordinate transformation math.
 - **EPUB**: Streaming ZIP parsing with OPF manifest/spine resolution, in-flow binary image extraction (`<img>` and `<image xlink:href>`), and $O(1)$ case-insensitive hash lookups.
 - **Markdown & Plain Text**: ATX/Setext heading parsing, lists, blockquotes, inline/block image rendering (`![alt](url)`), and multi-encoding fallback cascade (`UTF-8` $\to$ `ISO-8859-1` $\to$ `Windows-1252` $\to$ `UTF-16` $\to$ `ASCII`).
@@ -19,28 +20,33 @@
 - **Virtual Pagination**: 120 FPS `LazyVStack` windowing ensuring instant scrolling across 10,000+ paragraph documents.
 
 ### ✏️ iPadOS Apple Pencil & PencilKit Integration (`iOS/`)
+
 - Continuous spatial canvas overlay for seamless Apple Pencil note-taking.
 - Floating annotation toolbar with Pen, Highlighter, Eraser, and Shape tools.
 - Sticky notes, text boxes, and full undo/redo stack.
 - Annotation export engine for sharing annotated study documents.
 
 ### 🎙️ macOS Audiobook Studio (`macOS/`)
+
 - Multi-chapter batch synthesis with per-character/speaker voice assignment.
 - Manifest generation and export to structured audiobook audio files.
 - Full Catalyst menu bar commands (`File`, `Edit`, `Speech`, `View`, `Window`).
 - Developer diagnostics HUD and speech telemetry sandbox.
 
 ### 🧠 On-Device Neural TTS & Mathematical Grammar
+
 - On-device CoreML & MLX Kokoro 82M neural speech synthesis.
 - Fallback to Apple's native `AVSpeechSynthesizer`.
 - Automatic translation of complex LaTeX, exponents ($10^{23}$, $x^2$), scientific notation (`6.022e23`), and SI units (`5 nm`, `2.4 GHz`).
 - Real-time karaoke-style word highlighting synced to the audio waveform.
 
 ### 🎧 Ambient Focus Soundscapes
+
 - 5 bundled acoustic focus loops: **Brown Noise**, **Pink Noise**, **40Hz Binaural Beats**, **Soft Rain**, and **Library & Café**.
 - Independent background volume slider with smooth crossfade and sleep timer.
 
 ### 📚 Apple Books Reading Experience & Library Intelligence
+
 - **3-Mode Universal Reading Engine**: Seamlessly switch between **Single Page** (`.paginated`), **Two Pages** (`.twoPage` side-by-side book spread with center spine divider), and **Continuous** (`.continuous` vertical smooth scrolling) across all document formats (EPUB, PDF, Markdown, Plain Text, Web Articles).
 - **Two-Page Book Spread Mode**: Immersive dual-column spread for iPad in landscape and macOS Mac Catalyst. Features running chapter header, dual-page indicator footer ("Pages X–Y of N"), edge-tap paging (`-2 / +2`), and automatic voice-following spread turns.
 - **Dynamic PDF Theme Background**: Native PDF viewer (`pdfView.backgroundColor`) automatically binds to `themeManager.currentReaderTheme.backgroundColor`, ensuring Quiet, Paper, Charcoal, and Night themes maintain harmonious borders instead of glaring white margins.
@@ -53,6 +59,7 @@
 - **Precision Resume Banner**: Instant toast upon reopening a book with one-tap inline `Play` to resume neural narration exactly where you stopped.
 
 ### ♿ Accessibility First
+
 - **OpenDyslexic Typography**: Bundled OpenDyslexic Regular and Bold fonts.
 - **Bionic Reading Mode**: Fixation character bolding.
 - **Dyslexia Reading Ruler**: Draggable reading guide with adjustable window height.
@@ -62,7 +69,7 @@
 
 ## Directory Structure
 
-```
+```text
 VachanamApple/
 ├── Shared/                     # Universal multi-platform engine (iOS & macOS)
 │   ├── App/                    # VachanamApp, AppState, scene delegates
@@ -95,17 +102,21 @@ VachanamApple/
 ## How to Build & Run
 
 ### Prerequisites
+
 - macOS Sonoma 14.0+ (macOS Sequoia 15.0+ recommended)
 - Xcode 16.0+ (with iOS 18.0+ SDK)
 - Apple Silicon Mac (M1/M2/M3/M4) or iPad Air/Pro
 
 ### 1. Project Generation & Synchronization
+
 `Vachanam.xcodeproj` is programmatically generated and kept synchronized:
+
 ```bash
 python3 generate_project.py
 ```
 
 ### 2. Running on Mac (Mac Catalyst)
+
 ```bash
 # Build
 xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=macOS,variant=Mac Catalyst' -quiet build
@@ -115,6 +126,7 @@ xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=m
 ```
 
 ### 3. Running on iPad Simulator
+
 ```bash
 # Build
 xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' -quiet build
@@ -164,4 +176,3 @@ xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=i
 - **Privacy & Redacted Logging**: All diagnostic `print()` statements are gated behind `#if DEBUG` to prevent document text, file paths, or reading progress from appearing in production device logs.
 - **Temporary File Lifecycle & Backup Exclusion**: In-memory PDF data files automatically purge on document close (`deinit`), sandbox voice test artifacts are cleaned up on disappear, and audio caches are explicitly marked `isExcludedFromBackup = true` to preserve user iCloud backup storage quotas.
 - **OTA Updates**: Pushing to `main` creates GitHub Releases with SHA-256 verified Mac Catalyst archives (`Vachanam-MacCatalyst.zip.sha256`) and supports direct TestFlight deployment for background iPad updates.
-

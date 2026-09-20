@@ -32,6 +32,7 @@ graph TD
 ```
 
 ### Layer 1: Layout Coordinate Normalization
+
 - `BoundingBox` stores normalized coordinates $[0.0, 1.0]$ relative to the document page bounds:
   $$x_{\text{norm}} = \frac{x}{\text{width}}, \quad y_{\text{norm}} = \frac{y}{\text{height}}$$
 - In Jetpack Compose (`PdfPageView.kt`), coordinates are scaled to canvas viewport dimensions:
@@ -39,6 +40,7 @@ graph TD
 - **Hit-Testing**: Tapping any point $(x, y)$ performs an $O(\log N)$ or spatial lookup across `SemanticWord` bounding boxes to immediately relocate playback.
 
 ### Layer 2: Semantic Models & Text Engines
+
 - **`WordReconstructor.kt`**: Unifies hyphenated words split across line breaks (`probabil-` + `ity` $\to$ `probability`) while preserving true hyphenated compound words (`well-known`).
 - **`MathSpeechEngine.kt`**: Precompiled regular expression replacement for exponents ($10^{23}$, $x^2$), scientific notation (`6.022e23`), SI units (`5 nm`, `2.4 GHz`), and LaTeX formulas (`\frac{a}{b}`, `\sqrt{x}`).
 - **`TextNormalizer.kt`**: Expands Latin/scholarly abbreviations (`e.g.`, `i.e.`, `et al.`, `vs.`, `Fig.`, `pp.`) and formats URLs/DOIs.
@@ -47,6 +49,7 @@ graph TD
 - **`TTSChunker.kt`**: Partitions sentences into 10–25 word chunks for optimal synthesis cadence.
 
 ### Layer 3: Audio Timeline & Highlighting
+
 - **Word-Level Karaoke Sync**: `AndroidSystemAdapter` registers an `UtteranceProgressListener`. On API 26+, `onRangeStart(utteranceId, start, end, frame)` emits character ranges for each spoken word, which are converted to monotonic `globalWordID` highlights in real time.
 - **`PlaybackCoordinator.kt`**: Manages the authoritative `PlaybackCursor`, ensuring audio and visual highlight states remain strictly aligned without drift.
 

@@ -11,6 +11,7 @@
 ## Key Features
 
 ### 📖 3-Layer Universal Document Ingestion
+
 - **PDF**: `PdfTextExtractor` using PDFBox-Android for spatial word/sentence boundaries + `PdfDocumentWrapper` utilizing `android.graphics.pdf.PdfRenderer` for 2x high-resolution page bitmaps.
 - **EPUB**: `EPUBParser` with streaming ZIP archive decompression, OPF manifest/spine parsing, in-flow binary image extraction (`<img>` and `<image xlink:href>`), clean entity decoding, and word-gluing prevention.
 - **Markdown**: `MarkdownParser` parsing ATX/Setext headers, nested lists, quotes, inline/block image extraction (`![alt](url)`), and code blocks.
@@ -19,6 +20,7 @@
 - **Sentence-Aligned Virtual Pagination**: Non-PDF books are segmented into sentence-aligned virtual pages (`SemanticDocumentBuilder`) so sentences are never fractured across page turns.
 
 ### 🎙️ Pluggable TTS & Real-Time Karaoke Highlighting
+
 - **`TTSModelProtocol`**: Modular contract allowing swappable TTS backends.
 - **`AndroidSystemAdapter`**: Zero-download offline synthesis utilizing Android's native `TextToSpeech` engine and `UtteranceProgressListener.onRangeStart` for precise, word-by-word karaoke highlighting.
 - **`KokoroOnnxAdapter`**: On-device neural synthesis via ONNX Runtime for the Kokoro 82M voice model.
@@ -26,6 +28,7 @@
 - **`TTSController`**: High-level playback coordinator managing play/pause, sentence skipping, and speech rate scaling (0.5x – 2.5x).
 
 ### 📚 Apple Books Reading Experience & Library Intelligence
+
 - **3-Mode Universal Reading Engine**: Seamlessly switch between **Single Page** (`ReadingLayout.PAGINATED`), **Two Pages** (`ReadingLayout.TWO_PAGE` side-by-side book spread with center spine divider), and **Continuous** (`ReadingLayout.CONTINUOUS` vertical smooth scrolling) across all document formats (EPUB, PDF, Markdown, Plain Text, Web Articles).
 - **Two-Page Book Spread Mode**: Immersive dual-column spread for Android tablets and foldables. Features running chapter headers, dual-page indicator footer ("Pages X–Y of N"), edge-tap paging (`-2 / +2`), and automatic voice-following spread turns.
 - **Dynamic PDF Theme Background**: Native PDF canvas background automatically binds to `theme.backgroundColor`, ensuring Quiet, Paper, Charcoal, and Night themes maintain harmonious borders instead of glaring white margins.
@@ -38,6 +41,7 @@
 - **Precision Resume Banner**: Floating toast upon opening a document with chapter context and an inline `Play` button to resume neural narration instantly.
 
 ### ♿ Accessibility First & Material You
+
 - **5 Theme Palettes**: Original, Quiet, Paper, Charcoal, and Night with automatic contrast adjustment.
 - **Reading Layout Selector**: Switch between Single Page, Two Pages, and Continuous scroll directly inside the top toolbar or the Settings screen.
 - **OpenDyslexic Typography**: Bundled `opendyslexic_regular.otf` and `opendyslexic_bold.otf` in `res/font/`.
@@ -45,6 +49,7 @@
 - **Dyslexia Reading Ruler**: Draggable horizontal focus guide with customizable window height and dimming mask.
 
 ### 🎧 Ambient Focus Soundscapes
+
 - 5 bundled `.m4a` focus soundscapes in `res/raw/`:
   - **Brown Noise**
   - **Pink Noise**
@@ -58,7 +63,7 @@
 
 ## Directory Structure
 
-```
+```text
 VachanamAndroid/
 ├── build.gradle.kts
 ├── settings.gradle.kts
@@ -97,11 +102,13 @@ VachanamAndroid/
 ## How to Build & Run
 
 ### Prerequisites
+
 - Android SDK with Platform 35 (`platforms/android-35`)
 - Java 17+ (or Android Studio Ladybug / Meerkat)
 - Connected Android 12+ device (API 31+) or emulator
 
 ### Commands
+
 ```bash
 cd VachanamAndroid
 
@@ -127,4 +134,3 @@ cd VachanamAndroid
 - **Integrity Verification**: Every release asset includes an immutable SHA-256 checksum (`Vachanam-Android.apk.sha256`).
 - **SSRF & Network Hardening**: `WebArticleParser` enforces HTTPS schemes, blocks private/loopback/cloud metadata IP ranges, and caps responses to 5 MB.
 - **Data Protection**: Backup rules under `res/xml/` protect user reading state while strictly excluding transient audio caches. Cleartext traffic is disabled.
-
