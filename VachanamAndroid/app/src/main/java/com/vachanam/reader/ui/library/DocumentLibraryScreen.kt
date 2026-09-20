@@ -34,6 +34,7 @@ import com.vachanam.reader.data.persistence.BookShelf
 import com.vachanam.reader.data.persistence.ReadingProgress
 import com.vachanam.reader.ui.theme.*
 import com.vachanam.reader.util.FileUtils
+import com.vachanam.reader.util.PermissionHelper
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -102,6 +103,12 @@ fun DocumentLibraryScreen(
                 }
             }
         }
+    }
+
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ ->
+        filePickerLauncher.launch(arrayOf("*/*"))
     }
 
     // Filter documents
@@ -199,14 +206,12 @@ fun DocumentLibraryScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
-                    filePickerLauncher.launch(
-                        arrayOf(
-                            "application/pdf",
-                            "application/epub+zip",
-                            "text/plain",
-                            "text/markdown"
-                        )
-                    )
+                    val missing = PermissionHelper.getMissingPermissions(context)
+                    if (missing.isNotEmpty()) {
+                        storagePermissionLauncher.launch(missing)
+                    } else {
+                        filePickerLauncher.launch(arrayOf("*/*"))
+                    }
                 },
                 containerColor = WarmAmber,
                 contentColor = Color.Black

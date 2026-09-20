@@ -161,6 +161,12 @@ graph TD
     - **Graceful Reader Fallback (`ReaderContainerView.kt`)**: Replaced early `document ?: return` blank screen with an interactive empty state view providing a "Return to Library" navigation action.
     - **Word Reconstruction Compound Heuristics (`WordReconstructor.kt`)**: Added compound prefix detection (`well-`, `user-`, `self-`, etc.) to preserve genuine hyphenated compound words while rejoining broken line-break morphemes.
     - **TTS Sentence Chunking (`TTSChunker.kt`)**: Added slicing for sentences whose word count exceeds `maxWordsPerChunk`, ensuring chunk bounds constraints are respected for optimal audio synthesis.
+11. **[AUD-28] Android Runtime Permissions, SAF Persistence & MIME Access Matrix**:
+    - **Manifest Declarations (`AndroidManifest.xml`)**: Added `READ_EXTERNAL_STORAGE` (maxSdkVersion=32), `READ_MEDIA_AUDIO`, `READ_MEDIA_IMAGES`, `POST_NOTIFICATIONS`, `MANAGE_EXTERNAL_STORAGE` (with `tools:ignore="ScopedStorage"`), and `android:requestLegacyExternalStorage="true"`. Expanded intent filter to cover all supported book MIME types (`application/x-epub`, `text/x-markdown`, `application/octet-stream`).
+    - **Runtime Permission Controller (`PermissionHelper.kt`)**: Implemented dynamic version-gated permission queries (`POST_NOTIFICATIONS` + `READ_MEDIA_AUDIO` on API 33+; `READ_EXTERNAL_STORAGE` on API <= 32). Automatically prompted on app start in `MainActivity` and before document picking in `DocumentLibraryScreen`.
+    - **Persistable URI Permission Grants (`FileUtils.kt`)**: Added `contentResolver.takePersistableUriPermission(uri, FLAG_GRANT_READ_URI_PERMISSION)` to guarantee access persists across device reboots and activity lifecycles.
+    - **Broadened File Picker Selection**: Updated `OpenDocument` filter from restrictive hardcoded MIME types to universal `*/*` selection, preventing Android's system document provider from arbitrarily greying out valid EPUB, Markdown, and TXT files.
+    - **Explicit File Readability Checks (`AppState.kt`)**: Added proactive `!file.exists() || !file.canRead()` validation before extraction to surface clear, user-facing error messages if storage access is denied.
 
 ---
 

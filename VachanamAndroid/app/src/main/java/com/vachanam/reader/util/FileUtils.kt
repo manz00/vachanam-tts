@@ -15,6 +15,30 @@ object FileUtils {
             val contentResolver = context.contentResolver
             var displayName: String? = null
 
+            // 0. Take persistable URI read permission if content scheme
+            if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
+                try {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri,
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (_: Exception) {}
+            }
+
+            // 0b. Direct file handling if scheme is file or null
+            if (uri.scheme == ContentResolver.SCHEME_FILE || uri.scheme == null) {
+                val path = uri.path
+                if (path != null) {
+                    val srcFile = File(path)
+                    if (srcFile.exists() && srcFile.canRead()) {
+                        val destFile = File(context.filesDir, srcFile.name)
+                        destFile.parentFile?.mkdirs()
+                        srcFile.copyTo(destFile, overwrite = true)
+                        return destFile
+                    }
+                }
+            }
+
             // 1. Resolve true display name via ContentResolver (SAF standard)
             if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
                 try {
@@ -54,15 +78,16 @@ object FileUtils {
                 val mime = contentResolver.getType(uri)
                 val ext = when (mime) {
                     "application/pdf" -> "pdf"
-                    "application/epub+zip" -> "epub"
+                    "application/epub+zip", "application/x-epub" -> "epub"
                     "text/plain" -> "txt"
-                    "text/markdown" -> "md"
+                    "text/markdown", "text/x-markdown" -> "md"
                     else -> MimeTypeMap.getSingleton().getExtensionFromMimeType(mime) ?: "pdf"
                 }
                 cleanName = "$cleanName.$ext"
             }
 
             val destFile = File(context.filesDir, cleanName)
+            destFile.parentFile?.mkdirs()
             contentResolver.openInputStream(uri)?.use { input ->
                 FileOutputStream(destFile).use { output ->
                     input.copyTo(output)

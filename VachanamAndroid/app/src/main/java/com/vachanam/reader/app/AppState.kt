@@ -81,6 +81,10 @@ class AppState(
         _isLoading.value = true
         _errorMessage.value = null
         return try {
+            if (!file.exists() || !file.canRead()) {
+                _errorMessage.value = "Cannot read book file: permission denied or file not found."
+                return false
+            }
             val format = DocumentFormat.detect(file)
             val doc = if (format == DocumentFormat.PDF) {
                 PdfTextExtractor.shared.extractSemanticDocument(file)

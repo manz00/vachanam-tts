@@ -23,6 +23,8 @@ import com.vachanam.reader.ui.theme.VachanamTheme
 import com.vachanam.reader.ui.tts.SoundscapePickerSheet
 import com.vachanam.reader.util.FileUtils
 import kotlinx.coroutines.launch
+import androidx.activity.result.contract.ActivityResultContracts
+import com.vachanam.reader.util.PermissionHelper
 import java.io.File
 import java.io.FileOutputStream
 
@@ -35,6 +37,12 @@ class MainActivity : ComponentActivity() {
     private lateinit var bookmarkManager: BookmarkManager
     private lateinit var pronunciationManager: PronunciationManager
 
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ ->
+        // Runtime permissions evaluated
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -44,6 +52,11 @@ class MainActivity : ComponentActivity() {
         accessibilityManager = AccessibilityManager.getInstance(this)
         bookmarkManager = BookmarkManager.getInstance(this)
         pronunciationManager = PronunciationManager.getInstance(this)
+
+        val missingPermissions = PermissionHelper.getMissingPermissions(this)
+        if (missingPermissions.isNotEmpty()) {
+            permissionLauncher.launch(missingPermissions)
+        }
 
         handleIntent(intent)
 
