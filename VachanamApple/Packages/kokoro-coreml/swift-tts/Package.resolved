@@ -1,14 +1,6 @@
 {
   "pins" : [
     {
-      "identity" : "misakiswift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mattmireles/MisakiSwift",
-      "state" : {
-        "revision" : "3a27756a780fc138e328a96e533fb440a3419d5b"
-      }
-    },
-    {
       "identity" : "mlx-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ml-explore/mlx-swift",

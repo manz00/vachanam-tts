@@ -83,17 +83,12 @@ jobs:
 
       - name: Build Mac Catalyst App
         run: |
-          set +e
-          echo "### 📱 Available Destinations on Runner" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          xcodebuild -project VachanamApple/Vachanam.xcodeproj -scheme Vachanam -showdestinations 2>&1 | tee -a $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -configuration Release \
             -destination 'platform=macOS,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData/MacCatalyst \
+            -clonedSourcePackagesDirPath ./DerivedData/SourcePackages \
             -skipPackagePluginValidation \
             -skipMacroValidation \
             -skipPackageSignatureValidation \
@@ -101,19 +96,8 @@ jobs:
             -packageSigningEntityPolicy warn \
             CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
-            build > "${GITHUB_WORKSPACE}/xcodebuild_release.log" 2>&1
-          BUILD_STATUS=$?
-          echo "xcodebuild finished with exit status: $BUILD_STATUS"
-          if [ $BUILD_STATUS -ne 0 ]; then
-            echo "::error::xcodebuild failed with exit status $BUILD_STATUS"
-            echo "### ❌ Xcodebuild Build Log (Last 120 lines)" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
-            tail -n 120 "${GITHUB_WORKSPACE}/xcodebuild_release.log" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -n 150 "${GITHUB_WORKSPACE}/xcodebuild_release.log"
-            exit $BUILD_STATUS
-          fi
-          set -e
+            build
+
 
       - name: Package Mac Catalyst App & DMG Installer
         run: |
