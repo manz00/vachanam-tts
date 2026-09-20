@@ -61,13 +61,14 @@ jobs:
 
   build-apple:
     name: Build Mac Catalyst App
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: Checkout Code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Select Latest Xcode 16
         run: |
+          ls -la /Applications | grep -i Xcode || true
           XCODE_APP=$(find /Applications -maxdepth 1 -name "Xcode_16*.app" | sort -V | tail -n 1)
           if [ -n "$XCODE_APP" ]; then
             echo "Selecting $XCODE_APP"
@@ -85,10 +86,10 @@ jobs:
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
             -configuration Release \
-            -destination 'platform=macOS,arch=arm64,variant=Mac Catalyst' \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            ARCHS=arm64 \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
             build
 
       - name: Package Mac Catalyst App & DMG Installer
@@ -184,14 +185,24 @@ jobs:
           - **Manual**: Download and install the latest APK or Mac DMG anytime from this release.
           EOF
 
-          FILES=(dist/Vachanam-Android.apk dist/Vachanam-Android.apk.sha256 dist/Vachanam-macOS.dmg dist/Vachanam-macOS.dmg.sha256 dist/Vachanam-MacCatalyst.zip dist/Vachanam-MacCatalyst.zip.sha256)
+          FILES=()
+          for f in dist/Vachanam-Android.apk dist/Vachanam-Android.apk.sha256 dist/Vachanam-macOS.dmg dist/Vachanam-macOS.dmg.sha256 dist/Vachanam-MacCatalyst.zip dist/Vachanam-MacCatalyst.zip.sha256; do
+            if [ -f "$f" ]; then
+              FILES+=("$f")
+            fi
+          done
 
-          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
-            gh release upload "$TAG_NAME" "${FILES[@]}" --clobber
-            gh release edit "$TAG_NAME" --title "Vachanam Release $TAG_NAME" --notes-file release_body.md
+          if [ ${#FILES[@]} -gt 0 ]; then
+            if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+              gh release upload "$TAG_NAME" "${FILES[@]}" --clobber
+              gh release edit "$TAG_NAME" --title "Vachanam Release $TAG_NAME" --notes-file release_body.md
+            else
+              gh release create "$TAG_NAME" "${FILES[@]}" \
+                --title "Vachanam Release $TAG_NAME" \
+                --notes-file release_body.md \
+                --generate-notes
+            fi
           else
-            gh release create "$TAG_NAME" "${FILES[@]}" \
-              --title "Vachanam Release $TAG_NAME" \
-              --notes-file release_body.md \
-              --generate-notes
+            echo "No build artifacts found in dist/"
+            exit 1
           fi

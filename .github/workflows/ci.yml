@@ -10,7 +10,7 @@ on:
 jobs:
   test-apple:
     name: Apple Tests (Mac Catalyst & Unit Tests)
-    runs-on: macos-14
+    runs-on: macos-15
     permissions:
       contents: read
     steps:
@@ -19,6 +19,7 @@ jobs:
 
       - name: Select Latest Xcode 16
         run: |
+          ls -la /Applications | grep -i Xcode || true
           XCODE_APP=$(find /Applications -maxdepth 1 -name "Xcode_16*.app" | sort -V | tail -n 1)
           if [ -n "$XCODE_APP" ]; then
             echo "Selecting $XCODE_APP"
@@ -35,10 +36,10 @@ jobs:
         run: |
           xcodebuild -project VachanamApple/Vachanam.xcodeproj \
             -scheme Vachanam \
-            -destination 'platform=macOS,arch=arm64,variant=Mac Catalyst' \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
             -derivedDataPath ./DerivedData \
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
-            ARCHS=arm64 \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
             build
 
       - name: Run Unit Tests (iOS Simulator)
