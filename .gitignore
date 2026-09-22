@@ -12,7 +12,6 @@ project.xcworkspace/xcuserdata/
 # Root Hugging Face downloaded model cache
 /kokoro-coreml/
 *.onnx
-VachanamAndroid/app/src/main/assets/models/
 
 # Android & Gradle
 .gradle/

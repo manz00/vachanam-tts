@@ -1,7 +1,0 @@
-<resources>
-    <style name="Theme.Vachanam" parent="android:Theme.Material.NoActionBar">
-        <item name="android:statusBarColor">@color/deep_navy</item>
-        <item name="android:navigationBarColor">@color/deep_navy</item>
-        <item name="android:windowBackground">@color/deep_navy</item>
-    </style>
-</resources>

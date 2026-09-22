@@ -472,18 +472,21 @@ Structured around the principle:
     - **Swift 6.2 Toolchain Exit Code 74 Elimination**: Remote dependency `https://github.com/mlalma/MLXUtilsLibrary.git` declared `swift-tools-version: 6.2`, breaking Xcode 16 on GitHub Actions runners (`macos-15`). Vendored `MLXUtilsLibrary` locally under `VachanamApple/Packages/kokoro-coreml/MLXUtilsLibrary` with `swift-tools-version: 5.9`, eliminating the fatal toolchain mismatch and remote package fetch.
     - **Simulator Runner Gating**: Gated the iPad CoreSimulator test job (`test-ios-simulator`) to execute only on Pull Requests targeting `main` or manual `workflow_dispatch`, while keeping native Mac Catalyst unit testing (~35s) active on all pushes, cutting overall macOS runner minute consumption by ~70%.
 
+33. **[AUD-35] Android Platform Port Shelving & Apple Silicon Ecosystem Specialization**:
+    - **Performance Decoupling & Archival**: Shelved the Android platform port due to performance disparity between ONNX / Android System TTS and native Apple Neural Engine / CoreML / MLX.
+    - **Zero-Loss Archival Branch**: Committed all pending Android work (including `VoicePickerBottomSheet.kt`, `AndroidSystemAdapter` speech refinements, and settings panels) to dedicated branch `archive/android`.
+    - **Disk Space & CI Reclaim**: Purged `VachanamAndroid/` from `main`, reclaiming ~2.0 GB of disk space (including build caches and Kokoro ONNX model weights). Removed Android build and test jobs from `.github/workflows/ci.yml` and `release.yml` to streamline CI pipelines solely for Apple platforms.
+
 ---
 
-## 7. Multi-Platform Build, Test & Technical Docs
+## 7. Platform Build, Test & Technical Docs
 
-Detailed platform-specific technical specifications and audit histories are maintained in their respective platform directories:
+Detailed platform-specific technical specifications and audit histories:
 
-- **Apple (iPadOS & macOS)**: See [VachanamApple/TECHNICAL.md](VachanamApple/TECHNICAL.md) for Quartz 2D math, CoreML/MLX pipelines, and Apple audit entries (`[AUD-01]`..`[AUD-16]`, `[AUD-18]`, `[AUD-30]`..`[AUD-34]`).
-- **Android (12+)**: See [VachanamAndroid/TECHNICAL.md](VachanamAndroid/TECHNICAL.md) for PDFBox coordinate mapping, Android TTS integration, and Android audit entry (`[AUD-17]`).
+- **Apple (iPadOS, macOS, iOS)**: See [VachanamApple/TECHNICAL.md](VachanamApple/TECHNICAL.md) for Quartz 2D math, CoreML/MLX pipelines, and Apple audit entries (`[AUD-01]`..`[AUD-16]`, `[AUD-18]`, `[AUD-30]`..`[AUD-35]`).
+- **Android (Archived)**: The complete Android codebase, PDFBox coordinate mappings, and Android architecture history are preserved on the [`archive/android`](https://github.com/manz00/vachanam-tts/tree/archive/android) branch.
 
-### Build & Test Commands
-
-#### Apple (iPadOS & Mac Catalyst)
+### Build & Test Commands (Apple)
 
 ```bash
 cd VachanamApple
@@ -498,14 +501,3 @@ xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=m
 xcodebuild -project Vachanam.xcodeproj -scheme Vachanam -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' -only-testing:VachanamTests -quiet test
 ```
 
-#### Android (Kotlin + Jetpack Compose)
-
-```bash
-cd VachanamAndroid
-
-# Run JVM Unit Tests
-./gradlew testDebugUnitTest
-
-# Assemble Debug APK
-./gradlew assembleDebug
-```
