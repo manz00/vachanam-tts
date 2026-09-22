@@ -43,13 +43,12 @@ class SentenceSegmenter(
 
                     // Only index actual words/tokens, skip pure whitespace or standalone punctuation
                     if (trimmedWord.isNotEmpty() && trimmedWord.any { it.isLetterOrDigit() }) {
-                        val normalizedSpoken = normalizer.normalizeForTTS(trimmedWord)
                         val word = SemanticWord(
                             id = currentWordID,
                             globalWordID = currentWordID,
                             text = trimmedWord,
                             originalText = trimmedWord,
-                            spokenText = normalizedSpoken,
+                            spokenText = trimmedWord,
                             pageIndex = pageIndex,
                             sentenceID = currentSentenceID,
                             wordIndexInSentence = wordIdx++,

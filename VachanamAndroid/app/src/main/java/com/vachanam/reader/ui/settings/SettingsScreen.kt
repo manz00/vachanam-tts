@@ -9,8 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +25,8 @@ import com.vachanam.reader.accessibility.ThemeManager
 import com.vachanam.reader.tts.PronunciationManager
 import com.vachanam.reader.ui.theme.*
 
+import com.vachanam.reader.tts.TTSController
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -32,6 +34,7 @@ fun SettingsScreen(
     fontManager: FontManager,
     accessibilityManager: AccessibilityManager,
     pronunciationManager: PronunciationManager,
+    ttsController: TTSController? = null,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -46,6 +49,8 @@ fun SettingsScreen(
     val isRuler by accessibilityManager.isReadingRulerEnabled.collectAsState()
     val rulerHeight by accessibilityManager.rulerHeight.collectAsState()
     val isHighContrast by accessibilityManager.isHighContrastEnabled.collectAsState()
+    val selectedModelId by (ttsController?.selectedModelId ?: remember { kotlinx.coroutines.flow.MutableStateFlow("android_system") }).collectAsState()
+    val selectedVoice by (ttsController?.selectedVoice ?: remember { kotlinx.coroutines.flow.MutableStateFlow<String?>("default") }).collectAsState()
 
     val pronunciations by pronunciationManager.overrides.collectAsState()
     var showAddPronunciationDialog by remember { mutableStateOf(false) }
@@ -257,7 +262,118 @@ fun SettingsScreen(
                 }
             }
 
-            // 4. Custom Pronunciation Dictionary
+            // 4. Speech Engine & Voice Profiles
+            if (ttsController != null) {
+                item {
+                    Text(text = "Speech Engine & Voice Profiles", fontSize = 18.sp, color = WarmAmber)
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(text = "TTS Engine", fontSize = 14.sp, color = Color.White.copy(alpha = 0.8f))
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { ttsController.selectModel("android_system") }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedModelId == "android_system",
+                            onClick = { ttsController.selectModel("android_system") },
+                            colors = RadioButtonDefaults.colors(selectedColor = WarmAmber)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(text = "Android System TTS (Built-in)", color = Color.White, fontSize = 15.sp)
+                            Text(text = "Offline native voice synthesis with word karaoke", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { ttsController.selectModel("kokoro_82m") }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedModelId == "kokoro_82m",
+                            onClick = { ttsController.selectModel("kokoro_82m") },
+                            colors = RadioButtonDefaults.colors(selectedColor = WarmAmber)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(text = "Kokoro 82M Neural Model", color = Color.White, fontSize = 15.sp)
+                            Text(text = "Frontier expressive neural TTS with human-like prosody (~86 MB)", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = if (selectedModelId == "kokoro_82m") "Kokoro Voice Profiles" else "System Voice Profiles",
+                        fontSize = 14.sp,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    val voiceList = if (selectedModelId == "kokoro_82m") {
+                        listOf(
+                            "af_heart" to "Heart (Female, American)",
+                            "af_bella" to "Bella (Female, American)",
+                            "am_adam" to "Adam (Male, American)",
+                            "am_michael" to "Michael (Male, American)",
+                            "bf_emma" to "Emma (Female, British)",
+                            "bm_george" to "George (Male, British)"
+                        )
+                    } else {
+                        val available = ttsController.systemAdapter.getAvailableVoices()
+                        if (available.isEmpty()) {
+                            listOf("default" to "System Default Voice")
+                        } else {
+                            available.map { v ->
+                                val label = if (v == "default") "System Default Voice" else v.replace("en-us-", "").replace("en-", "").replace("-", " ")
+                                v to label
+                            }
+                        }
+                    }
+
+                    for ((vId, vLabel) in voiceList) {
+                        val isChosen = selectedVoice == vId || (selectedVoice == null && vId == voiceList.first().first)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { ttsController.selectVoice(vId) }
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                RadioButton(
+                                    selected = isChosen,
+                                    onClick = { ttsController.selectVoice(vId) },
+                                    colors = RadioButtonDefaults.colors(selectedColor = VibrantTeal)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = vLabel, color = Color.White, fontSize = 14.sp)
+                            }
+                            IconButton(
+                                onClick = { ttsController.previewVoice(vId) },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                    contentDescription = "Preview voice",
+                                    tint = WarmAmber,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 5. Custom Pronunciation Dictionary
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

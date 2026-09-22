@@ -40,7 +40,7 @@ class TextNormalizer(
         processed = mathEngine.vocalize(processed, mathStyle)
 
         // 4. Intra-word hyphens in common compound words (e.g. on-device -> on device)
-        processed = processed.replace(Regex("(?<=\\b[a-zA-Z]{2,})-(?=[a-zA-Z]{2,}\\b)"), " ")
+        processed = processed.replace(Regex("\\b([a-zA-Z]{2,})-([a-zA-Z]{2,})\\b"), "$1 $2")
 
         // 5. Clean up redundant spaces
         return processed.replace(Regex("\\s+"), " ").trim()

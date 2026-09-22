@@ -22,6 +22,9 @@ class TTSController(
     private val _selectedModelId = MutableStateFlow("android_system")
     val selectedModelId: StateFlow<String> = _selectedModelId.asStateFlow()
 
+    private val _selectedVoice = MutableStateFlow<String?>("default")
+    val selectedVoice: StateFlow<String?> = _selectedVoice.asStateFlow()
+
     private val _speechRate = MutableStateFlow(1.0f)
     val speechRate: StateFlow<Float> = _speechRate.asStateFlow()
 
@@ -51,6 +54,28 @@ class TTSController(
 
     fun selectModel(modelId: String) {
         _selectedModelId.value = modelId
+        if (modelId == "kokoro_82m") {
+            _selectedVoice.value = kokoroAdapter.metadata.supportedVoices.firstOrNull() ?: "af_heart"
+        } else {
+            _selectedVoice.value = systemAdapter.getAvailableVoices().firstOrNull() ?: "default"
+            systemAdapter.setVoice(_selectedVoice.value)
+        }
+    }
+
+    fun selectVoice(voice: String?) {
+        _selectedVoice.value = voice
+        systemAdapter.setVoice(voice)
+    }
+
+    fun previewVoice(voice: String) {
+        val isMale = systemAdapter.detectGenderByName(voice) == AndroidSystemAdapter.Gender.MALE ||
+                voice.startsWith("am_") || voice.startsWith("bm_")
+        val sampleText = if (isMale) {
+            "Hello! I am your male voice. How does this sound for reading?"
+        } else {
+            "Hello! I am your female voice. How does this sound for reading?"
+        }
+        systemAdapter.speak(sampleText, voice = voice, speed = _speechRate.value)
     }
 
     fun play(document: SemanticDocument? = null) {
@@ -88,11 +113,19 @@ class TTSController(
 
                 // Synthesize & Speak
                 val rate = _speechRate.value
-                val result = systemAdapter.synthesize(normalizedSpeech, speed = rate, pauseDurationSec = chunk.pauseDurationAfter)
+                val activeAdapter: TTSModelProtocol = if (_selectedModelId.value == "kokoro_82m" && kokoroAdapter.isLoaded) {
+                    kokoroAdapter
+                } else {
+                    systemAdapter
+                }
+                val voice = _selectedVoice.value
+                val result = activeAdapter.synthesize(normalizedSpeech, voice = voice, speed = rate, pauseDurationSec = chunk.pauseDurationAfter)
 
                 if (reqId != coordinator.currentRequestID) break
 
-                systemAdapter.speak(normalizedSpeech, speed = rate)
+                if (activeAdapter == systemAdapter) {
+                    systemAdapter.speak(normalizedSpeech, voice = voice, speed = rate)
+                }
 
                 // Wait for chunk duration + boundary pause
                 val durationMs = (result.duration * 1000).toLong()

@@ -105,6 +105,7 @@ class MainActivity : ComponentActivity() {
                                 fontManager = fontManager,
                                 accessibilityManager = accessibilityManager,
                                 pronunciationManager = pronunciationManager,
+                                ttsController = appState.ttsController,
                                 onBack = { currentScreen = if (activeDoc != null) "reader" else "library" }
                             )
                         }

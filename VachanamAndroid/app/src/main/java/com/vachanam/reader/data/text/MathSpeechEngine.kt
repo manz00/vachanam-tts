@@ -90,7 +90,6 @@ class MathSpeechEngine {
         }
 
         // 2. Scientific notation: 6.022e23 or 3.0 x 10^8
-        val sciPattern = Pattern.compile("(\\b\\d+(?:\\.\\d+)?)[eE]([+-]?\\d+)\\b")
         val sciMatcher = sciPattern.matcher(processed)
         val sb = StringBuffer()
         while (sciMatcher.find()) {
@@ -108,7 +107,6 @@ class MathSpeechEngine {
         processed = sb.toString()
 
         // 3. Superscripts: x² -> x squared, x³ -> x cubed, 10⁻¹² -> 10 to the power of minus 12
-        val superPattern = Pattern.compile("([a-zA-Z0-9])([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+)")
         val superMatcher = superPattern.matcher(processed)
         val superSb = StringBuffer()
         while (superMatcher.find()) {
@@ -137,7 +135,6 @@ class MathSpeechEngine {
         processed = superSb.toString()
 
         // 4. LaTeX fractions: \frac{a}{b} -> a over b
-        val fracPattern = Pattern.compile("\\\\frac\\{([^}]+)\\}\\{([^}]+)\\}")
         val fracMatcher = fracPattern.matcher(processed)
         val fracSb = StringBuffer()
         while (fracMatcher.find()) {
@@ -154,7 +151,6 @@ class MathSpeechEngine {
         processed = fracSb.toString()
 
         // 5. LaTeX square roots: \sqrt{x}
-        val sqrtPattern = Pattern.compile("\\\\sqrt\\{([^}]+)\\}")
         val sqrtMatcher = sqrtPattern.matcher(processed)
         val sqrtSb = StringBuffer()
         while (sqrtMatcher.find()) {
@@ -189,5 +185,10 @@ class MathSpeechEngine {
 
     companion object {
         val shared = MathSpeechEngine()
+
+        private val sciPattern = Pattern.compile("(\\b\\d+(?:\\.\\d+)?)[eE]([+-]?\\d+)\\b")
+        private val superPattern = Pattern.compile("([a-zA-Z0-9])([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ⁿ]+)")
+        private val fracPattern = Pattern.compile("\\\\frac\\{([^}]+)\\}\\{([^}]+)\\}")
+        private val sqrtPattern = Pattern.compile("\\\\sqrt\\{([^}]+)\\}")
     }
 }

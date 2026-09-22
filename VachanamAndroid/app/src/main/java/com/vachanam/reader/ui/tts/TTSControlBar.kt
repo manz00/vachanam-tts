@@ -29,6 +29,15 @@ fun TTSControlBar(
 
     val isPlaying by coordinator.isPlaying.collectAsState()
     val speechRate by ttsController.speechRate.collectAsState()
+    val selectedModelId by ttsController.selectedModelId.collectAsState()
+    var showVoicePicker by remember { mutableStateOf(false) }
+
+    if (showVoicePicker) {
+        VoicePickerBottomSheet(
+            ttsController = ttsController,
+            onDismiss = { showVoicePicker = false }
+        )
+    }
 
     Surface(
         modifier = modifier
@@ -41,10 +50,19 @@ fun TTSControlBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
+            // Voice & Model Picker button
+            IconButton(onClick = { showVoicePicker = true }) {
+                Icon(
+                    imageVector = Icons.Default.RecordVoiceOver,
+                    contentDescription = "Voice Profiles & Engine",
+                    tint = if (selectedModelId == "kokoro_82m") VibrantTeal else WarmAmber
+                )
+            }
+
             // Ambient Soundscapes button
             IconButton(onClick = onOpenSoundscapes) {
                 Icon(
